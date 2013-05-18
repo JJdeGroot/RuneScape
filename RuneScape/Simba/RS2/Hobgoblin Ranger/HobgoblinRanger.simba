@@ -1,0 +1,164 @@
+program HobgoblinRanger;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i srl/srl/misc/paintsmart.simba}
+
+var
+  Hobgoblin, StartTime, MaxKillTime: Integer;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  MaxKillTime := 30000; // Max time to kill a hobgoblin in milli seconds
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  Wait(1000 + Random(3000));
+  SetAngle(SRL_ANGLE_LOW)
+  MakeCompass(275);
+  Wait(250 + Random(500));
+end;
+
+function FindHobgoblin: Boolean;
+var
+  i, j, t: Integer;
+  ATPA: Array[0..1] of TPointArray;
+  Colors, Tol, Area: Array of Integer;
+  BoxSize: Array[0..1] of Integer;
+  HueMod, SatMod: Array of Extended;
+  TBox: Array[0..1] of TBox;
+  ClearBoxes: TBox;
+  ClearTPA: TPointArray;
+
+begin
+  // Details of the gray & brown colors of Hobgoblins
+  Colors := [9411230, 4020585]
+  Tol := [28, 11]
+  HueMod := [0.23, 0.17]
+  SatMod := [0.20, 1.24]
+  Area := [MSCX-220, MSCY-100, MSCX+200, MSCY-35]
+  ClearTPA := TPAFromBox(IntToBox(240, 110, 285, 140));
+  SMART_ClearCanvasArea(IntToBox(Area[0]-2, Area[1]-2, Area[2]+2, Area[3]+2));
+  MarkTime(t);
+
+  for i:=0 to high(Colors) do
+    begin
+      SetColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(HueMod[i], SatMod[i]);
+      if FindColorsSpiralTolerance(((MSX1+MSX2)/2), ((MSCY+MSY1)/2), ATPA[i], Colors[i], Area[0], Area[1], Area[2], Area[3], Tol[i]) then
+        begin
+          //WriteLn('Points: '+ToStr(ATPA[i])+'');
+          ClearTPAFromTPA(ATPA[i], ClearTPA);
+          WriteLn('Length: '+IntToStr(Length(ATPA[i]))+'');
+          if (Length(ATPA[i])<100) then
+            Exit;
+          TBox[i] := GetTPABounds(ATPA[i]);
+          BoxSize[i] := (TBox[i].x1 + TBox[i].y1 + TBox[i].x2 + TBox[i].y2);
+          SMART_DrawBoxEx(False, IntToBox(TBox[i].x1, TBox[i].y1, TBox[i].x2, TBox[i].y2), clRed);
+        end;
+    end;
+  for i:=0 to (high(Colors)-1) do
+    begin
+      for j:=0 to high(ATPA[i]) do
+      if NearbyPointInArray(ATPA[i][j], 1, ATPA[i+1]) then
+        begin
+          if TimeFromMark(t) < 1500 then
+            begin
+              MMouse(ATPA[i][j].x, ATPA[i][j].y, 0, 0);
+              if WaitUptextMulti(['tta', 'ack', 'obg', 'blin', 'Hobgoblin'], 100) then
+                begin
+                  //WriteLn('Point: '+ToStr(ATPA[i][j])+'');
+                  WriteLn('Clicked on a hobgoblin');
+                  ClickMouse2(1);
+                  Result:=True;
+                  Exit;
+                end;
+            end else
+            begin
+              WriteLn('Too many attempts to find the hobgoblin, trying again soon');
+              Exit;
+            end;
+        end;
+    end;
+end;
+
+procedure WaitUntilKilled;
+var
+  t: Integer;
+
+begin
+  MarkTime(t);
+  SMART_DrawBoxEx(False, IntToBox(220, 100, 290, 135), clGreen);
+  Wait(1000 + Random(1000));
+
+  if (PixelShift(IntToBox(220, 100, 290, 135), 1000)>900) then
+    begin
+      WriteLn('We are attacking a hobgoblin');
+      repeat
+        Wait(100 + Random(200));
+        //WriteLn(''+IntToStr(PixelShift(IntToBox(220, 100, 290, 135), 1000))+'');
+      until(PixelShift(IntToBox(220, 100, 290, 135), 1000)<900) or (TimeFromMark(t)>MaxKillTime);
+      Inc(Hobgoblin);
+      Wait(4000 + Random(1000));
+    end else
+    begin
+      WriteLn('Hobgoblin out of reach');
+    end;
+end;
+
+procedure Proggy;
+var
+  Sec, RangeXp, HpXp, RangeXpRate, HpXpRate: Integer;
+  TextBox: TBox;
+
+begin
+  TextBox := IntToBox(0, 0, MSX2, 67);
+  Sec := (1+((GetSystemTime-StartTime)/1000));
+  RangeXp := (285*4/10*Hobgoblin);
+  HpXp := (285*4/3/10*Hobgoblin);
+  RangeXpRate :=((3600*(RangeXp))/(Sec));
+  HpXpRate :=((3600*(HpXp))/(Sec));
+
+  SMART_ClearCanvasArea(TextBox);
+  SMART_DrawText(366, 323, UpCharsEx, 'JJ''s Hobgoblin Ranger', clRed);
+  SMART_DrawText(5, 22, UpChars, 'Running for: '+TimeRunning+'', clWhite);
+  SMART_DrawText(5, 36, UpChars, ''+IntToStr(RangeXp)+' Ranged xp gained at '+IntToStr(RangeXpRate)+' per hour', clWhite);
+  SMART_DrawText(5, 50, UpChars, ''+IntToStr(HpXp)+' Hitpoints xp gained at '+IntToStr(HpXpRate)+' per hour', clWhite);
+end;
+
+
+begin
+  SetUpLogin;
+  StartTime:=GetSystemTime;
+  SMART_ClearCanvas;
+  repeat
+    if FindHobgoblin then
+      begin
+        WaitUntilKilled;
+      end else
+      begin
+        WriteLn('Not able to find a hobgoblin, waiting a while');
+        Wait(1000 + Random(1000));
+      end;
+    Proggy;
+  until not(LoggedIn);
+end.

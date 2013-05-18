@@ -1,0 +1,15 @@
+Barricade detection
+Frozen detection (A magical force stops you from moving)
+
+Jellie:
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.95, 1.06);
+
+8172918, 20
+
+
+Pyrefiends:
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.63, 2.61);
+
+4101346, 9

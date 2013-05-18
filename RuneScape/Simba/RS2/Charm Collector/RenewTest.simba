@@ -1,0 +1,82 @@
+program Test;
+{$i srl/srl.simba}
+
+var
+  n: integer;
+
+procedure Marked;
+begin
+  MarkTime(n);
+  Wait(5000);
+  WriteLn(''+IntToStr(n)+' that is N');
+end;
+
+
+procedure RenewFamiliar;
+var
+  Flask, X, Y: Integer;
+
+begin
+if n>30000 then
+  begin;
+  if FindColor(X, Y, 127, 0, 338, 518, 479) then
+    begin
+      n:=0;
+      WriteLn('Summoning familiar will vanish within one minute, renewing!');
+      if GetCurrentTab = (tab_Inv) then
+      begin
+        WriteLn('Current tab is inventory tab, correct!')
+      end else
+      begin
+        MouseBox(642, 168, 671, 204, 1);                      //FTab(tab_Inv);
+        WriteLn('Changed tabs to inventory tab');
+        Wait(100 + Random(100));
+      end;
+
+      Flask := DTMFromString('mAAEAAHic42FgYHBiYmBwBmJrKLYEYhsgdgRidyD2BmIfKA3iPwPquQHEt4H4ARC/AOIPQPwJit8C8ROo3B0glj12BkgyEY3/A0lGGmJkAAAVShDj');
+      if FindDTM(Flask, X, Y, MIX1, MIY1, MIX2, MIY2) then
+      MMouse(X, Y, 5, 5);
+        case Random(6) of
+          0..3: Mouse(X, Y, 0, 0, 1);
+          4..5: begin;
+                  Mouse(X, Y, 0, 0, 0);
+                  WaitOptionMulti(['Dri', 'ink'], 150);
+                end;
+        end;
+
+      FreeDTM(Flask);
+      WriteLn('Took a sip of a summoning flask to renew points');
+      Wait(100 + Random(300));
+
+      Mousebox(690, 127, 746, 160, 0);
+      Wait(100 + Random(100));
+      WaitOptionMulti(['etai', 'ails'], 150);
+      Wait(100 + Random(100));
+        case Random(4) of
+          0..2: MouseBox(623, 376, 659, 412, 1);
+          3:    begin;
+                  MouseBox(623, 376, 659, 412, 0);
+                  WaitOptionMulti(['Ren', 'enew'], 150);
+                 end;
+        end;
+      Wait(100 + Random(100));
+    end else
+    WriteLn('Summoning familiar is still alive for more than one minute.');
+  //end else;
+  end;
+WriteLn(''+IntToStr(n)+' that is N');
+end;
+
+procedure Timed;
+begin;
+  WriteLn(''+IntToStr(n)+' that is N');
+end;
+
+
+begin
+  SetUpSRL;
+  ActivateClient;
+  Marked;
+  RenewFamiliar;
+  Timed;
+end.

@@ -1,0 +1,151 @@
+program Test;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+end;
+
+{Cheat Sheet
+
+Pos:
+
+1 = Floor
+2 = X AXEL (Inc By 64);
+3 = Y AXEL (Inc By 64);
+4 = X AXEL
+5 = Y AXEL
+
+}
+
+var
+  B: Boolean;
+
+function C_ConsoleOpen: Boolean;
+begin
+  Result := GetColor(31, 340) = clWhite;
+end;
+
+function C_OpenConsole :Boolean;
+begin
+  If C_ConsoleOpen then
+  begin
+    Result := True;
+    Exit;
+  end;
+
+  TypeSendEx('`', False);
+  Wait(500);
+  Result := WaitFunc(@C_ConsoleOpen, 10, 4000);
+end;
+
+function C_UpdatePos :Boolean;
+begin
+  If C_OpenConsole then
+  begin
+    If IsFKeyDown(12) then terminatescript;
+    If B then TypeByte(VK_PRIOR)
+      else
+    SendKeys('getcamerapos', RandomRange(10, 50));
+    TypeByte(VK_RETURN);
+    Wait(RandomRange(150, 200));
+    B := True;
+    Result := True;
+  end;
+end;
+
+function C_GetPosEx :TIntegerArray;
+var
+  Box :TBox;
+  TPA :TPointArray;
+  CPos :String;
+  I :Integer;
+
+  TSA :TStringArray;
+begin
+  If not C_UpdatePos then Exit;
+  FindColors(TPA, clWhite, 65, 296, 516, 307);
+  Box := GetTPABounds(TPA);
+  CPos := GetTextAtExWrap(Box.X1 - 2, Box.Y1 - 2, Box.X2 + 2, Box.Y2 + 2, 0, 5, 4, clWhite, 0, SmallChars);
+  CPos := Between('s: ', 'H', CPos);
+  TSA := Explode('''', CPos);
+  If Length(TSA) < 4 then Exit;
+  for I := 0 to Length(TSA) - 1 do
+    TSA[I] := Trim(TSA[I]);
+  SetLength(Result, 5);
+  for I := 1 to 4 do
+    Result[I] := StrToInt(TSA[I]);
+  DeleteValueInIntArray(Result, 0);
+
+end;
+
+function C_ConvertToGlobalPos(Position :TIntegerArray) :TPoint;
+begin
+  If Length(Position) = 4 then
+  begin
+    Result.X := Round(Position[0] * 64) + Position[2];
+    Result.Y := Round(Position[1] * 64) + Position[3];
+  end;
+end;
+
+function C_GetPos :TPoint;
+begin
+  Result := C_ConvertToGlobalPos(C_GetPosEx);
+end;
+
+function C_PointToMM(var P: TPoint) :TPoint;
+var
+  MyPos :TPoint;
+begin
+  MyPos := C_GetPos;
+  Result.X := (P.X - MyPos.X) * 4 - 2;
+  Result.X := Result.X + 628;
+  Result.Y := (MyPos.Y - P.Y) * 4 - 2;
+  Result.Y := Result.Y + 87;
+end;
+
+function C_WalkToPoint(P :TPoint) :Boolean;
+var
+  WPoint :TPoint;
+begin
+  WPoint := C_PointToMM(P);
+  If rs_OnMinimap(WPoint.X, WPoint.Y) then
+  begin
+    Mouse(WPoint.X, WPoint.Y, 0, 0, mouse_Left);
+    Wait(RandomRange(80, 100));
+    Flag;
+    while isMoving do Wait(100);
+  end;
+end;
+
+begin
+  SetUpLogin;
+  WriteLn('MyPos : ' + ToStr(C_GetPos));
+  C_WalkToPoint(Point(1000, 1000));
+end.

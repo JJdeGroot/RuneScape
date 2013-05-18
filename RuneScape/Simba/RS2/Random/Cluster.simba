@@ -1,0 +1,209 @@
+program FindTPointCluster;
+{$include srl/srl/misc/smart.simba}
+{$I SRL/SRL.Simba}
+{$I SRL/SRL/Misc/PaintSmart.Simba}
+
+const
+  Debug = True;
+  Paint = 0; // 0 = False, 1 = Draw dots, 2 = Draw circle
+  Test = False; // True to use mouse
+  UseMM = False; // True if searching MM
+
+var
+  Colors, Area: array of Integer;
+  aArr: T2DPointArray;
+  Arr: TPointArray;
+  Demo, D: TPointArray;
+  SortFrom: TPoint;
+  MaxDist, Tol: Integer;
+  FilterArr, TrimArr: Integer;
+  x, y: Integer;
+  a: Integer;
+
+Procedure Declare;
+begin
+  Colors := [8027776, 3758958, 15326682];
+  Tol := 50; // Tolerance on each color
+  MaxDist := 10; // Maximum distance between each color
+  Area := [MSX1, MSY1, MSX2, MSY2]; // x1, y1, x2, y2 to search in
+  SortFrom := Point(MSCX, MSCY); // Point to sort each TPA from
+  FilterArr := -1; // Max distance from SortFrom (-1 to ignore)
+  TrimArr := 500; // Max TPA size (-1 to ignore)
+end;
+
+(*
+FindTPointCluster
+~~~~~~~
+
+.. code-block:: pascal
+
+    function FindTPointCluster(Colors: TIntegerArray; Tol: Integer; SortFrom: TPoint; Filter, Trim, MaxDist: Integer; Strict: Boolean; x1, y1, x2, y2: Integer): TPointArray;
+
+Results a TPointArray which holds "clusters" of the the first specified color in
+each TPoint. It can search for an unlimited number of colors in x1, y1, x2, y2.
+    * Colors: The colors to be found and grouped depending on proximity. Enter the
+      main color first in the array.
+    * Tol: The tolerance on each color.
+    * SortFrom: The point to sort each TPoint from.
+    * Filter: The maximum distance between SortFrom and each TPoint. -1 to not use.
+    * Trim: The maximum length of each TPointArray. -1 to not use.
+    * MaxDist: The maximum distance between each color can be in each cluster.
+    * Strict: True to exit the function if not all of the specified colors are found.
+
+.. note::
+
+    by Runaway
+
+Example:
+
+.. code-block:: pascal
+
+  Colors := [16514558, 5062187, 4664874];
+  Arr := FindTPointCluster(Colors, 20, Point(MMCX, MMCY), -1, 200, 30, True, MMX1, MMY1, MMX2, MMY2);
+  SplitTPAWrap(Arr, 30, aArr);
+  for i := 0 to High(aArr) do
+  begin
+    x := MiddleTPA(aArr[i]).x;
+    y := MiddleTPA(aArr[i]).y;
+    if (not rs_OnMinimap(x, y)) then
+      Continue;
+    Mouse(x, y, 3, 3, mouse_left);
+    if DidClick(True, RandomRange(750, 1250)) then
+      Break;
+  end;
+*)
+function FindTPointCluster(Colors: TIntegerArray; Tol: Integer; SortFrom: TPoint; Filter, Trim, MaxDist: Integer; Strict: Boolean; x1, y1, x2, y2: Integer): TPointArray;
+var
+  TPA: TPointArray;
+  aPoints: array of TPointArray;
+  hPoints, hColors: Integer;
+  Error, Len, Match: Integer;
+  t, r, i, ii: Integer;
+begin
+  MarkTime(t);
+  SetLength(aPoints, Length(Colors));
+  hColors := High(Colors);
+  r := 0;
+  Error := 0;
+  for i := 0 to hColors do
+  begin
+    if Debug then Writeln('Searching: color '+IntToStr(i + 1)+' of '+IntToStr(hColors + 1)+'...');
+    if (FindColorsTolerance(TPA, Colors[i], x1, y1, x2, y2, Tol)) then
+    begin
+      SortTPAFrom(TPA, SortFrom);
+      if Debug then Writeln('Found: '+IntToStr(Length(TPA))+' point(s) of color '+IntToStr(Colors[i]));
+      if (Filter <> -1) then
+        FilterPointsDist(TPA, 0, Filter, SortFrom.x, SortFrom.y);
+      if (Trim <> -1) and (Length(TPA) > Trim) then
+        SetLength(TPA, Trim);
+      if Debug then Writeln('Using: first '+IntToStr(Length(TPA))+' point(s) of color '+IntToStr(Colors[i]));
+      aPoints[i - Error] := TPA;
+    end else
+    begin
+      if Strict then
+      begin
+        Writeln('Error: not enough colors found!');
+        Exit;
+      end;
+      if Debug then Writeln('Error: color '+IntToStr(i + 1)+' of '+IntToStr(hColors + 1)+' not found!');
+      Len := Length(aPoints) - 1;
+      SetLength(aPoints, Len);
+      Inc(Error);
+    end;
+    if (Error >= hColors) then
+    begin
+      Writeln('Error: not enough colors found!');
+      Exit;
+    end;
+  end;
+  if Debug then Writeln('Searching... done');
+  if Debug then Writeln('Sorting...');
+  hPoints := High(aPoints);
+  for i := 0 to High(aPoints[0]) do
+  begin
+    Match := 0;
+    for ii := 1 to hPoints do
+    begin
+      if NearbyPointInArray(aPoints[0][i], MaxDist, aPoints[ii]) then
+      begin
+        Inc(Match);
+        if (Match >= hPoints) then
+        begin
+          SetLength(Result, r + 1);
+          Result[r] := aPoints[0][i];
+          Inc(r);
+        end;
+      end else
+        Break;
+    end;
+  end;
+  SortTPAFrom(Result, SortFrom);
+  if Debug then Writeln('Sorting... done');
+  Writeln('Took: '+IntToStr(TimeFromMark(t))+' ms, found '+IntToStr(Length(Result))+' point(s)');
+end;
+
+begin
+  Smart_Server := 12;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  Declare;
+  if Debug then ClearDebug;
+  Arr := FindTPointCluster(Colors, Tol, SortFrom, FilterArr, TrimArr, MaxDist, True, Area[0], Area[1], Area[2], Area[3]);
+  SplitTPAWrap(Arr, MaxDist, aArr);
+  if Debug then
+  begin
+    for a := 0 to High(aArr) do
+      Writeln('Array['+IntToStr(a)+']: '+ToStr(aArr[a]));
+  end;
+  if (Paint <> 0) then
+  begin
+    SMART_ClearCanvas;
+    if (Paint = 1) or (Paint = 2) then
+    begin
+      for a := 0 to High(aArr) do
+      begin
+        if (Paint = 1) then
+          SMART_DrawDot(False, MiddleTPA(aArr[a]), clred);
+        if (Paint = 2) then
+        begin
+          if (a > 5) then Break;
+          SMART_DrawCircle(False, MiddleTPA(aArr[a]), MaxDist, False, clred);
+        end;
+      end;
+    end else
+    begin
+      for a := 0 to High(Colors) do
+      begin
+        FindColorsTolerance(D, Colors[a], Area[0], Area[1], Area[2], Area[3], Tol);
+        Demo := Demo + D;
+      end;
+      for a := 0 to High(Demo) do
+        SMART_DrawDot(False, Demo[a], clred);
+    end;
+  end;
+  if Test then
+  begin
+    for a := 0 to High(aArr) do
+    begin
+      x := MiddleTPA(aArr[a]).x;
+      y := MiddleTPA(aArr[a]).y;
+      if UseMM then
+      begin
+        if (not rs_OnMinimap(x, y)) then
+          Continue;
+      end;
+      Mouse(x, y, 3, 3, mouse_left);
+      if UseMM then
+      begin
+        if DidClick(True, RandomRange(750, 1250)) then
+          Break;
+      end else
+      begin
+        if DidClick(False, RandomRange(750, 1250)) then
+          Break;
+      end;
+    end;
+  end;
+end.

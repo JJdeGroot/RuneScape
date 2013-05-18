@@ -1,0 +1,209 @@
+{*
+SRL AIO Fighter
+~~~~~~~~~
+This script is the result of a project where multiple SRL Members worked on.
+Project source code can be found at: http://code.google.com/p/srl-aio-fighter/
+*}
+program SRL_AIO_Fighter;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i SRL/srl/misc/smartgraphics.simba}
+
+var
+  DevMode: boolean;
+  KeyCodes: TStringArray;
+
+(*
+Log
+~~~~~~~~~
+Description: Adds details to a debug log
+             This is a modified version of AddToSRLLog
+By: Markus /  J J
+Example: Log('DrinkPotion --> Succesfully sipped a dose')
+*)
+procedure Log(Details: String);
+var
+  FileName, SavePath: string;
+  FileNum: Integer;
+
+begin
+  SavePath := SRL_SavePath + 'AIO Fighter/';
+  if not DirectoryExists(SavePath) then
+    CreateDirectory(SavePath);
+
+  FileName := 'AIO Fighter log ('+SRL_StartTime+').txt';
+  FileName := Replace(FileName, '/', '-');
+  FileName := Replace(FileName, ':', ' ');
+
+  if not(FileExists(SavePath + FileName)) then
+    FileNum := CreateFile(SavePath + FileName)
+  else
+    FileNum := AppendFile(SavePath + FileName);
+
+  if FileNum >= 0 then
+    WriteFileString(FileNum, '['+MsToTime(GetTimeRunning(), TIME_BARE)+']: ' + Details + chr(13) + chr(10));
+
+  CloseFile(FileNum);
+end;
+
+(*
+GetTypedMessage
+~~~~~~~~~
+Description: Returns what the user has typed, removes the username.
+             This is a modified version of GetChatBoxText
+By: ZephyrsFury /  J J
+Example: writeln(GetTypedMessage);
+*)
+function GetTypedMessage: String;
+var
+  Position: Integer;
+  cArr: TPointArray;
+  B: TBox;
+  s: String;
+
+begin
+  // Getting the black text used for Action Bar
+  if FindColorsTolerance(cArr, clBlack, MCX1, 459, MCX2, 472, 5) then
+  begin
+    B := GetTPABounds(cArr);
+    s := Trim(GetTextAtExWrap(b.x1-1, 459, B.x2+1, 472, 0, 5, 2, clBlack, 5, SmallChars));
+
+    // Filtering out username of the player
+    Position := Pos(' ', s);
+    if Position > 0 then
+      Result := Copy(s, Position, Length(s));
+
+    Log('GetTypedMessage --> Black text: ' + Result);
+  end;
+
+  // Getting the blue text that the user has typed
+  if FindColorsTolerance(cArr, clBlue, MCX1, 459, MCX2, 472, 5) then
+  begin
+    B := GetTPABounds(cArr);
+    s := Trim(GetTextAtExWrap(b.x1-1, 459, B.x2+1, 472, 0, 5, 2, clBlue, 5, SmallChars));
+    Log('GetTypedMessage --> Blue text: ' + s);
+    Result := Result + s;
+  end;
+
+  Log('GetTypedMessage --> Full text: ' + Result);
+end;
+
+// Reads some texts
+procedure GetAllTexts(X1, Y1, X2, Y2, Color, Tolerance: Integer);
+var
+  i: Integer;
+  Fonts: TStringArray;
+
+begin
+  Fonts := ['CharsNPC', 'SmallChars', 'StatChars', 'UpChars', 'FriendChars', 'LoginChars'];
+  for i:=0 to high(Fonts) do
+    writeln(GetTextAtExWrap(X1, Y1, X2, Y2, 0, 0, 2, Color, Tolerance, Fonts[i]));
+end;
+
+(*
+GetActionBar
+~~~~~~~~~
+Description: Will attempt to open the action bar
+             When somebody presses enter, you need to toggle the action bar
+             to make the action bar work again.
+             When somebody has typed something himself, you need to send the
+             message to make the action bar work again.
+             And ofcourse, if nothing was typed then it still needs to be
+             checked if the action bar is open or not.
+By: J J
+Example: BoundedKeys := GetKeyBinds;
+*)
+function GetActionBar: boolean;
+var
+  s: String;
+
+begin
+  // Checking if the user typed something
+  s := GetTypedMessage;
+  if Pos('[Press Enter to Chat]', s) = 0 then
+    if Length(s) > 3 then
+    begin
+      Log('GetActionBar --> Sending text that the user typed');
+      TypeByte(VK_ENTER);
+      Wait(RandomRange(500, 1000));
+      if not IsActionBarOpen then
+      begin
+        Log('GetActionBar --> Opening action bar, it was closed');
+        ToggleActionBar(True);
+      end;
+    end else
+    begin
+      Log('GetActionBar --> User pressed enter, toggling action bar to reset');
+      if IsActionBarOpen then
+      begin
+        ToggleActionBar(False);
+        Wait(RandomRange(500, 1000));
+      end;
+      ToggleActionBar(True);
+    end;
+
+  Result := Pos('[Press Enter to Chat]', GetTypedMessage) > 0;
+  Log('GetActionBar --> Did we manage to get the Action Bar working? ' + BoolToStr(Result));
+end;
+
+(*
+GetKeyBinds
+~~~~~~~~~
+Description: Returns the keys that have been bound to each slot, left to right.
+By: J J
+Example: BoundedKeys := GetKeyBinds;
+*)
+function GetKeyBinds: Array[0..11] of String;
+var
+  i: Integer;
+
+begin
+  GetActionBar;
+  for i:=0 to high(Result) do
+  begin
+    if DevMode then
+      SMART_DrawBoxEx(False, False, IntToBox(48+36*i, 315, 57+36*i, 324), clGreen);
+
+    Result[i] := GetTextAtExWrap(48+36*i, 315, 57+36*i, 324, 0, 0, 2, 3111603, 10, 'UpChars');
+    Log('GetKeyBinds --> Slot #' + IntToStr(i) + ' : ' + Result[i]);
+  end;
+end;
+
+(*
+UseAbility
+~~~~~~~~~
+Description: Attempts to use the ability that is in the chosen slot
+By: J J
+Example: UseAbility(6);
+*)
+function UseAbility(Slot: Integer): boolean;
+begin
+  if GetActionBar then
+  try
+    SendKeys(KeyCodes[Slot], 200, 100);
+  except
+  begin
+    Log('UseAbility --> Failed send the key that belonged to slot #' + IntToStr(Slot));
+    Result := True;
+  end;
+  finally
+    Result := not(Result);
+  end;
+  Log('UseAbility --> Did we manage to use the ability in slot #' + IntToStr(Slot) + '? ' + BoolToStr(Result));
+end;
+
+begin
+  SetupSRL;
+  //ClickNorth(SRL_ANGLE_HIGH);
+
+  writeln('Debug file located at: "' + SRL_SavePath + 'AIO Fighter/"');
+  DevMode := True;
+  SMART_ClearCanvas;
+  //GetKeyBinds;
+  //GetAllTexts(MCX1, MCY1, MCX2, MCY2, clBlack, 10);
+  //UseAbility(1);
+  //GetTypedMessage;
+  KeyCodes := GetKeyBinds;
+  UseAbility(3);
+  //writeln(GetTypedMessage);
+end.

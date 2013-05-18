@@ -1,0 +1,1073 @@
+program JJsGOP;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+{$i SRL/SRL/misc/paintsmart.simba}
+{$i srl/GOP_Proggy.simba}
+
+var
+  JoinedTeam, DesiredWizard: String;
+  PaintColor: TColor;
+  ActionBox: TBox;
+  GamesPlayed, Tokens, TokensGained, WaitTime: Integer;
+  ActionboxTPA: TPointArray;
+
+procedure Setup;
+begin
+  ClearDebug;
+  Smart_Server := 61;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  ActionBox := IntToBox(289, 428, 512, 442);
+  TPAFromBoxWrap(ActionBox, ActionBoxTPA);
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+  LoginPlayerToLob;
+  OpenWorldScreen;
+  SelectWorld(61);
+  LoginPlayer;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+end;
+
+procedure Antiban;
+var
+  K: Integer;
+
+begin
+  K := Random(5000);
+  if K <= 90 then
+    begin
+      WriteLn('Antiban active');
+      SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+      case K of
+        0..9:   begin
+                  SMART_DrawText(290, 429, UpChars, 'antiban = check rc xp', clWhite);
+                  HoverSkill('runecrafting', False);
+                end;
+        10..14: begin
+                  SMART_DrawText(290, 429, UpChars, 'antiban = check random skill', clWhite);
+                  HoverSkill('random', False);
+                end;
+        15..21: begin
+                  SMART_DrawText(290, 429, UpChars, 'antiban = random click', clWhite);
+                  RandomRClick;
+                end;
+        22..31: begin
+                  SMART_DrawText(290, 429, UpChars, 'antiban = pick up mouse', clWhite);
+                  PickUpMouse;
+                end;
+        32..41: begin
+                  SMART_DrawText(290, 429, UpChars, 'antiban = random movement', clWhite);
+                  RandomMovement;
+                end;
+        42..55: begin
+                  SMART_DrawText(290, 429, UpChars, 'antiban = bored human', clWhite);
+                  BoredHuman;
+                end;
+        56..60: begin
+                  SMART_DrawText(290, 429, UpChars, 'antiban = examine item', clWhite);
+                  ExamineInv;
+                end;
+        61..75: begin
+                  SMART_DrawText(290, 429, UpChars, 'antiban = sleep & mmouse', clWhite);
+                  SleepAndMoveMouse(1000 + Random(5000));
+                end;
+        76..90: begin
+                  SMART_DrawText(290, 429, UpChars, 'antiban = afk for a while', clWhite);
+                  case Random(7) of
+                    0: Wait(1000 + Random(10000));
+                    1: Wait(2000 + Random(4000));
+                    2: Wait(3000 + Random(1500));
+                    3: Wait(7500 + Random(2500));
+                    4: Wait(5000 + Random(5000));
+                    5: Wait(5000 + Random(20000));
+                    6: Wait(20000 + Random(5000));
+                  end;
+                end;
+      end;
+      Wait(500 + Random(500));
+      Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+      WriteLn('Antiban done');
+    end;
+end;
+
+procedure TimeUpdate;
+var
+  TimeBox: TBox;
+  TimeBoxTPA: TPointArray;
+
+begin
+  TimeBox := IntToBox(289, 414, 512, 428);
+  TPAFromBoxWrap(Timebox, TimeboxTPA);
+  SMART_DrawDotsEx(False, TimeboxTPA, RGBtoColor(194, 178, 146));
+  SMART_DrawText(290, 415, UpChars, ''+TimeRunning+'', clWhite);
+end;
+
+procedure GamesUpdate;
+var
+  GamesBox: TBox;
+  GamesBoxTPA: TPointArray;
+
+begin
+  GamesBox := IntToBox(289, 443, 350, 455);
+  TPAFromBoxWrap(GamesBox, GamesBoxTPA);
+  SMART_DrawDotsEx(False, GamesBoxTPA, RGBtoColor(194, 178, 146));
+  SMART_DrawText(290, 443, UpChars, ''+IntToStr(GamesPlayed)+'', clWhite);
+end;
+
+procedure TokensUpdate;
+var
+  i: Integer;
+  TokensBox: TBox;
+  TokensBoxTPA: TPointArray;
+  TokensGainedString: String;
+  NumbersCheck: Array of String;
+
+begin
+  TokensGainedString := GetChatBoxText(8, clBlack);
+  NumbersCheck := ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+
+  for i:=0 to 10 do
+    begin
+      if Pos(NumbersCheck[i], TokensGainedString) > 0 then
+        begin
+          TokensGained := StrToInt(GetNumbers(TokensGainedString));
+          Tokens := (Tokens + TokensGained);
+          TokensBox := IntToBox(289, 456, 350, 470);
+          TPAFromBoxWrap(TokensBox, TokensBoxTPA);
+          SMART_DrawDotsEx(False, TokensBoxTPA, RGBtoColor(194, 178, 146));
+          SMART_DrawText(290, 457, UpChars, ''+IntToStr(Tokens)+'', clWhite);
+        end;
+    end;
+end;
+
+procedure ProggyUpdate;
+begin
+  TimeUpdate;
+  GamesUpdate;
+  TokensUpdate;
+end;
+
+function CheckGOPLobby: Boolean;
+var
+  MyPos: TPoint;
+  GopLobbyBox: TBox;
+
+begin
+  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+  SMART_DrawText(290, 429, UpChars, 'check if at gop lobby', clWhite);
+  GopLobbyBox := IntToBox(39803, 3015, 39863, 3079);
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_7']);
+  MyPos := SPS_GetMyPos;
+  WriteLn('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  if PointInBox(MyPos, GopLobbyBox) then
+    begin
+      ColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(0.23, 0.88);
+      WriteLn('Blue colors: '+IntToStr(CountColorTolerance(7301651, MMX1, MMY1, MMX2, MMY2, 10))+'');
+      if CountColorTolerance(7301651, MMX1, MMY1, MMX2, MMY2, 10) > 2000 then
+      begin
+        WriteLn('We are at the Gop lobby');
+        Result:=True;
+      end else
+      begin
+        WriteLn('We are NOT at the Gop lobby');
+      end;
+    end;
+end;
+
+function CheckIfJoined: String;
+var
+   Pts: TPointArray;
+   Bound: TBox;
+   X, Y, i: Integer;
+   JoinedTexts, FullTexts, KickedTexts: Array of String;
+
+begin
+  ColorToleranceSpeed(1);
+  JoinedTexts := ['put', 'part', 'joined'];
+  FullTexts := ['afraid', 'enough', 'glad'];
+  KickedTexts := ['left', 'new game', 'minutes'];
+  FindColorsTolerance(Pts, 0, 140, 380, 500, 450, 0);
+  Bound := GetTPABounds(Pts);
+  for i:=0 to 2 do
+    begin
+      if FindTextEx(X, Y, [JoinedTexts[i]], [UpChars, NPCChars], Bound.x1 - 5, Bound.y1 - 5, Bound.x2 + 5, Bound.y2 + 5) then
+        begin
+          WriteLn('We have joined a team');
+          Result:='joined';
+          Wait(500 + Random(1000));
+          Exit;
+        end;
+      if FindTextEx(X, Y, [FullTexts[i]], [UpChars, NPCChars], Bound.x1 - 5, Bound.y1 - 5, Bound.x2 + 5, Bound.y2 + 5) then
+        begin
+          WriteLn('The teams are full');
+          Result:='full';
+          Wait(500 + Random(1000));
+          Exit;
+        end;
+      if FindTextEx(X, Y, [KickedTexts[i]], [UpChars, NPCChars], Bound.x1 - 5, Bound.y1 - 5, Bound.x2 + 5, Bound.y2 + 5) then
+        begin
+          WriteLn('We have been kicked');
+          Result:='kicked';
+          Wait(500 + Random(1000));
+          Exit;
+        end;
+    end;
+end;
+
+function JoinWizard: Boolean;
+var
+  X, Y, i, Q: integer;
+  WizCol: TPointArray;
+  WizColSplit: T2DPointArray;
+  P: TPoint;
+  Hue, Sat: Array of Extended;
+  Col, Tol: Array of Integer;
+  NotUpText, Uptext: Array[0..2] of TStringArray;
+  JoinConfirm: Boolean;
+
+begin
+  FindNormalRandoms;
+  case DesiredWizard of
+    'Wizards':        Q := 0;
+    'Wizard Acantha': Q := 1;
+    'Wizard Vief':    Q := 2;
+  end;
+
+  Hue := [0.08, 0.34, 0.42];
+  Sat := [0.15, 0.41, 3.32];
+  Col := [6837308, 4680593, 8834548];
+  Tol := [18, 17, 4];
+  NotUpText[0] := ['ief', 'orvak', 'cantha', 'lriss'];
+  UpText[0] :=    ['izard', 'Wizard'];
+  NotUpText[1] := ['ief', 'orvak', 'lriss'];
+  UpText[1] :=    ['cant', 'Acantha'];
+  NotUpText[2] := ['cantha', 'orvak', 'lriss']
+  UpText[2] :=    ['ief', 'Vief'];
+
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(Hue[Q], Sat[Q]);
+  if FindColorsSpiralTolerance(X, Y, WizCol, Col[Q], MSX1, MSY1, MSX2, MSY2, Tol[Q]) then
+    begin
+      WizColSplit := SplitTPAEx(WizCol, 5, 5);
+      SortATPASize(WizColSplit, True);
+      for i:=0 to high(WizColSplit) do
+        begin
+          P := MiddleTPA(WizColSplit[i]);
+          MMouse(P.X, P.Y, RandomRange(-2, 2), RandomRange(-2, 2));
+          if not(WaitUpTextMulti(NotUpText[Q], 500)) then
+            if WaitUpTextMulti(UpText[Q], 500) then
+              begin
+                ClickMouse2(0);
+                if WaitOptionMulti(['oin', 'game'], 500) then
+                  begin
+                    FFlag(0);
+                    repeat
+                      Wait(100 + Random(100));
+                    until not(IsMoving);
+                    Wait(500 + Random(500));
+
+                    case DesiredWizard of
+                      'Wizard Acantha': JoinConfirm := True;
+                      'Wizard Vief':    JoinConfirm := True;
+                    end;
+
+                    if JoinConfirm then
+                      begin
+                        case Random(5) of
+                            0..2: TypeSendEx('1', False);
+                            3..4: Mousebox(207, 398, 311, 415, 1);
+                          end;
+                      end;
+
+                    Result := True;
+                  end;
+              end;
+        end;
+    end;
+end;
+
+procedure GetWaitTime;
+var
+  i: Integer;
+  Bound: TBox;
+  Pts: TPointArray;
+  WaitTimeString: String;
+  NumbersCheck: Array of String;
+
+begin
+  ColorToleranceSpeed(1);
+  FindColorsTolerance(Pts, 0, 140, 380, 500, 450, 0);
+  Bound := GetTPABounds(Pts);
+  WaitTimeString := GetTextAtExWrap(Bound.x1 - 5, Bound.y1 - 5, Bound.x2 + 5, Bound.y2 + 5, 0, 0, 2, 0, 0, UpChars);
+  WriteLn(WaitTimeString);
+
+  NumbersCheck := ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+  for i:=0 to 9 do
+    begin
+      if Pos(NumbersCheck[i], WaitTimeString) > 0 then
+        begin
+          WaitTime := StrToInt(GetNumbers(WaitTimeString));
+          SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+          SMART_DrawText(290, 429, UpChars, 'kicked, waiting '+IntToStr(WaitTime)+' minutes', clWhite);
+        end;
+    end;
+end;
+
+procedure KickedFailsafe;
+var
+  Options: Array of String;
+  i, u: Integer;
+
+begin
+  Options := ['joined', 'full', 'kicked'];
+  for i:=0 to 2 do
+    if (CheckIfJoined = Options[i]) then
+      begin
+        case i of
+          0: begin
+               WriteLn('We haven`t been kicked! Succesful mainloop.');
+               Wait(500 + Random(1000));
+             end;
+          1: begin
+               WriteLn('We haven`t been kicked! Succesful mainloop.');
+               Wait(500 + Random(1000));
+             end;
+          2: begin
+               WriteLn('We have been kicked, waiting until we can start again.');
+               Wait(500 + Random(1000));
+               SPS_Setup(RUNESCAPE_SURFACE, ['99_7']);
+               GetWaitTime;
+               U := 0;
+               MarkTime(U);
+                 repeat
+                   Wait(250 + Random(500));
+                   Antiban;
+                   case Random(50) of
+                     0: FindNormalRandoms;
+                     1: SPS_BlindWalk(Point(RandomRange(39819, 39851), RandomRange(3015, 3035)));
+                     2: case Random(10) of
+                          0: ClickNorth(0);
+                        end;
+                   end;
+                   Antiban;
+                   Wait(250 + Random(500));
+                 until(TimeFromMark(U) >= (WaitTime*60000));
+                 WriteLn('Waiting time over');
+                 JoinWizard;
+             end;
+        end;
+      end;
+end;
+
+procedure JoinGame;
+var
+  Q, A: Integer;
+  WizardLocs: TPointArray;
+  MyPos: TPoint;
+
+begin
+  FindNormalRandoms;
+
+  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+  SMART_DrawText(290, 429, UpChars, 'joining team', clWhite);
+
+  case DesiredWizard of
+    'Wizards':        Q := RandomRange(0, 1);
+    'Wizard Acantha': Q := 2;
+    'Wizard Vief':    Q := 3;
+  end;
+
+  WizardLocs := [Point(RandomRange(39811, 39823), RandomRange(3051, 3059)),
+                 Point(RandomRange(39847, 39863), RandomRange(3043, 3055)),
+                 Point(RandomRange(39807, 39823), RandomRange(3027, 3043)),
+                 Point(RandomRange(39843, 39855), RandomRange(3027, 3035))];
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_7']);
+  MyPos := SPS_GetMyPos;
+  WriteLn('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  SPS_BlindWalk(WizardLocs[Q]);
+  Wait(1000 + Random(1000));
+
+  repeat
+    Inc(A);
+    JoinWizard;
+    Wait(5000 + Random(5000));
+  until(CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 250) or
+       (A > 9) or (CheckIfJoined = 'joined') or (CheckIfJoined = 'kicked');
+
+  if CheckIfJoined = 'kicked' then
+    begin
+      WriteLn('We have been kicked..');
+      KickedFailsafe;
+    end;
+end;
+
+function EnterPortalOutside: Boolean;
+var
+  X, Y, i: integer;
+  PortOutCol: TPointArray;
+  PortOutSplit: T2DPointArray;
+  P: TPoint;
+
+begin
+  // This will click on the portal outside \\
+  FindNormalRandoms;
+  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+  SMART_DrawText(290, 429, UpChars, 'going through portal', clWhite);
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.45, 1.20);
+    if FindColorsSpiralTolerance(X, Y, PortOutCol, 12080783, MSX1, MSY1, MSX2, MSY2, 26) then
+      begin
+        SortTPAFrom(PortOutCol, Point(MSCX, MSCY));
+        PortOutSplit := SplitTPAEx(PortOutCol, 50, 50);
+        SortATPASize(PortOutSplit, True);
+        for i:=0 to High(PortOutSplit) do
+          begin
+            P := MiddleTPA(PortOutSplit[i]);
+            MMouse(P.X, P.Y, 5, 5);
+              if WaitUpTextMulti(['ortal', 'Portal'], 250) then
+                begin
+                  ClickMouse2(1);
+                  Wait(6000 + Random(2000));
+                  Result:=True;
+               end;
+          end;
+      end;
+end;
+
+function DefineTeam: String;
+var
+  HatCol, HatTol, ColorCount: Array of Integer;
+  HatHue, HatSat: Array of Extended;
+  PossibleHats, HatUptexts: Array of String;
+  i: Integer;
+  HatAreaBox, Teambox: TBox;
+  TeamboxTPA: TPointArray;
+
+begin;
+  HatAreaBox := IntToBox(240, 144, 266, 162);
+  Teambox := IntToBox(180, 401, 280, 415);
+  HatCol := [3975861, 3555132];
+  HatTol := [15, 13];
+  HatHue := [0.02, 1.07];
+  HatSat := [0.84, 0.51];
+  PossibleHats := ['Yellow', 'Green'];
+  ColorCount := [100, 100];
+
+  for i := 0 to 1 do
+  begin
+    ColorToleranceSpeed(2);
+    SetColorspeed2Modifiers(HatHue[i], HatSat[i]);
+    WriteLn('Counted colors: '+IntToStr(CountColorTolerance(HatCol[i], 242, 144, 268, 162, HatTol[i]))+'');
+    if CountColorTolerance(HatCol[i], 242, 144, 268, 162, HatTol[i]) > ColorCount[i] then
+      begin
+        Result := PossibleHats[i];
+        WriteLn('We are part of the '+PossibleHats[i]+' team');
+        case PossibleHats[i] of
+          'Yellow': begin;
+                      JoinedTeam := 'Yellow';
+                      PaintColor := clYellow;
+                      TPAFromBoxWrap(Teambox, TeamboxTPA);
+                      SMART_DrawDotsEx(False, TeamboxTPA, RGBtoColor(194, 178, 146));
+                      SMART_DrawText(181, 400, UpCharsEx, 'Yellow team', PaintColor);
+                      Exit;
+                    end;
+          'Green': begin;
+                     JoinedTeam := 'Green';
+                     PaintColor := clGreen;
+                     TPAFromBoxWrap(Teambox, TeamboxTPA);
+                     SMART_DrawDotsEx(False, TeamboxTPA, RGBtoColor(194, 178, 146));
+                     SMART_DrawText(181, 400, UpCharsEx, 'Green team', PaintColor);
+                     Exit;
+                   end;
+        end;
+      end;
+  end;
+
+  HatUptexts := ['Yellow', 'Green'];
+  if not(GameTab(Tab_Equip)) then
+    begin
+      FTab(Tab_Equip);
+      Wait(250 + Random(250));
+    end;
+  MouseBox(570, 290, 600, 320, 2);
+
+  for i := 0 to 1 do
+    begin;
+      if WaitUpTextMulti([HatUptexts[i]], 500) then
+        begin
+          Result := HatUptexts[i];
+          WriteLn('We are part of the '+HatUptexts[i]+' team');
+          case i of
+            0: begin;
+                 JoinedTeam := 'Yellow';
+                 PaintColor := clYellow;
+                 SMART_DrawDotsEx(False, TeamboxTPA, RGBtoColor(194, 178, 146));
+                 SMART_DrawText(181, 400, UpCharsEx, 'Yellow team', PaintColor);
+                 Exit;
+               end;
+            1: begin;
+                 JoinedTeam := 'Green';
+                 PaintColor := clGreen;
+                 SMART_DrawText(181, 400, UpCharsEx, 'Green team', PaintColor);
+                 Exit;
+               end;
+          end;
+        end;
+    end;
+end;
+
+function WaitForPortal: Boolean;
+var
+  t: Integer;
+  MyPos: TPoint;
+
+begin
+  t:=0;
+  Marktime(t);
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_7']);
+  MyPos := SPS_GetMyPos;
+  FindNormalRandoms;
+  WriteLn('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+
+  if (CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 400) then
+    begin
+      SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+      SMART_DrawText(290, 429, UpChars, 'defining team', clWhite);
+      WriteLn('We have joined a game. Time to wait until the portal opens');
+      WriteLn('It`s time to define which team we joined...');
+      DefineTeam;
+      SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+      SMART_DrawText(290, 429, UpChars, 'walking to portal', clWhite);
+      SPS_BlindWalk(Point(RandomRange(39834, 39842), RandomRange(3010, 3020))); // Portal to enter
+      ProggyUpdate;
+      SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+      SMART_DrawText(290, 429, UpChars, 'waiting for portal', clWhite);
+        repeat
+          Wait(250 + Random(500));
+          Antiban;
+          case Random(250) of
+            0: FindNormalRandoms;
+            1: SPS_BlindWalk(Point(RandomRange(39819, 39851), RandomRange(3015, 3035)));
+            2: ClickNorth(0);
+          end;
+          Antiban;
+          Wait(250 + Random(500));
+        until(CountColorTolerance(10798276, 173, 279, 352, 292, 1) < 100) or
+             (CountColorTolerance(204, 208, 208, 324, 220, 1) > 250) or (TimeFromMark(t) > 300000);
+      if (TimeFromMark(t) > 300000) then
+        begin
+          WriteLn('We have been waiting for over 5 minutes and the portal hasn`t opened yet...')
+        end else
+          Result := True;
+    end else
+      WriteLn('Something has gone wrong. Not able to detect the "Waiting" text');
+end;
+
+function FindTheAirAltar: Boolean;
+var
+  MyPos: TPoint;
+  AroundAirAltar: TBox;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_1']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundAirAltar := IntToBox(39843, 623, 39855, 635);
+  if not PointInBox(MyPos, AroundAirAltar) then
+    SPS_BlindWalk(Point(RandomRange(39843, 39855), RandomRange(623, 635))) else
+      Result:= True;
+end;
+
+function FindTheMindAltar: Boolean;
+var
+  MyPos: TPoint;
+  AroundMindAltar: TBox;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_2']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundMindAltar := IntToBox(39847, 1023, 39871, 1043);
+  if not PointInBox(MyPos, AroundMindAltar) then
+    SPS_BlindWalk(Point(RandomRange(39847, 39871), RandomRange(1023, 1043))) else
+      Result:= True;
+end;
+
+function FindTheWaterAltar: Boolean;
+var
+  MyPos: TPoint;
+  AroundWaterAltar: TBox;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_3']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundWaterAltar := IntToBox(39823, 1439, 39839, 1451);
+  if not PointInBox(MyPos, AroundWaterAltar) then
+    SPS_BlindWalk(Point(RandomRange(39823, 39839), RandomRange(1439, 1451))) else
+      Result:= True;
+end;
+
+function FindTheEarthAltar: Boolean;
+var
+  MyPos: TPoint;
+  AroundEarthAltar: TBox;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_4']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundEarthAltar := IntToBox(39827, 1815, 39843, 1831);
+  if not PointInBox(MyPos, AroundEarthAltar) then
+    SPS_BlindWalk(Point(RandomRange(39827, 39843), RandomRange(1815, 1831))) else
+      Result:= True;
+end;
+
+function FindTheFireAltar: Boolean;
+var
+  MyPos: TPoint;
+  AroundFireAltar: TBox;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_5']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundFireAltar := IntToBox(39835, 2239, 39851, 2255);
+  if not PointInBox(MyPos, AroundFireAltar) then
+    SPS_BlindWalk(Point(RandomRange(39835, 39851), RandomRange(2239, 2255))) else
+      Result:= True;
+end;
+
+function FindTheBodyAltar: Boolean;
+var
+  MyPos: TPoint;
+  AroundBodyAltar: TBox;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_6']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundBodyAltar := IntToBox(39835, 2651, 39851, 2667);
+  if not PointInBox(MyPos, AroundBodyAltar) then
+    SPS_BlindWalk(Point(RandomRange(39835, 39851), RandomRange(2651, 2667))) else
+      Result:= True;
+end;
+
+function DefineArea:String;
+var
+  AltarMMCol, AltarMMTol, ColorCount: Array of Integer;
+  AltarMMHue, AltarMMSat: Array of Extended;
+  PossibleAltars: Array of String;
+  i: Integer;
+
+begin;
+  AltarMMCol := [6274014, 1922629, 3036009, 10194822, 6776920];
+  AltarMMTol := [15, 12, 15, 5, 18];
+  AltarMMHue := [0.07, 0.71, 0.17, 2.70, 2.79];
+  AltarMMSat := [2.64, 1.53, 1.25, 2.72, 0.17];
+  PossibleAltars := ['fire', 'air', 'earth', 'water', 'body'];
+  ColorCount := [2000, 5000, 10000, 5000, 5000];
+
+  for i := 0 to 4 do
+  begin
+    ColorToleranceSpeed(2);
+    SetColorspeed2Modifiers(AltarMMHue[i], AltarMMSat[i]);
+    if CountColorTolerance(AltarMMCol[i], MMX1, MMY1, MMX2, MMY2, AltarMMTol[i]) > ColorCount[i] then
+      begin
+        ColorToleranceSpeed(1);
+        WriteLn('Define area is '+PossibleAltars[i]+'');
+        Result:=PossibleAltars[i];
+        Exit;
+      end;
+  end;
+  if (CountColorTolerance(7301908, MMX1, MMY1, MMX2, MMY2, 31) < 500) then
+    begin
+      WriteLn('Mind altar');
+      Result:='mind';
+    end;
+end;
+
+function WalkToAltar: Boolean;
+begin
+  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+  SMART_DrawText(290, 429, UpChars, 'walking to the altar', clWhite);
+  case DefineArea of
+    'fire':  if FindTheFireAltar then Result := True;
+    'earth': if FindTheEarthAltar then Result := True;
+    'air':   if FindTheAirAltar then Result := True;
+    'water': if FindTheWaterAltar then Result := True;
+    'body':  if FindTheBodyAltar then Result := True;
+    'mind':  if FindTheMindAltar then Result := True;
+  end;
+end;
+
+function AttractOrbs: Boolean;
+var
+  i, Q, CountedOrbColors: Integer;
+  OrbCol, GameBoxTPA, HatBoxTPA: TPointArray;
+  OrbSplit: T2DPointArray;
+  P: TPoint;
+  Gamebox, Hatbox: TBox;
+  Col, Tol: Array of Integer;
+  Hue, Sat: Array of Extended;
+
+begin
+  Hue := [0.44, 0.11];
+  Sat := [2.00, 1.40];
+  Col := [4638563, 4185305];
+  Tol := [19, 19];
+
+  case JoinedTeam of
+    'Green':  Q := 0;
+    'Yellow': Q := 1;
+  end;
+
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(Hue[Q], Sat[Q]);
+  CountedOrbColors := CountColorTolerance(Col[Q], 5, 75, 420, MSY2, Tol[Q]) +
+                      CountColorTolerance(Col[Q], 420, 5, MSX2, 190, Tol[Q]);
+  WriteLn('Counted orb colors: '+IntToStr(CountedOrbColors)+'');
+  if CountedOrbColors > 400 then
+    begin
+      if FindColorsSpiralTolerance(MSCX, MSCY, OrbCol, Col[Q], MSX1, MSY1, MSX2, MSY2, Tol[Q]) then
+        begin
+          SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+          SMART_DrawText(290, 429, UpChars, 'attracting orbs', clWhite);
+          Gamebox := IntToBox(421, 193, 515, 311);
+          Hatbox := IntToBox(242, 144, 268, 162);
+          GameBoxTPA := TPAFromBox(Gamebox);
+          HatboxTPA := TPAFromBox(Hatbox);
+          OrbCol := ClearTPAFromTPA(OrbCol, GameBoxTPA);
+          OrbCol := ClearTPAFromTPA(OrbCol, HatBoxTPA);
+          OrbSplit := SplitTPAEx(OrbCol, 5, 5);
+          SortATPASize(OrbSplit, True);
+          if Length(OrbSplit) < 4 then
+            begin
+              for i:=0 to high(OrbSplit) do
+              begin
+                P := MiddleTPA(OrbSplit[i]);
+                MMouse(P.X, P.Y, RandomRange(-3, 3), RandomRange(-3, 3));
+                if WaitUpTextMulti(['orb'], 250) then
+                  begin
+                    case Random(7) of
+                      0..4: ClickMouse2(1);
+                      5..6: begin
+                              ClickMouse2(0);
+                              WaitOptionMulti(['act', 'Attract'], 500);
+                            end;
+                    end;
+                    Wait(500 + Random(1500));
+                    Result:=True;
+                  end;
+              end;
+            end else
+            begin
+              for i:=0 to 2 do
+                begin
+                  P := MiddleTPA(OrbSplit[i]);
+                  MMouse(P.X, P.Y, RandomRange(-3, 3), RandomRange(-3, 3));
+                  if WaitUpTextMulti(['orb'], 250) then
+                    begin
+                      case Random(7) of
+                        0..4: ClickMouse2(1);
+                        5..6: begin
+                                ClickMouse2(0);
+                                WaitOptionMulti(['act', 'Attract'], 500);
+                              end;
+                      end;
+                      Wait(500 + Random(1500));
+                      Result:=True;
+                    end;
+                end;
+            end;
+        end;
+    end;
+end;
+
+procedure CraftRunes;
+var
+  X, Y, i: Integer;
+  AltarColors, GameboxTPA: TPointArray;
+  AltarColorsSplit: T2DPointArray;
+  AltarTypes: Array of String;
+  AltarTypeSatMod, AltarTypeHueMod: Array of Extended;
+  TheAltarColors, TheAltarTolerance: Array of Integer;
+  P: TPoint;
+  Gamebox: TBox;
+
+begin
+  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+  SMART_DrawText(290, 429, UpChars, 'walking to the altar', clWhite);
+  WalkToAltar;
+  Wait(500 + Random(1000));
+
+  // This will click on the altar and craft runes \\
+  AltarTypes := ['air', 'mind', 'water', 'earth', 'fire', 'body'];
+  AltarTypeSatMod := [0.48, 0.60, 0.00, 0.93, 0.00, 0.48];
+  AltarTypeHueMod := [0.06, 0.17, 0.05, 0.27, 0.05, 0.20];
+  TheAltarColors := [7433327, 9998742, 6446432, 5657429, 6446432, 9275018];
+  TheAltarTolerance := [10, 5, 5, 5, 5, 5];
+
+  for i:= 0 to 5 do
+  begin
+    if DefineArea = AltarTypes[i] then
+      begin
+        SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+        SMART_DrawText(290, 429, UpChars, 'crafting runes', clWhite);
+        Antiban;
+        ColorToleranceSpeed(2);
+        SetColorSpeed2Modifiers(AltarTypeSatMod[i], AltarTypeHueMod[i]);
+        if FindColorsSpiralTolerance(X, Y, AltarColors, TheAltarColors[i], MSX1, MSY1, MSX2, MSY2, TheAltarTolerance[i]) then
+          begin
+            Gamebox := IntToBox(421, 193, 515, 311);
+            GameBoxTPA := TPAFromBox(Gamebox);
+            AltarColors := ClearTPAFromTPA(AltarColors, GameBoxTPA);
+            SortTPAFrom(AltarColors, Point(MSCX, MSCY));
+            AltarColorsSplit := SplitTPAEx(AltarColors, 25, 25);
+            SortATPASize(AltarColorsSplit, True);
+            P := MiddleTPA(AltarColorsSplit[0]);
+            MMouse(P.X, P.Y, RandomRange(-10, 10), RandomRange(-10, 10));
+            if WaitUpTextMulti(['raft', 'une', 'ltar'], 250) then
+             begin
+               ClickMouse2(1);
+               Wait(750 + Random(1500));
+               case Random(5) of
+                 0..2: TypeSendEx('1', False);
+                 3..4: Mousebox(207, 398, 311, 415, 1);
+               end;
+               Wait(4000 + Random(2500));
+               Antiban;
+             end;
+          end;
+      end;
+  end;
+end;
+
+function WalkToPortalInside: Boolean;
+var
+  a, X, Y, i, ArrowSymbol: Integer;
+  InputAcc, OutputAcc: Extended;
+  AltarTypes, SPSMaps: Array of String;
+  MyPos: TPoint;
+  ArrowTPoints: Array of TPoint;
+
+begin
+  Antiban;
+  A := 0;
+  AltarTypes := ['air', 'mind', 'water', 'earth', 'fire', 'body'];
+  SPSMaps := ['99_1', '99_2', '99_3', '99_4', '99_5', '99_6'];
+  ArrowTPoints := [Point(RandomRange(39843, 39855), RandomRange(651, 659)),
+                   Point(RandomRange(39847, 39863), RandomRange(1087, 1091)),
+                   Point(RandomRange(39843, 39855), RandomRange(1463, 1467)),
+                   Point(RandomRange(39831, 39843), RandomRange(1863, 1867)),
+                   Point(RandomRange(39815, 39823), RandomRange(2243, 2251)),
+                   Point(RandomRange(39827, 39831), RandomRange(2683, 2691))];
+
+  for i:= 0 to 5 do
+  begin
+    if DefineArea = AltarTypes[i] then
+      begin
+        SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+        SMART_DrawText(290, 429, UpChars, 'walking to portal', clWhite);
+        SPS_Setup(RUNESCAPE_SURFACE, [SPSMaps[i]]);
+        MyPos := SPS_GetMyPos;
+        if MyPos = Point(-1, -1) then
+          begin
+            repeat
+              ArrowSymbol := BitmapFromString(7, 15, 'meJzT9AzXxEAaAWkCVz8gI5IFT31' +
+                                'ARhBB/n3vkRHxgiCRpe+JRG7r7/HPfoeMgCJqPonI4hCRxnpRuDhc' +
+                                'BIJUPOOAIkASLgIXh7MBQZeURw==');
+              InputAcc := 0.5;
+              FindDeformedBitmapToleranceIn(ArrowSymbol, X, Y, MMX1, MMY1, MMX2, MMY2, 75, 0, True, OutputAcc)
+              FreeBitmap(ArrowSymbol);
+              if (OutputAcc > InputAcc) then
+                begin
+                  WriteLn('We found the flicker arrow symbol, walking there!');
+                  Result := True;
+                  MMouse(X, Y, 0, 0);
+                  Wait(25 + Random(75));
+                  ClickMouse2(1);
+                  Wait(100 + Random(100));
+                    repeat
+                      Wait(50 + Random(50));
+                    until (IsMoving=False);
+                end else
+                begin;
+                  WriteLn('We haven`t been able to detect the flickering arrow symbol.');
+                  inc(A);
+                  Wait(250 + Random(500));
+                end;
+            until (OutputAcc > InputAcc) or (A>9);
+          end else
+          begin
+            if SPS_BlindWalk(ArrowTPoints[i]) then
+              Result := True;
+            Wait(1000 + Random(1000));
+          end;
+      end;
+  end;
+end;
+
+function EnterPortalInside: Boolean;
+var
+  X, Y, i: integer;
+  PortInCol: TPointArray;
+  PortInSplit: T2DPointArray;
+  P: TPoint;
+
+begin
+  // This will click on the portal inside \\
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.31, 1.43);
+    if FindColorsSpiralTolerance(X, Y, PortInCol, 12605594, MSX1, MSY1, MSX2, MSY2, 24) then
+      begin
+        SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+        SMART_DrawText(290, 429, UpChars, 'going through portal', clWhite);
+
+        SortTPAFrom(PortInCol, Point(MSCX, MSCY));
+        PortInSplit := SplitTPAEx(PortInCol, 50, 50);
+        SortATPASize(PortInSplit, True);
+        for i:=0 to High(PortInSplit) do
+          begin
+            P := MiddleTPA(PortInSplit[i]);
+            MMouse(P.X, P.Y, 5, 5);
+              if WaitUpTextMulti(['ortal', 'Portal'], 250) then
+                begin
+                  ClickMouse2(1);
+                  Wait(6000 + Random(2000));
+                  Result:=True;
+               end else
+               begin
+                 WriteLn('We haven`t been able to detect the portal, inside GOP');
+                 Result := False;
+               end;
+          end;
+      end;
+end;
+
+function FindRedText: Boolean;
+var
+  t: Integer;
+
+begin
+  t:=0;
+  MarkTime(t);
+  begin
+    repeat
+      wait(10 + Random(30));
+    until(CountColorTolerance(204, 208, 208, 324, 220, 1) > 100) or (TimeFromMark(t)>250)
+    if TimeFromMark(t) < 250 then
+    begin
+      WriteLn('Found the red text');
+      Result:=True;
+    end;
+  end;
+end;
+
+procedure BarrierEmergency;
+var
+  X, Y, BarrierDTM, A, t, GreenActivity, RedActivity, YellowActivity: Integer;
+  BarrierBox: TBox;
+
+begin
+  ColorToleranceSpeed(1);
+  GreenActivity := CountColorTolerance(345640, 484, 203, 501, 301, 1);
+  RedActivity := CountColorTolerance(39423, 484, 203, 501, 301, 1);
+  YellowActivity := CountColorTolerance(26214, 484, 203, 501, 301, 1);
+  WriteLn('Green activity: '+IntToStr(GreenActivity)+', Red activity: '+IntToStr(RedActivity)+', Yellow activity: '+IntToStr(YellowActivity)+', ');
+
+  if (RedActivity > 10) then
+    begin
+       case Random(8) of
+        0: Mousebox(MMCX-5, MMCY-30, MMCX+5, MMCY-20, 1);              // North
+        1: Mousebox(MMCX+20, MMCY-30, MMCX+30, MMCY-20, 1);            // North/East
+        2: Mousebox(MMCX+20, MMCY-5, MMCX+30, MMCY+5, 1);              // East
+        3: Mousebox(MMCX+20, MMCY+30, MMCX+30, MMCY, 1);               // South/East
+        4: Mousebox(MMCX-5, MMCY+20, MMCX+5, MMCY+30, 1);              // South
+        5: Mousebox(MMCX-30, MMCY+20, MMCX-20, MMCY+30, 1);            // South/West
+        6: Mousebox(MMCX-30, MMCY-5, MMCX-20, MMCY+5, 1);              // West
+        7: Mousebox(MMCX-30, MMCY-30, MMCX-20, MMCY-20, 1);            // North/West
+      end;
+      FFlag(0);
+      repeat
+        Wait(50 + Random(50))
+      until not(IsMoving);
+      Wait(500 + Random(500));
+
+      JoinedTeam := 'Yellow';
+      case JoinedTeam of
+        'Yellow': BarrierDTM := DTMFromString('mbQAAAHicY2VgYDjKxsCwC4h3A/FBIL4AYjMxMKwH4u1AvBmIjwFxYqI5UDUTCv7PgAkYsWAwAAACjgmY');
+        'Green':  BarrierDTM := DTMFromString('mbQAAAHicY2VgYMhmYmAoAeIEIK4C4nwgfgIUvwbEH4D4LhDfBGItA00gyYSC/zNgAkYsGAwAeAkIJw==');
+      end;
+
+      if not(GetCurrentTab = Tab_Inv) then FTab(Tab_Inv);
+
+      MarkTime(t);
+      repeat
+        if FindDTM(BarrierDTM, X, Y, MIX1, MIY1, MIX2, MIY2) then
+          begin
+            Inc(A);
+            MMouse(X, Y, RandomRange(-2, 2), RandomRange(-2, 2));
+            if WaitUpTextMulti(['ake-', 'arri', 'gener'], 250) then
+              begin
+                ClickMouse2(1);
+                BarrierBox := IntToBox(245, 134, 282, 195);
+                Wait(1500 + Random(500));
+                Mousebox(258, 159, 271, 178, 0);
+                WaitOptionMulti(['estr', 'estroy', 'Destroy'], 250);
+                Wait(500 + Random(500));
+              end;
+          end;
+        GreenActivity := CountColorTolerance(345640, 484, 203, 501, 301, 1);
+        YellowActivity := CountColorTolerance(26214, 484, 203, 501, 301, 1);
+      until (GreenActivity > 1200) or (YellowActivity > 1200) or (TimeFromMark(t) > 20000);
+      FreeDTM(BarrierDTM);
+   end;
+end;
+
+begin
+  // Setting up some stuff
+  Setup;
+  DesiredWizard := 'Wizards';
+  DrawProggy;
+  {
+  // Joining a team and waiting for the portal to open
+  JoinGame;
+  if WaitForPortal then
+    EnterPortalOutside;
+
+  repeat
+    // Walking to the altar and attracting orbs
+    WalkToAltar;
+    repeat
+      AttractOrbs;
+      BarrierEmergency;
+      case Random(10) of
+        0: WalkToAltar;
+      end;
+    until (CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 200) or (FindRedText = True);
+
+    // Crafting runes, then teleporting to the next altar
+    WalkToAltar;
+    CraftRunes;
+    if WalkToPortalInside then
+      EnterPortalInside;
+  until (DefineArea = 'Body') or (CheckGOPLobby = True);
+
+  // Completing
+  Inc(GamesPlayed);}
+end.

@@ -1,0 +1,24 @@
+program Test;
+{$i srl/srl.simba}
+
+procedure Antiban;
+begin
+  case Random(1500) of
+    0..1: HoverSkill('defence', False);
+    2..3: HoverSkill('hitpoints', False);
+    4..5: HoverSkill('summoning', False);
+    6: HoverSkill('random', False);
+    7..9: RandomRClick;
+    10..12: PickUpMouse;
+    13..15: RandomMovement;
+    16..18: BoredHuman;
+    19: ExamineInv;
+    20..24: SleepAndMoveMouse(Random(5000));
+  end;
+end;
+
+begin
+  SetUpSRL;
+  ActivateClient;
+  Antiban;
+end.

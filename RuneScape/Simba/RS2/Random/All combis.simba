@@ -1,0 +1,44 @@
+program Test;
+{$i srl/srl.simba}
+
+procedure Test;
+var
+  a, b, c: Integer;
+
+begin
+  ClearDebug;
+  for a:= 48 to 57 do
+    begin
+      WriteLn(Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+    end;
+
+  for a := 97 to 122 do
+    begin
+      WriteLn(Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+      WriteLn(Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a) + Chr(a));
+    end;
+end;
+
+begin
+  SetUpSRL;
+  Test;
+end.

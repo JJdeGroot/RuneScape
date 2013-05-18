@@ -1,0 +1,88 @@
+program Test;
+{$i srl/srl.simba}
+
+var
+  X, Y: integer;
+
+function TalkToMino(var fx, fy: Integer): Boolean;
+var
+  arP: TPointArray;
+  ararP: T2DPointArray;
+  tmpCTS, i, arL, w: Integer;
+  P: TPoint;
+
+begin
+MarkTime(w)
+  repeat
+    tmpCTS := GetColorToleranceSpeed;
+    ColorToleranceSpeed(2);
+    SetColorSpeed2Modifiers(0.17, 1.93);
+    FindColorsTolerance(arP, 8371400, MSX1, MSY1, MSX2, MSY2, 17);
+    SortTPAFrom(arP, Point(MSCX, MSCY));
+    ararP := SplitTPAEx(arP, 50, 50);
+    arL := High(ararP);
+
+    for i := 0 to arL do
+      begin
+        P := MiddleTPA(ararP[i]);
+        MMouse(P.x, P.y, 5, 5);
+        if WaitUpTextMulti(['nter', 'ract'], 150) then
+          case Random(8) of
+            0..4: Mouse(P.X, P.Y, 0, 0, 1);
+            5..7: begin;
+                    Mouse(P.X, P.Y, 0, 0, 0);
+                    WaitOptionMulti(['nter', 'ract'], 150);
+                  end;
+          end;
+      if (DidRedClick=True) then Exit;
+      end;
+until (DidRedClick=True) or (TimeFromMark(w) >= 7500);
+end;
+
+procedure TalkWithMino;
+var
+  X, Y: Integer;
+
+begin;
+  Wait(1000 + Random(1000));
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.09, 1.64);
+  if FindColorSpiralTolerance(X, Y, 2717512, 225, 461, 294, 474, 23)  then
+    begin
+      case Random(3) of
+        0..1: begin;
+                repeat
+                  Wait(500 + Random(500));
+                  KeyDown(32);
+                until not(FindColorSpiralTolerance(X, Y, 2717512, 225, 461, 294, 474, 23));
+              end;
+        2:    begin;
+                case Random(3) of
+                  0..1: begin;
+                          Wait(500 + Random(500));
+                          MouseBox(225, 461, 294, 474, 2);
+                            repeat
+                              MouseBox(225, 461, 294, 474, 1);
+                              Wait(750 + Random(1500));
+                          until not(FindColorSpiralTolerance(X, Y, 2717512, 225, 461, 294, 474, 23));
+                        end;
+                 2:     begin;
+                          MouseBox(225, 461, 294, 474, 2);
+                            repeat
+                              Wait(750 + Random(1500));
+                              MouseBox(225, 461, 294, 474, 1);
+                            until not(FindColorSpiralTolerance(X, Y, 2717512, 225, 461, 294, 474, 23));
+                        end;
+                end;
+            end;
+      end;
+    end;
+end;
+
+
+begin
+  SetUpSRL;
+  ActivateClient;
+  TalkToMino(X, Y);
+  TalkWithMino;
+end.

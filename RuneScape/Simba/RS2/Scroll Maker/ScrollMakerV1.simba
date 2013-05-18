@@ -1,0 +1,139 @@
+program ScrollMaker;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+end;
+
+procedure WaitUntilWalking;
+begin
+  Wait(300 + Random(300));
+  if (IsMoving=True) then
+    begin
+      repeat
+        Wait(50 + Random(100));
+      until(IsMoving=False);
+    end;
+  Wait(300 + Random(300));
+end;
+
+function OpenTrapdoor: Boolean;
+var
+  TrapdoorColors: TPointArray;
+  TrapSplit: T2DPointArray;
+  X, Y: Integer;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.08, 0.43);
+  if FindColorsSpiralTolerance(MSCX, MSCY, TrapdoorColors, 3030604, MSCX-125, MSCY-125, MSCX+125, MSCY+125, 12) then
+    begin
+      SplitTPAExWrap(TrapdoorColors, 15, 15, TrapSplit);
+      SortATPASize(TrapSplit, True);
+      MiddleTPAEx(TrapSplit[0], X, Y);
+      MMouse(X, Y, RandomRange(-1, 1), RandomRange(-3, 3));
+      if WaitUpTextMulti(['apdo', 'pen', 'en T', 'Trapdoor', 'Open'], 500) then
+        begin
+          case Random(7) of
+            0..4: begin; ClickMouse2(1); Result:=True; end;
+            5..6: begin
+                    ClickMouse2(0);
+                    if WaitOptionMulti(['pen', 'apdo', 'Open'], 500) then
+                      Result:=True;
+                  end;
+          end;
+        end;
+    end;
+  Wait(750 + Random(750));
+end;
+
+procedure WalkToLadder;
+var
+  MyPos: TPoint;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['0_6']);
+  MyPos := SPS_GetMyPos;
+  WriteLn('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  SPS_BlindWalk(Point(RandomRange(251, 259), RandomRange(2603, 2611)));
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.10, 1.04);
+  if CountColorTolerance(1395296, MSX1, MSY1, MSX2, MSY2, 12)<500 then
+    begin
+      SPS_BlindWalk(Point(RandomRange(251, 259), RandomRange(2603, 2611)));
+      if CountColorTolerance(1395296, MSX1, MSY1, MSX2, MSY2, 12)<500 then
+        begin
+          if OpenTrapdoor then
+            begin
+               Exit;
+            end else
+            begin
+              WriteLn('Something has gone wrong when trying to find the ladder/trapdoor, terminating!');
+              TerminateScript;
+            end;
+        end;
+    end;
+  Wait(750 + Random(750));
+end;
+
+function ClimbLadder: Boolean;
+var
+  LadderColors: TPointArray;
+  LadderSplit: T2DPointArray;
+  X, Y: Integer;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.10, 1.04);
+  if FindColorsSpiralTolerance(MSCX, MSCY, LadderColors, 1395296, MSCX-125, MSCY-125, MSCX+125, MSCY+125, 12) then
+    begin
+      SplitTPAExWrap(LadderColors, 2, 10, LadderSplit);
+      SortATPASize(LadderSplit, True);
+      MiddleTPAEx(LadderSplit[0], X, Y);
+      MMouse(X, Y, RandomRange(-1, 1), RandomRange(-3, 3));
+      if WaitUpTextMulti(['limb', 'own', 'apdoo'], 500) then
+        begin
+          case Random(7) of
+            0..4: ClickMouse2(1);
+            5..6: begin
+                    ClickMouse2(0);
+                    if WaitOptionMulti(['lim', 'imb', 'Climb'], 500) then
+                      Result:=True;
+                  end;
+          end;
+        end;
+  end;
+end;
+
+begin
+  SetUpLogin;
+  WalkToLadder;
+  ClimbLadder;
+end.

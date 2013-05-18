@@ -1,0 +1,160 @@
+program DancingTalker;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayerToLob;
+  OpenWorldScreen;
+  SelectWorld(2);
+  LoginPlayer;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+end;
+
+procedure Antiban;
+begin
+  case Random(2500) of
+    0..9:   begin
+              WriteLn('Antiban active');
+              HoverSkill('random', False);
+              Wait(100 + Random(300));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    10..16: begin
+              WriteLn('Antiban active');
+              RandomRClick;
+              Wait(200 + Random(600));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+             end;
+    20..29: begin
+              WriteLn('Antiban active');
+              PickUpMouse;
+              Wait(150 + Random(450));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    30..39: begin
+              WriteLn('Antiban active');
+              RandomMovement;
+              Wait(200 + Random(400));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    40..54: begin
+              WriteLn('Antiban active');
+              BoredHuman;
+              Wait(500 + Random(1000));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    50..54: begin
+              WriteLn('Antiban active');
+              ExamineInv;
+              Wait(250 + Random(400));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    60..74: begin
+              WriteLn('Antiban active');
+              SleepAndMoveMouse(1000 + Random(5000));
+              Wait(100 + Random(300));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    70..89: begin
+              WriteLn('Antiban active');
+                case Random(7) of
+                  0: Wait(1000 + Random(10000));
+                  1: Wait(2000 + Random(4000));
+                  2: Wait(3000 + Random(1500));
+                  3: Wait(7500 + Random(2500));
+                  4: Wait(5000 + Random(5000));
+                  5: Wait(5000 + Random(20000));
+                  6: Wait(20000 + Random(5000));
+                end;
+                Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                WriteLn('Antiban done');
+            end;
+  end;
+end;
+
+procedure Dance;
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.06, 0.81);
+  if CountColorTolerance(10102614, MIX1, MIY1, MIX2, MIY2, 24) < 500 then
+    GameTab(tab_Emotes);
+  Mousebox(547, 383, 589, 430, 1);
+end;
+
+function TalkFast(Text: string; PressEnter: Boolean): Boolean;
+var
+  i, j, e: Integer;
+begin
+  i := RandomRange(1, Length(Text));
+  if i<2 then
+    begin
+      for e:=1 to Length(text) do
+      begin
+        SendKeys(Text[e], 1 + Random(1));
+      end;
+    end else
+    begin
+      for j:=1 to i do
+      begin
+        SendKeys(Text[j], 1 + Random(1));
+      end;
+      Antiban;
+      Dance;
+      Antiban;
+      for j:=(i+1) to Length(text) do
+      begin
+        SendKeys(Text[j], 1 + Random(1));
+      end;
+    end;
+
+  if (PressEnter) then
+    TypeByte(VK_RETURN);
+  Result:=True;
+end;
+
+begin
+  SetUpLogin;
+  repeat
+    Antiban;
+    case Random(5) of
+      0: TalkFast('cyan:wave:Dragon Dyce is #1', True);
+      1: TalkFast('red:wave2:Dragon Dyce is the best', True);
+      2: TalkFast('purple:shake:Dragon Dyce is epic', True);
+      3: TalkFast('green:scroll:Dragon Dyce is number one', True);
+      4: TalkFast('wave: Dragon Dyce is amazing', True);
+    end;
+    Antiban;
+  until not(LoggedIn);
+end.

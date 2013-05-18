@@ -1,0 +1,295 @@
+program JJsBetaSummoner;
+{$i srl/srl.simba}
+
+var
+  Debug, FoundMagestix, FoundObelisk: Boolean;
+  B, T, PouchesMade, Selling, PouchesToMake,  StartTime, SummonXp, ScrollXp,
+  WaitTime, MagestixX, MagestixY, ObeliskX, ObeliskY: Integer;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 53;
+  Smart_Members := True;;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+end;
+
+procedure Setup;
+begin
+  Debug := False;                 // Debugging? True or False
+  WaitTime := 500 + Random(500);  // If the script is too fast for you, increase this
+  PouchesToMake := 32000;         // How many pouches to make?
+  SummonXp := 96;                 // How many summoning xp per pouch? Don't use commas or dots here! (just divide the xp to get the right number)
+  ScrollXp := 1;                  // How many summoning xp per scroll? Don't use commas or dots here! (just divide the xp to get the right number)
+  Selling := 1;
+  B := 0;
+  MarkTime(t);
+end;
+
+function IsShopUp: Boolean;
+begin
+  ColorToleranceSpeed(1);
+  if Debug then
+    WriteLn('IsShopUp colors: '+IntToStr(CountColorTolerance(3779306, 490, 81, 501, 203, 15))+'');
+  Result := (CountColorTolerance(3779306, 490, 81, 501, 203, 15) > 100); // Orange scrolling bar
+end;
+
+function IsObeliskUp: Boolean;
+begin
+  ColorToleranceSpeed(1);
+  if Debug then
+    WriteLn('IsObeliskUp colors: '+IntToStr(CountColorTolerance(105157, 198, 35, 216, 50, 1))+'');
+  Result := (CountColorTolerance(105157, 200, 37, 211, 47, 1) > 30); // Yellow X
+end;
+
+function IsMainSpotUp: Boolean;
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.02, 1.56);
+  if Debug then
+    WriteLn('IsMainSpotUp colors: '+IntToStr(CountColorTolerance(6529477, MSX1, MSY1, MSX2, MSY2, 11))+'');
+  Result := (CountColorTolerance(6529477, MSX1, MSY1, MSX2, MSY2, 11) > 2000); // Light brown of the logs
+end;
+
+
+
+function SellTime: Boolean;
+begin
+  WriteLn('Checking if we need to sell stuff');
+  Inc(B);
+  Inc(Selling);
+  if Debug then
+    WriteLn('Selling Integer: '+IntToStr(Selling)+' and B Integer: '+IntToStr(B)+'');
+  if (B > 22) then
+    begin
+      B := 0;
+      Selling := (Selling - 1);
+    end;
+  if (Selling = 2) then
+    begin
+      Selling := 0;
+      Result := True;
+    end;
+end;
+
+function TradeMagestix: Boolean;
+var
+  Colors: TPointArray;
+  SplitColors: Array of TPointArray;
+  P: TPoint;
+
+begin
+  if not(FoundMagestix) then
+    begin
+      ColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(0.17, 1.45);
+      if FindColorsSpiralTolerance(MSCX, MSCY, Colors, 1546700, MSCX-30, MSCY-80, MSCX+30, MSCY, 14) then
+        begin
+          SplitTPAExWrap(Colors, 3, 3, SplitColors);
+          SortATPASize(SplitColors, True);
+          P := MiddleTPA(SplitColors[0]);
+
+          MMouse(P.X+RandomRange(-4, 4), P.Y+RandomRange(20, 28), RandomRange(-5, 5), RandomRange(-5, 5));
+          if WaitUpTextMulti(['alk', 'ages', 'tix'], 500) then
+            begin
+              FoundMagestix := True;
+              MagestixX := P.X;
+              MagestixY := P.Y+24;
+              if Debug then
+                begin
+                  WriteLn('X-coord: '+IntToStr(MagestixX)+'');
+                  WriteLn('Y-coord:'+IntToStr(MagestixY)+'');
+                end;
+              ClickMouse2(0);
+              if WaitOptionMulti(['rade', 'Trade'], 500) then
+                Result:=True;
+            end;
+        end;
+    end else
+    begin
+      MMouse(MagestixX, MagestixY, RandomRange(-2, 2), RandomRange(-2, 2));
+      ClickMouse2(0);
+      if WaitOptionMulti(['rade', 'Trade'], 500) then
+        Result:=True;
+    end;
+end;
+
+function SellSecondary: Boolean;
+begin
+  if WaitFunc(@IsShopUp, RandomRange(50, 100), 5000) then
+    begin
+      if Debug then
+        WriteLn('Shop screen is up');
+      WriteLn('Selling secondary');
+      if SellTime then
+        begin
+          Mousebox(567, 217, 589, 237, 0);
+          if WaitOptionMulti(['50', 'Sell 50', 'l 5'], 1000) then
+            Result:=True;
+          Wait(WaitTime);
+        end else
+        begin
+          Result:=True;
+        end;
+    end;
+end;
+
+function BuySecondary: Boolean;
+begin
+  WriteLn('Buying secondary');
+  Mousebox(182, 195, 212, 221, 0); // FIRST SPOT
+  //Mousebox(241, 199, 261, 218, 0); // SECOND SPOT IF YOU FAILED
+  if WaitOptionMulti(['50', 'y 5', 'All', '500', 'Buy 50'], 1000) then
+    begin
+      Wait(WaitTime);
+      if PinScreen then
+        begin
+          InPin(Players[0].Pin);
+          Wait(2000 + Random(2000));
+          TradeMagestix;
+          BuySecondary;
+        end;
+      Result:=True;
+    end;
+end;
+
+function CloseShop: Boolean;
+begin
+  Mousebox(491, 13, 506, 27, 1);
+  if WaitFunc(@IsMainSpotUp, RandomRange(50, 100), 5000) then
+    begin
+      if Debug then
+      WriteLn('Main spot screen is up');
+      Result:=True;
+    end;
+end;
+
+function OpenObelisk: Boolean;
+var
+  Colors: TPointArray;
+  SplitColors: Array of TPointArray;
+  P: TPoint;
+
+begin
+  if not(FoundObelisk) then
+    begin
+      ColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(0.11, 0.13);
+      if FindColorsSpiralTolerance(MSCX, MSCY, Colors, 9147284, MSX1, MSY1, MSX2, MSY2, 17) then
+        begin
+          SplitTPAExWrap(Colors, 5, 5, SplitColors);
+          SortATPASize(SplitColors, True);
+          P := MiddleTPA(SplitColors[0]);
+          MMouse(P.X, P.Y, RandomRange(-15, 15), RandomRange(-15, 15));
+          if WaitUpTextMulti(['fuse', 'ouch', 'lisk'], 1000) then
+            begin
+              ObeliskX := P.X;
+              ObeliskY := P.Y;
+              FoundObelisk := True;
+              case Random(7) of
+                0..4: ClickMouse2(1);
+                5..6: begin
+                        ClickMouse2(0);
+                        WaitOptionMulti(['fuse', 'ouch'], 500);
+                      end;
+              end;
+              Result:=True;
+            end;
+        end;
+    end else
+    begin
+      MMouse(ObeliskX, ObeliskY, RandomRange(-15, 15), RandomRange(-15, 15));
+      case Random(7) of
+        0..4: ClickMouse2(1);
+        5..6: begin
+                ClickMouse2(0);
+                WaitOptionMulti(['fuse', 'ouch'], 500);
+              end;
+      end;
+  end;
+end;
+
+function MakePouches: Boolean;
+begin
+  Wait(2000 + Random(200));
+  begin
+    if Debug then
+      WriteLn('Obelisk screen is up');
+    Mousebox(51, 68, 76, 94, 0);
+    if WaitOptionMulti(['All', 'Infuse-All'], 1000) then
+      begin
+        Wait(2500 + Random(500));
+        IncEx(PouchesMade, 23);
+        Result:=True;
+      end;
+  end;
+end;
+
+procedure FailSafe;
+begin
+  if (TimeFromMark(t) > 15000) then
+    begin
+      t:=0;
+      if FindChatBoxText('inventory', 8, clBlack) then
+        CloseShop;
+      ColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(0.06, 1.58);
+      if Debug then
+        WriteLn(''+IntToStr(CountColorTolerance(1803469, 494, 16, 502, 24, 13))+'');
+      if CountColorTolerance(1803469, 494, 16, 502, 24, 13) >= 25 then
+        begin
+          CloseShop;
+        end else
+        begin
+          Mousebox(479, 35, 492, 48, 1);
+        end;
+    end;
+end;
+
+procedure SellPouches;
+begin
+  Mousebox(615, 225, 628, 237, 0);
+  WaitOptionMulti(['ell 50', '50'], 1000);
+  Wait(800 + Random(400));
+  Mousebox(309, 214, 353, 226, 1);
+  Wait(500 + Random(500));
+end;
+
+
+begin
+  SetupSRL;
+  ActivateClient;
+  Setup;
+  MouseSpeed := 15;
+  StartTime:=GetSystemTime;
+  repeat
+    TradeMagestix;
+    SellSecondary;
+    SellPouches;
+    BuySecondary;
+    CloseShop;
+    OpenObelisk;
+    MakePouches;
+  until (not(LoggedIn)) or (PouchesMade >= PouchesToMake);
+end.

@@ -1,0 +1,65 @@
+program JJs07Miner;
+{$DEFINE SMART8}
+{$i srl/srl.simba}
+{$i P07Include.simba}
+{$i SRL/srl/misc/smartgraphics.simba}
+
+const
+  // INVENTORY
+  MIX1_2007 = 562;
+  MIY1_2007 = 212;
+  MIX2_2007 = 722;
+  MIY2_2007 = 464;
+  // MAINSCREEN
+  MSX1_2007 = 4;
+  MSY1_2007 = 4;
+  MSX2_2007 = 516;
+  MSY2_2007 = 338;
+  MSCX_2007 = (MSX1_2007 + MSX2_2007)/2;
+  MSCY_2007 = (MSY1_2007 + MSY2_2007)/2;
+
+
+function ClickIronRock: boolean;
+var
+  TPA: TPointArray;
+  ATPA: T2DPointArray;
+  ClientBMP, BufferBMP, X, Y, i, T: Integer;
+  P: TPoint;
+  Uptext: String;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.08, 0.24);
+
+  if FindColorsSpiralTolerance(MSCX_2007, MSCY_2007, TPA, 2503507, MSX1_2007, MSY1_2007, MSX2_2007, MSY2_2007, 6) then
+  begin
+    writeln('Found colors');
+    SplitTPAWrap(TPA, 3, ATPA);
+    SortATPAFrom(ATPA, Point(MSCX_2007, MSCY_2007));
+
+    for i:=0 to high(ATPA) do
+      if Length(ATPA[i]) > 5 then
+      begin
+        writeln('Height > 5');
+        P := MiddleTPA(ATPA[i]);
+        if Distance(P.x, P.y, MSCX_2007, MSCY_2007) < 100 then
+        begin
+          writeln('distance < 50');
+          MMouse(P.x, P.y, RandomRange(-5, 5), RandomRange(-5, 5));
+          ClickMouse2(1);
+          Result := True;
+          break;
+        end;
+      end;
+  end;
+end;
+
+
+begin
+  SetupSRL;
+  WriteLn('Script started!');
+  SRL_EnableNavBar;
+  ClickIronRock;
+  // DropAllOres;
+  WriteLn('Script ended!');
+end.

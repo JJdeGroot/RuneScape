@@ -1,0 +1,113 @@
+program Test;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+
+Const
+  Area_Air = 'Air';
+  Area_Earth = 'Earth';
+  Area_Water = 'Water';
+  Area_Fire = 'Fire';
+  Area_Mind = 'Mind';
+  Area_Body = 'Body';
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+end;
+
+function MaxArray(A : array of Integer; Var Pos : integer) : integer;
+var
+  i : integer;
+begin
+  Result := MaxA(A);
+  for i := low(A) to high(A) do
+    if(Result = A[i])then
+      begin
+        Pos := i;
+        break;
+      end;
+end;
+
+function GetAlter: String;  //This is the function that actually returns the alter
+var
+  P, i : integer;
+  AlterColours, Counts : array of integer;
+begin
+
+  AlterColours := [2450544, 2706787, 2589310, 3688535, 8487814, 7369098]
+  SetArrayLength(Counts, 6);
+
+  for i := low(Counts) to high(Counts) do
+    Counts[i] := CountColorTolerance(AlterColours[i], MMCX - 30, MMCY - 30, MMCX + 30, MMCY + 30, 15);
+
+  MaxArray(Counts, P);
+
+  case P of
+    0 : Result := Area_Air;
+    1 : Result := Area_Earth;
+    2 : Result := Area_Water;
+    3 : Result := Area_Fire;
+    4 : Result := Area_Mind;
+    5 : Result := Area_Body;
+  end;
+end;
+
+procedure Test2;
+var
+PossibleArea: Array [0..5] of String;
+i: Integer;
+
+begin
+  PossibleArea[0]:=Area_Air;
+  PossibleArea[1]:=Area_Earth;
+  PossibleArea[2]:=Area_Water;
+  PossibleArea[3]:=Area_Fire;
+  PossibleArea[4]:=Area_Mind;
+  PossibleArea[5]:=Area_Body;
+
+    begin
+      for i:= 0 to 5 do
+        begin
+          if GetAlter=PossibleArea[i] then
+            WriteLn('Our location is '+PossibleArea[i]+'')
+        end;
+    end;
+end;
+
+procedure Test3;
+begin
+  if GetAlter=Area_Mind then
+  WriteLn('Succesful test');
+end;
+
+begin
+  SetUpLogin;
+  //GetAlter;
+  Test2;
+  //Test3;
+end.

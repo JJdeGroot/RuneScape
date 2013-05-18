@@ -1,0 +1,121 @@
+program Test;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i srl/srl/misc/paintsmart.simba}
+
+var
+  Debug: Boolean;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  SMART_ClearCanvas;
+  DeclarePlayers;
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+end;
+
+procedure FindHoles;
+var
+  i, J, LowestY, LowestYBox, HighestY, HighestYBox: Integer;
+  Holes: TPointArray;
+  SplitHoles: T2DPointArray;
+  Box, TopRowBox, BottomRowBox: TBoxArray;
+  TopRow, BottomRow: TBox;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.06, 0.79);
+  if FindColorsSpiralTolerance(MSCX, MSCY, Holes, 4288642, MSX1, MSY1, MSX2, MSY2, 7) then
+    begin
+      SplitTPAExWrap(Holes, 10, 10, SplitHoles);
+      SetArrayLength(Box, Length(SplitHoles));
+      for i:=0 to high(SplitHoles) do
+        begin
+          Box[i] := IntToBox(GetTPABounds(SplitHoles[i]).X1, GetTPABounds(SplitHoles[i]).Y1, GetTPABounds(SplitHoles[i]).X2,  GetTPABounds(SplitHoles[i]).Y2);
+          if Debug then
+            begin
+              WriteLn('Box '+IntToStr(i)+' coords: '+ToStr(Box[i])+'');
+              SMART_DrawBoxes(False, [Box[i]], clRed);
+            end;
+        end;
+
+      LowestY := Box[0].Y1;
+      for i:=0 to high(Box) do
+        begin
+          if Box[i].Y1 < LowestY then
+            begin
+              LowestY := Box[i].Y1;
+              LowestYBox := i;
+            end;
+        end;
+
+      HighestY := Box[0].Y2;
+      for i:=0 to high(Box) do
+        begin
+          if Box[i].Y1 > HighestY then
+            begin
+              HighestY := Box[i].Y1;
+              HighestYBox := i;
+            end;
+        end;
+
+      TopRow := IntToBox(MSX1, Box[LowestYBox].Y1-10, MSX2, Box[LowestYBox].Y1+10);
+      BottomRow := IntToBox(MSX1, Box[HighestYBox].Y1-10, MSX2, Box[HighestYBox].Y1+10);
+
+      if Debug then
+        begin
+          SMART_DrawBoxes(False, [Box[LowestYBox]], clYellow);
+          SMART_DrawBoxes(False, [Box[HighestYBox]], clYellow);
+          SMART_DrawBoxes(False, [TopRow], clPurple);
+          SMART_DrawBoxes(False, [BottomRow], clPurple);
+        end;
+
+      for i:=0 to high(Box) do
+        begin
+          if PointInBox(Point(((Box[i].X1 + Box[i].X2) / 2), ((Box[i].Y1 + Box[i].Y2) / 2)), TopRow) then
+            begin
+              SetLength(TopRowBox, Length(TopRowBox)+1);
+              TopRowBox[Length(TopRowBox)-1] := Box[i];
+              if Debug then
+                WriteLn('Box '+IntToStr(i)+' is in the top row');
+            end;
+        end;
+
+      if Debug then
+        begin
+          WriteLn('Boxes in top row: '+ToStr(TopRowBox)+'');
+          for i:=0 to high(TopRowBox) do
+            SMART_DrawBoxes(False, [TopRowBox[i]], clGreen);
+        end;
+
+    end;
+end;
+
+begin
+  SetUpLogin;
+  SMART_ClearCanvas;
+  Debug := True;
+  FindHoles;
+end.

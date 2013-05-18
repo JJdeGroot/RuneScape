@@ -1,0 +1,648 @@
+program Test;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  //ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+end;
+
+procedure SPSCheck;
+var
+  MyPos:TPoint;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_4']);
+  MyPos:=SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+end;
+
+procedure FindTheAirAltar;
+var
+  MyPos: TPoint;
+  AroundAirAltar: TBox;
+  AirAltarDTM, X, Y: Integer;
+  aFound: Extended;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_1']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundAirAltar := IntToBox(39843, 623, 39855, 635);
+  if PointInBox(MyPos, AroundAirAltar) then
+    begin
+      WriteLn('Our location is near the air altar');
+    end else
+    {We aren't near the altar, so we are going to walk near it using SPS}
+    begin
+      if MyPos = Point(-1, -1) then
+        begin
+          ColorToleranceSpeed(2);
+          SetColorSpeed2Modifiers(0.48, 0.06);
+          if not(FindColoredAreaTolerance(X, Y, 7433327, MSCX - 100, MSCY - 100, MSCX + 100, MSCY + 100, 500, 7)) then
+            begin
+              AirAltarDTM := DTMFromString('maQEAAHicE2RgYGhjYmBIZILQq4C4FYjzgHghEOcD8RwgTofiCiCeBMTLgHg5EM8E4hqQeqA5hUDsDqWnAHETEEcCcSgQdwFxIhDXQuUmQeVTgdgPiH2BuDhDmaGnzpfB0UaZISrIEMwG4dxkG4a2Si8wLs6wh4uDcFKkGVitvZUig6ezOgMX0BxKMdA7DIwUYgwAAPGsI6M=');
+              if not(FindDTMRotated(AirAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound)) then
+                begin
+                  ColorToleranceSpeed(1);
+                  RadialWalkTolerance(2319220, 0, 359, 75, 5, 5, 5);
+                  Wait(1000 + Random(1000));
+                  ColorToleranceSpeed(2);
+                  SetColorSpeed2Modifiers(0.48, 0.06);
+                  if FindColoredAreaTolerance(X, Y, 7433327, MSX1, MSY1, MSX2, MSY2, 500, 7) then
+                      begin
+                        WriteLn('We can see the altar on our mainscreen');
+                        FreeDTM(AirAltarDTM);
+                        Exit;
+                      end;
+                  ColorToleranceSpeed(1);
+                  if FindDTMRotated(AirAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                    begin
+                      WriteLn('We have found the AirAltarDTM on the minimap this time');
+                      MMouse(X + 5, Y + 5, 2, 2);
+                      Wait(25 + Random(125));
+                      ClickMouse2(1);
+                    end else
+                    begin
+                      ColorToleranceSpeed(1);
+                      RadialWalkTolerance(2319220, 0, 359, 25, 5, 5, 5);
+                      Wait(1000 + Random(1000));
+                      ColorToleranceSpeed(2);
+                      SetColorSpeed2Modifiers(0.48, 0.06);
+                      if FindColoredAreaTolerance(X, Y, 7433327, MSX1, MSY1, MSX2, MSY2, 500, 7) then
+                      begin
+                        WriteLn('We can see the altar on our mainscreen');
+                        FreeDTM(AirAltarDTM);
+                        Exit;
+                      end;
+                      ColorToleranceSpeed(1);
+                      if FindDTMRotated(AirAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                        begin
+                          WriteLn('We have found the AirAltarDTM on the minimap this time');
+                          MMouse(X, Y, 2, 2);
+                          Wait(25 + Random(125));
+                          ClickMouse2(1);
+                        end else
+                        begin
+                          WriteLn('Something has went wrong, not able to navigate to the Air Altar');
+                        end;
+                    end;
+                end else
+                begin
+                  WriteLn('We have found the AirAltarDTM on the minimap');
+                  MMouse(X, Y, 2, 2);
+                  Wait(25 + Random(125));
+                  ClickMouse2(1);
+                end;
+              FreeDTM(AirAltarDTM);
+            end else
+            begin
+              WriteLn('We can see the air altar on our main screen!');
+            end;
+          Wait(100 + Random(100));
+            repeat
+              Wait(50 + Random(50));
+            until (IsMoving=False);
+        end else
+        begin
+          WriteLn('Walking near the air altar');
+          SPS_BlindWalk(Point(RandomRange(39843, 39855), RandomRange(623, 635)));
+        end;
+    end;
+end;
+
+procedure FindTheMindAltar;
+var
+  MyPos: TPoint;
+  AroundMindAltar: TBox;
+  MindAltarDTM, X, Y: Integer;
+  aFound: Extended;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_2']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundMindAltar := IntToBox(39847, 1023, 39871, 1043);
+  if PointInBox(MyPos, AroundMindAltar) then
+    begin
+      WriteLn('Our location is near the mind altar');
+    end else
+    {We aren't near the altar, so we are going to walk near it using SPS}
+    begin
+      if MyPos = Point(-1, -1) then
+        begin
+          ColorToleranceSpeed(2);
+          SetColorSpeed2Modifiers(0.60, 0.17);
+          if not(FindColoredAreaTolerance(X, Y, 9998742, MSCX - 100, MSCY - 100, MSCX + 100, MSCY + 100, 500, 4)) then
+            begin
+              MindAltarDTM := DTMFromString('mPwEAAHic42dgYNjNxsCwDYhXA/E6IN4BxIeA+DQQn4XiE0C8D4jXAPE9IN4DVSfBxMDAxQShlYFYA4pBbCkgFgRibiDmBGI+qLrfjAwMJkC6raGZobK4HAPXV9aA6Y6mVhSx6qpKOGYFuptczEQBRgMAIdEj4w==');
+              if not(FindDTMRotated(MindAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound)) then
+                begin
+                  ColorToleranceSpeed(1);
+                  RadialWalkTolerance(10329254, 0, 359, 60, 5, 5, 10);
+                  Wait(1000 + Random(1000));
+                  ColorToleranceSpeed(2);
+                  SetColorSpeed2Modifiers(0.60, 0.17);
+                  if FindColoredAreaTolerance(X, Y, 9998742, MSX1, MSY1, MSX2, MSY2, 500, 4) then
+                  begin
+                    FreeDTM(MindAltarDTM);
+                    WriteLn('We can see the Mind Altar on the mainscreen');
+                    Exit;
+                  end;
+                  ColorToleranceSpeed(1);
+                  if FindDTMRotated(MindAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                    begin
+                      WriteLn('We have found the MindAltarDTM on the minimap this time');
+                      MMouse(X, Y, 3, 3);
+                      Wait(25 + Random(125));
+                      ClickMouse2(1);
+                    end else
+                    begin
+                      ColorToleranceSpeed(1);
+                      RadialWalkTolerance(9473944, 0, 359, 30, 5, 5, 10);
+                      Wait(1000 + Random(1000));
+                      ColorToleranceSpeed(2);
+                      SetColorSpeed2Modifiers(0.60, 0.17);
+                      if FindColoredAreaTolerance(X, Y, 9998742, MSX1, MSY1, MSX2, MSY2, 500, 4) then
+                      begin
+                        FreeDTM(MindAltarDTM);
+                        WriteLn('We can see the Mind Altar on the mainscreen');
+                        Exit;
+                      end;
+                      ColorToleranceSpeed(1);
+                      if FindDTMRotated(MindAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                        begin
+                          WriteLn('We have found the MindAltarDTM on the minimap this time');
+                          MMouse(X, Y, 3, 3);
+                          Wait(25 + Random(125));
+                          ClickMouse2(1);
+                        end else
+                        begin
+                          WriteLn('Something has went wrong, not able to navigate to the Mind Altar');
+                        end;
+                    end;
+                end else
+                begin
+                  WriteLn('We have found the MindAltarDTM on the minimap');
+                  MMouse(X, Y, 3, 3);
+                  Wait(25 + Random(125));
+                  ClickMouse2(1);
+                end;
+              FreeDTM(MindAltarDTM);
+            end else
+            begin
+              WriteLn('We can see the mind altar on our main screen!');
+            end;
+          Wait(100 + Random(100));
+            repeat
+              Wait(50 + Random(50));
+            until (IsMoving=False);
+        end else
+        begin
+          WriteLn('Walking near the mind altar');
+          SPS_BlindWalk(Point(RandomRange(39847, 39871), RandomRange(1023, 1043)));
+        end;
+    end;
+end;
+
+procedure FindTheWaterAltar;
+var
+  MyPos: TPoint;
+  AroundWaterAltar: TBox;
+  WaterAltarDTM, X, Y: Integer;
+  aFound: Extended;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_3']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundWaterAltar := IntToBox(39823, 1439, 39839, 1451);
+  if PointInBox(MyPos, AroundWaterAltar) then
+    begin
+      WriteLn('Our location is near the water altar');
+    end else
+    {We aren't near the altar, so we are going to walk near it using SPS}
+    begin
+      if MyPos = Point(-1, -1) then
+      begin
+        WriteLn('SPS hasn`t been able to recognize our location..');
+        WriteLn('Walking to the altar by using alternative methods!');
+        WriteLn('Counted colors: '+IntToStr(CountColorTolerance(6775397, MSX1, MSY1, MSX2, MSY2, 6))+'');
+        if not(FindColoredAreaTolerance(X, Y, 6775397, MSCX - 100, MSCY - 100, MSCX + 100, MSCY + 100, 250, 6)) then
+          begin
+            WaterAltarDTM := DTMFromString('mFQEAAHic42VgYChiYmBIAuIsIC4E4logbgbiRiCuBuISqBxITSwQVwGxH1BfABBHA3EcEEcBsS8QuwKxPRDbQGk3IDYG4gIgrqvRZSjK0mQoKtBkyC3UZMjM1QDTBXkaYLG8NA2wfFmeFkNz12yGtr75DFxAfaRiJjIwCgAALhwZKg==');
+            if not(FindDTMRotated(WaterAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound)) then
+              begin
+                RadialWalkTolerance(2720893, 0, 359, 75, 5, 5, 5);
+                Wait(1000 + Random(1000));
+                if FindColoredAreaTolerance(X, Y, 6775397, MSX1, MSY1, MSX2, MSY2, 250, 6) then
+                begin
+                  FreeDTM(WaterAltarDTM);
+                  WriteLn('We can see the water altar on our mainscreen now');
+                  Exit;
+                end;
+                if FindDTMRotated(WaterAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                  begin
+                    WriteLn('We have found the WaterAltarDTM on the minimap this time');
+                    MMouse(X, Y, 2, 2);
+                    Wait(25 + Random(125));
+                    ClickMouse2(1);
+                  end else
+                  begin
+                    RadialWalkTolerance(2720893, 0, 359, 25, 5, 5, 5);
+                    Wait(1000 + Random(1000));
+                    if FindColoredAreaTolerance(X, Y, 6775397, MSX1, MSY1, MSX2, MSY2, 250, 6) then
+                      begin
+                        FreeDTM(WaterAltarDTM);
+                        WriteLn('We can see the water altar on our mainscreen now');
+                        Exit;
+                      end;
+                    if FindDTMRotated(WaterAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                      begin
+                        WriteLn('We have found the WaterAltarDTM on the minimap this time');
+                        MMouse(X, Y, 2, 2);
+                        Wait(25 + Random(125));
+                        ClickMouse2(1);
+                      end else
+                      begin
+                        WriteLn('Something has went wrong, not able to navigate to the Water Altar');
+                      end;
+                  end;
+              end else
+              begin
+                WriteLn('We have found the WaterAltarDTM on the minimap');
+                MMouse(X, Y, 2, 2);
+                Wait(25 + Random(125));
+                ClickMouse2(1);
+              end;
+            FreeDTM(WaterAltarDTM);
+          end else
+          begin
+            WriteLn('We can see the water altar on our main screen!');
+          end;
+        Wait(100 + Random(100));
+          repeat
+            Wait(50 + Random(50));
+          until (IsMoving=False);
+      end else
+      begin
+        WriteLn('Walking near the water altar');
+        SPS_BlindWalk(Point(RandomRange(39823, 39839), RandomRange(1439, 1451)));
+      end;
+    end;
+end;
+
+procedure FindTheEarthAltar;
+var
+  MyPos: TPoint;
+  AroundEarthAltar: TBox;
+  EarthAltarDTM, X, Y: Integer;
+  aFound: Extended;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_4']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundEarthAltar := IntToBox(39827, 1819, 39843, 1835);
+  if PointInBox(MyPos, AroundEarthAltar) then
+    begin
+      WriteLn('Our location is near the water altar');
+    end else
+    begin
+      if MyPos = Point(-1, -1) then
+      begin
+        ColorToleranceSpeed(2);
+        SetColorSpeed2Modifiers(0.93, 0.27);
+        if not(FindColoredAreaTolerance(X, Y, 5657429, MSCX - 100, MSCY - 100, MSCX + 100, MSCY + 100, 500, 3)) then
+          begin
+            EarthAltarDTM := DTMFromString('mFQEAAHic42VgYDjPxsBwAYj3AvFZIH4ExIeA+A4QHwbi20B8DoiPQOlrQGzBxMCgDsSmQOwFxDZA7ALEBkCsBcRuQOwExGZQMUsgLklzZEgJ0WXIijRgSAgxY0gL0wOzQWJ5sYZgfk2OG0NTjhVDWbozQ0WqGQMX0H0cJGImNMxIBEYBAFHAG1s=');
+            if not(FindDTMRotated(EarthAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound)) then
+              begin
+                WriteLn('We haven`t been able to find the EarthAltarDTM');
+                ColorToleranceSpeed(1);
+                RadialWalkTolerance(3631228, 0, 359, 75, 5, 5, 5);
+                Wait(1000 + Random(1000));
+                ColorToleranceSpeed(2);
+                SetColorSpeed2Modifiers(0.93, 0.27);
+                if FindColoredAreaTolerance(X, Y, 5657429, MSX1, MSY1, MSX2, MSY2, 500, 3) then
+                  begin
+                    FreeDTM(EarthAltarDTM);
+                    WriteLn('We can see the Earth Altar on the mainscreen');
+                    Exit;
+                  end;
+                  ColorToleranceSpeed(1);
+                  if FindDTMRotated(EarthAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                    begin
+                      WriteLn('We have found the BodyAltarDTM on the minimap this time');
+                      MMouse(X, Y, 2, 2);
+                      Wait(25 + Random(125));
+                      ClickMouse2(1);
+                      Wait(100 + Random(100));
+                        repeat
+                          Wait(50 + Random(50));
+                        until (IsMoving=False);
+                      FreeDTM(EarthAltarDTM);
+                    end else
+                    begin
+                      ColorToleranceSpeed(1);
+                      RadialWalkTolerance(3631228, 0, 359, 35, 5, 5, 5);
+                      Wait(1000 + Random(1000));
+                      ColorToleranceSpeed(2);
+                      SetColorSpeed2Modifiers(0.93, 0.27);
+                      if FindColoredAreaTolerance(X, Y, 5657429, MSX1, MSY1, MSX2, MSY2, 500, 3) then
+                        begin
+                          FreeDTM(EarthAltarDTM);
+                          WriteLn('We can see the Earth Altar on the mainscreen');
+                          Exit;
+                        end;
+                        ColorToleranceSpeed(1);
+                        if FindDTMRotated(EarthAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                          begin
+                            WriteLn('We have found the BodyAltarDTM on the minimap this time');
+                            MMouse(X, Y, 2, 2);
+                            Wait(25 + Random(125));
+                            ClickMouse2(1);
+                          end else
+                          begin
+                            WriteLn('Something has went wrong, not able to navigate to the Body Altar');
+                          end;
+                    end;
+              end else
+              begin
+                WriteLn('We have found the EarthAltarDTM on the minimap');
+                MMouse(X, Y, 2, 2);
+                Wait(25 + Random(125));
+                ClickMouse2(1);
+                Wait(100 + Random(100));
+                repeat
+                  Wait(50 + Random(50));
+                until (IsMoving=False);
+                FreeDTM(EarthAltarDTM);
+              end;
+          end else
+          begin
+            WriteLn('We can see the earth altar on our main screen!');
+          end;
+      end else
+      begin
+        {We aren't near the altar, so we are going to walk near it using SPS}
+        WriteLn('Walking near the earth altar');
+        SPS_BlindWalk(Point(RandomRange(39827, 39843), RandomRange(1819, 1835)));
+      end;
+    end;
+end;
+
+procedure FindTheFireAltar;
+var
+  MyPos: TPoint;
+  AroundFireAltar: TBox;
+  FireAltarDTM, X, Y: Integer;
+  aFound: Extended;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_5']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundFireAltar := IntToBox(39835, 2239, 39851, 2255);
+  if PointInBox(MyPos, AroundFireAltar) then
+    begin
+      WriteLn('Our location is near the fire altar');
+    end else
+    {We aren't near the altar, so we are going to walk near it using SPS}
+    begin
+      if MyPos = Point(-1, -1) then
+      begin
+        ColorToleranceSpeed(1);
+        if not(FindColoredAreaTolerance(X, Y, 6512225, MSCX - 100, MSCY - 100, MSCX + 100, MSCY + 100, 500, 6)) then
+          begin
+            FireAltarDTM := DTMFromString('mwQAAAHic42RgYJjGxsAwHYhbgXgpEE8F4n4gngvE5UDcDcRSTAwMPEAsA8XaQKwExCJALADElkAc7mXJEOSsyxDubsDg66DNEOKqz5ASZA7GWpJcYMwPtI+LAGYEYiYCGA4A2jUNQg==');
+            if not(FindDTMRotated(FireAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound)) then
+              begin
+                WriteLn('We haven`t found the DTM, radial walking near the altar');
+                RadialWalkTolerance(3823718, 0, 359, 60, 5, 5, 5);
+                Wait(1000 + Random(1000));
+                if FindColoredAreaTolerance(X, Y, 6512225, MSX1, MSY1, MSX2, MSY2, 500, 6) then
+                  begin;
+                    FreeDTM(FireAltarDTM);
+                    WriteLn('We are near the altar');
+                    Exit;
+                  end;
+                ColorToleranceSpeed(1);
+                if FindDTMRotated(FireAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                  begin
+                    WriteLn('We have found the FireAltarDTM on the minimap this time');
+                    MMouse(X, Y, 2, 2);
+                    Wait(25 + Random(125));
+                    ClickMouse2(1);
+                  end else
+                  begin
+                    ColorToleranceSpeed(1);
+                    RadialWalkTolerance(3823718, 0, 359, 25, 5, 5, 5);
+                    Wait(1000 + Random(1000));
+                    if FindDTMRotated(FireAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                      begin
+                        WriteLn('We have found the FireAltarDTM on the minimap this time');
+                        MMouse(X, Y, 2, 2);
+                        Wait(25 + Random(125));
+                        ClickMouse2(1);
+                      end else
+                      begin
+                        WriteLn('Something has went wrong, not able to navigate to the Fire Altar');
+                      end;
+                  end;
+              end else
+              begin
+                WriteLn('We have found the FireAltarDTM on the minimap');
+                MMouse(X, Y, 2, 2);
+                Wait(25 + Random(125));
+                ClickMouse2(1);
+              end;
+            FreeDTM(FireAltarDTM);
+          end else
+          begin
+            WriteLn('We can see the fire altar on our main screen!');
+          end;
+        Wait(100 + Random(100));
+          repeat
+            Wait(50 + Random(50));
+          until (IsMoving=False);
+      end else
+      begin
+        WriteLn('Walking near the fire altar');
+        SPS_BlindWalk(Point(RandomRange(39835, 39851), RandomRange(2239, 2255)));
+      end;
+    end;
+end;
+
+procedure FindTheBodyAltar;
+var
+  MyPos: TPoint;
+  AroundBodyAltar: TBox;
+  BodyAltarDTM, X, Y: Integer;
+  aFound: Extended;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_6']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundBodyAltar := IntToBox(39835, 2651, 39851, 2667);
+  if PointInBox(MyPos, AroundBodyAltar) then
+    begin
+      WriteLn('Our location is near the body altar');
+    end else
+    {We aren't near the altar, so we are going to walk near it using SPS}
+    begin
+      if MyPos = Point(-1, -1) then
+      begin
+        ColorToleranceSpeed(2);
+        SetColorSpeed2Modifiers(0.48, 0.20);
+        if not(FindColoredAreaTolerance(X, Y, 9275018, MSCX - 100, MSCY - 100, MSCX + 100, MSCY + 100, 300, 5)) then
+          begin
+            BodyAltarDTM := DTMFromString('mfgEAAHicE2JgYLjOxsBwCYgvAvF9KD4PpU8C8TMgPg6lXwDxYSC+ygbRdwOItwHxByCWZ2JgkARiVSBWB2JxIJYDYkUg5gdiXSDWAmIBqLgcVFwPiC2BWBSIuYG4Na+MoTm3hKG9oIKhMiWLoau4EoirgfwyhsK4ZIb8mCSG2ox8hvLkDDAfxM6OiGMojk8Fq2/NKwGK5TGwAv1GDcxIJYwJABFDKfo=');
+            if not(FindDTMRotated(BodyAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound)) then
+              begin
+                ColorToleranceSpeed(1);
+                RadialWalkTolerance(8223117, 0, 359, 75, 5, 5, 5);
+                Wait(1000 + Random(1000));
+                ColorToleranceSpeed(2);
+                SetColorSpeed2Modifiers(0.48, 0.20);
+                if FindColoredAreaTolerance(X, Y, 9275018, MSX1, MSY1, MSX2, MSY2, 300, 5) then
+                  begin
+                    FreeDTM(BodyAltarDTM);
+                    WriteLn('We can see the Body Altar on the mainscreen');
+                    Exit;
+                  end;
+                ColorToleranceSpeed(1);
+                if FindDTMRotated(BodyAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                  begin
+                    WriteLn('We have found the BodyAltarDTM on the minimap this time');
+                    MMouse(X, Y, 2, 2);
+                    Wait(25 + Random(125));
+                    ClickMouse2(1);
+                  end else
+                  begin
+                    ColorToleranceSpeed(1);
+                    RadialWalkTolerance(8223117, 0, 359, 25, 5, 5, 5);
+                    Wait(1000 + Random(1000));
+                    ColorToleranceSpeed(2);
+                    SetColorSpeed2Modifiers(0.48, 0.20);
+                    if FindColoredAreaTolerance(X, Y, 9275018, MSX1, MSY1, MSX2, MSY2, 300, 5) then
+                      begin
+                        FreeDTM(BodyAltarDTM);
+                        WriteLn('We can see the Body Altar on the mainscreen');
+                        Exit;
+                      end;
+                    ColorToleranceSpeed(1);
+                    if FindDTMRotated(BodyAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                      begin
+                        WriteLn('We have found the BodyAltarDTM on the minimap this time');
+                        MMouse(X, Y, 2, 2);
+                        Wait(25 + Random(125));
+                        ClickMouse2(1);
+                      end else
+                      begin
+                        WriteLn('Something has went wrong, not able to navigate to the Body Altar');
+                      end;
+                  end;
+              end else
+              begin
+                WriteLn('We have found the BodyAltarDTM on the minimap');
+                MMouse(X, Y, 2, 2);
+                Wait(25 + Random(125));
+                ClickMouse2(1);
+              end;
+            FreeDTM(BodyAltarDTM);
+          end else
+          begin
+            WriteLn('We can see the body altar on our main screen!');
+          end;
+        Wait(100 + Random(100));
+          repeat
+            Wait(50 + Random(50));
+          until (IsMoving=False);
+      end else
+      begin
+        WriteLn('Walking near the body altar');
+        SPS_BlindWalk(Point(RandomRange(39835, 39851), RandomRange(2651, 2667)));
+      end;
+    end;
+end;
+
+procedure Test;
+var
+  X, Y: Integer;
+
+begin;
+  ColorToleranceSpeed(2)
+  if FindColorSpiralTolerance(X, Y, 62451, MMCX - 20, MMCY - 20, MMCX + 20, MMCY + 20, 6) then
+    begin
+      MMouse(X, Y, 2, 2);
+    end;
+end;
+
+
+
+function RandomPointDist(TPA: TPointArray; MaxDist: Integer): TPoint;      //By MormonMan
+var
+  MP, P: TPoint;
+begin
+  if not LoggedIn then Exit;
+  P := Point(-1, -1);
+  MP := MiddleTPA(TPA);
+  while (Distance(MP.x, MP.y, P.x, P.y) > MaxDist) do
+    P := TPA[Random(Length(TPA) - 1)];
+  Result := P;
+end;
+
+Function NPCDotsToMS: Boolean;
+var
+  NPCs: TPointArray;
+  P: TPoint;
+  B: TBox;
+begin
+  NPCs:= GetMMDotsOnMS('NPC');
+  SortTPAByY(NPCs, True);
+  P:= RandomPointDist(NPCs, 20);
+  P:= MMToMS(P);
+  Result:= P <> Point(-1, -1);
+  B:= IntToBox(P.X - 20, P.Y - 20, P.X + 20, P.Y + 20);
+  MouseTBox(B, 1);
+end;
+
+begin
+  SetUpLogin;
+  //SPSCheck;
+  //FindTheAirAltar;
+  //FindTheMindAltar;
+  //FindTheWaterAltar;
+  //FindTheEarthAltar;
+  //FindTheFireAltar;
+  //FindTheBodyAltar;
+  Test;
+  //NPCDotsToMS;
+end.

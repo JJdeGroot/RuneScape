@@ -1,0 +1,315 @@
+{* AccountNavigator made by J J *}
+program AccountNavigator;
+{$DEFINE SMART}
+{$i SRL/SRL.simba}
+{$i sps/sps.simba}
+{$loadlib Appa_Simba}
+
+const
+  loginname = '';         // Your email name
+  loginextension = '@outlook.com';   // Your email provider
+  pass = '';
+  Y_OFFSET_LOGIN = -50;
+  Y_OFFSET_RUNESCAPE = -50;
+
+var
+  Count, Timer: Integer;
+
+// Declares the players
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+  Players[0].Name := loginname + '+' + IntToStr(Count) + loginextension;
+  Players[0].Pass := pass;
+  Players[0].Active := True;
+  Players[0].Pin := '';
+  Players[0].Member := true;
+end;
+
+// Clicks on a point in a box
+procedure ClickBox(B: TBox; ClickType: Integer);
+var
+  X, Y: Integer;
+
+begin
+  X := RandomRange(B.X1, B.X2);
+  Y := RandomRange(B.Y1, B.Y2);
+  MMouse(X, Y, 0, 0);
+  ClickMouse2(ClickType);
+end;
+
+// Clicks on the create a new account text
+function CreateNewAccount: boolean;
+var
+  LoginCreateAccountBox: TBox;
+
+begin
+  if RSReady then
+  begin
+    LoginCreateAccountBox := IntToBox(320, 416+Y_OFFSET_LOGIN, 443, 427+Y_OFFSET_LOGIN);
+    ClickBox(LoginCreateAccountBox, 1);
+    Result := True;
+  end;
+end;
+
+// Counts the blue colors of the facebook ad at the creation screen
+function CreateScreen: boolean;
+begin
+  Result := CountColorTolerance(RGBtoColor(75, 115, 180), 63, 141+Y_OFFSET_LOGIN, 711, 167+Y_OFFSET_LOGIN, 30) > 50;
+end;
+
+// Registers a new account
+function RegisterAccount: boolean;
+var
+  CreateEmailBox1, CreateEmailBox2,
+  CreatePasswordBox1, CreatePasswordBox2, CreateAgeBox,
+  CreateContinueBox: TBox;
+  CreateBoxes: TBoxArray;
+  i: Integer;
+  Details: TStringArray;
+
+begin
+  if WaitFunc(@CreateScreen, 200, 5000) then
+  begin
+    CreateEmailBox1 := IntToBox(250, 166+Y_OFFSET_LOGIN, 475, 186+Y_OFFSET_LOGIN);
+    CreateEmailBox2 := IntToBox(250, 196+Y_OFFSET_LOGIN, 475, 214+Y_OFFSET_LOGIN);
+    CreatePasswordBox1 := IntToBox(250, 227+Y_OFFSET_LOGIN, 475, 247+Y_OFFSET_LOGIN);
+    CreatePasswordBox2 := IntToBox(250, 256+Y_OFFSET_LOGIN, 475, 276+Y_OFFSET_LOGIN);
+    CreateAgeBox := IntToBox(250, 290+Y_OFFSET_LOGIN, 302, 309+Y_OFFSET_LOGIN);
+    CreateContinueBox := IntToBox(258, 400+Y_OFFSET_LOGIN, 338, 416+Y_OFFSET_LOGIN);
+
+    CreateBoxes := [CreateEmailBox1, CreateEmailBox2,
+                    CreatePasswordBox1, CreatePasswordBox2,
+                    CreateAgeBox];
+
+    Details := ['accounttest123+' + IntToStr(Count) + '@outlook.com',
+                'accounttest123+' + IntToStr(Count) + '@outlook.com',
+                'tester123', 'tester123', '18'];
+
+    for i:=0 to high(Details) do
+    begin
+      ClickBox(CreateBoxes[i], 1);
+      Wait(RandomRange(300, 600));
+      TypeSendEx(Details[i], False);
+      Wait(RandomRange(300, 600));
+    end;
+
+    ClickBox(CreateContinueBox, 1);
+    Result := True;
+  end;
+end;
+
+// Counts the blue colors of the facebook ad at the login screen
+function LoginScreen: boolean;
+begin
+  Result := CountColorTolerance(RGBtoColor(75, 115, 180), 331, 359+Y_OFFSET_LOGIN, 434, 389+Y_OFFSET_LOGIN, 30) > 50;
+end;
+
+function StyleScreen: boolean;
+begin
+  Result := CountColorTolerance(RGBToColor(70, 90, 20), 16, 43 + Y_OFFSET_LOGIN, 759, 515 + Y_OFFSET_LOGIN, 35) > 3000;
+end;
+
+function NameScreen: boolean;
+begin
+  Result := CountColorTolerance(RGBtoColor(25, 25, 25), 31, 158 + Y_OFFSET_LOGIN, 379, 400 + Y_OFFSET_LOGIN, 20) > 1000;
+end;
+
+
+// Sets up your RuneScape character
+function HandleSetup: boolean;
+var
+  T: Integer;
+  DisplayName: String;
+  Style: boolean;
+
+begin
+  MarkTime(T);
+  while (TimeFromMark(T) < 60000) do
+  begin
+    if StyleScreen then
+    begin
+      MouseBox(630, 474 + Y_OFFSET_LOGIN, 719, 491+ Y_OFFSET_LOGIN, 1);
+      Wait(RandomRange(2000, 3000));
+      ClickMouse2(1);
+      Wait(RandomRange(2000, 3000));
+      Style := True;
+    end;
+
+    if Style then
+      if NameScreen then
+      begin
+        MouseBox(158, 235 + Y_OFFSET_LOGIN, 330, 252 + Y_OFFSET_LOGIN, 1);
+        Wait(RandomRange(300, 600));
+        DisplayName := IntToStr(Count) + 'rsdeals' + IntToStr(RandomRange(100, 999));
+        TypeSendEx(DisplayName, False);
+        Mousebox(165, 368 + Y_OFFSET_LOGIN, 245, 388 + Y_OFFSET_LOGIN, 1);
+        Result := True;
+        break;
+      end;
+  end;
+end;
+
+// Skips the cutscene
+procedure SkipCutscene;
+begin
+  // If we have a cutscene then
+  if PercentBlackMM > 90 then
+  begin
+    KeyDown(VK_ESCAPE);
+    Wait(RandomRange(50, 100));
+    KeyUp(VK_ESCAPE);
+  end else
+  begin
+    // Check if we need to press continue
+    if CountColorTolerance(RGBToColor(230, 180, 70), 130, 235, 538, 385, 50) > 500 then
+    begin
+      MouseBox(434, 443 + 25 + Y_OFFSET_LOGIN, 613, 460 + 25 + Y_OFFSET_LOGIN, 1);
+      Wait(RandomRange(7000, 9000));
+    end;
+  end;
+end;
+
+function TutorialStart: boolean;
+begin
+  Result := CountColorTolerance(RGBtoColor(14, 14, 14), 84, 126 + Y_OFFSET_RUNESCAPE, 432, 336 + Y_OFFSET_RUNESCAPE, 10) > 1000;
+end;
+
+// Handles the tutorial
+procedure HandleTutorial;
+begin
+  // Rotates the angle then puts it back to north/high
+  MakeCompass(RandomRange(10, 350));
+  ClickNorth(SRL_ANGLE_HIGH);
+
+  // Goes to the Noticeboard
+  Mousebox(558, 224 + Y_OFFSET_RUNESCAPE, 577, 249 + Y_OFFSET_RUNESCAPE, 1);
+  Wait(RandomRange(1000, 2000));
+
+  // Opens the noticeboard
+  Mousebox(565, 261 + Y_OFFSET_RUNESCAPE, 684, 274 + Y_OFFSET_RUNESCAPE, 1);
+  Wait(RandomRange(2000, 3000));
+
+  // Clicks on back
+  Mousebox(681, 218 + Y_OFFSET_RUNESCAPE, 738, 231 + Y_OFFSET_RUNESCAPE, 1);
+  Wait(RandomRange(500, 1000));
+
+  // Clicks on options
+  Mousebox(683, 131 + Y_OFFSET_RUNESCAPE, 735, 142 + Y_OFFSET_RUNESCAPE, 1);
+  Wait(RandomRange(2000, 3000));
+
+  // Puts the tutorial off
+  Mousebox(330, 370 + Y_OFFSET_RUNESCAPE, 434, 384 + Y_OFFSET_RUNESCAPE, 1);
+  Wait(RandomRange(2000, 3000));
+end;
+
+// Lodestone teleports to lumbridge
+function LodestoneToLumbridge: boolean;
+var
+  X, Y, HomeTeleport: Integer;
+
+begin
+  if not(GetCurrentTab = tab_Magic) then
+  begin
+    GameTab(tab_Magic);
+    Wait(RandomRange(1000, 2000));
+  end;
+
+  HomeTeleport := DTMFromString('mbQAAAHicY2VgYFjIxsCwgA1CzwDiVUB8lomB4QgQXwPic1C878gnhrY5N1AwP1A/OmbEgsEAAMfVEgE=');
+  if FindDTM(HomeTeleport, X, Y, MIX1, MIY1, MIX2, MIY2) then
+  begin
+    MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+    ClickMouse2(1);
+    if WaitFunc(@LodestoneScreen, RandomRange(200, 400), 4000) then
+    begin
+      MouseBox(320, 233, 334, 245, 1);
+      Wait(RandomRange(20000, 25000));
+      Result := True;
+    end;
+  end;
+  FreeDTM(HomeTeleport);
+end;
+
+function ToNorthLumbridge: boolean;
+var
+  Attempts: Integer;
+  TPA, QuestToBill: TPointArray;
+
+begin
+  SymbolAccuracy := 0.6;
+  SPS_Setup(RUNESCAPE_SURFACE, ['11_8', '11_9']);
+  QuestToBill := [Point(4701, 3569), Point(4701, 3563), Point(4699, 3555),
+                  Point(4697, 3550), Point(4692, 3547), Point(4683, 3545),
+                  Point(4675, 3544), Point(4668, 3545), Point(4655, 3544),
+                  Point(4647, 3544), Point(4637, 3543), Point(4625, 3541),
+                  Point(4615, 3540), Point(4609, 3535), Point(4602, 3530),
+                  Point(4598, 3525), Point(4597, 3517), Point(4595, 3511),
+                  Point(4596, 3505), Point(4596, 3497), Point(4594, 3488),
+                  Point(4595, 3481), Point(4596, 3469), Point(4593, 3460),
+                  Point(4592, 3454), Point(4589, 3437), Point(4584, 3433),
+                  Point(4578, 3429), Point(4572, 3426), Point(4566, 3423),
+                  Point(4559, 3418), Point(4554, 3413), Point(4548, 3409),
+                  Point(4544, 3402), Point(4543, 3389), Point(4547, 3385),
+                  Point(4551, 3387)];
+
+  while FindSymbolsMulti(TPA, ['rest', 'dungeon', 'anvil', 'training dummy', 'furnace']) do
+  begin
+    Inc(Attempts);
+    if (Attempts > 10) then
+      break;
+    RadialWalkTolerance(5198671, 330, 359, 70, RandomRange(-2, 2), RandomRange(-2, 2), 25)
+  end;
+end;
+
+// Tries to walk to the grand exchange, time out after 5 minutes.
+function WalkToGrandExchange: boolean;
+var
+  Path: TPointArray;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['10_5', '10_6', '10_7', '10_8', '11_5', '11_6', '11_7', '11_8']);
+  Path := [Point(4671, 3539), Point(4664, 3539), Point(4655, 3539), Point(4646, 3539), Point(4639, 3539), Point(4630, 3538), Point(4620, 3538), Point(4611, 3534), Point(4605, 3528), Point(4599, 3522), Point(4597, 3513), Point(4596, 3505), Point(4594, 3493), Point(4594, 3484), Point(4593, 3474), Point(4591, 3465), Point(4589, 3452), Point(4586, 3445), Point(4584, 3439), Point(4576, 3435), Point(4570, 3428), Point(4563, 3427), Point(4557, 3425), Point(4555, 3421), Point(4552, 3414), Point(4550, 3408), Point(4545, 3400), Point(4545, 3391), Point(4545, 3381), Point(4545, 3366), Point(4545, 3355), Point(4539, 3349), Point(4536, 3337), Point(4536, 3329), Point(4543, 3321), Point(4547, 3312), Point(4548, 3298), Point(4547, 3292), Point(4544, 3283), Point(4544, 3272), Point(4543, 3260), Point(4543, 3249), Point(4540, 3232), Point(4540, 3220), Point(4541, 3208), Point(4534, 3203), Point(4529, 3201), Point(4522, 3194), Point(4518, 3188), Point(4518, 3180), Point(4521, 3170), Point(4522, 3162), Point(4525, 3154), Point(4527, 3147), Point(4527, 3136), Point(4527, 3130), Point(4525, 3121), Point(4525, 3112), Point(4525, 3098), Point(4525, 3091), Point(4525, 3079), Point(4525, 3068), Point(4525, 3061), Point(4526, 3053), Point(4523, 3038), Point(4522, 3027), Point(4522, 3017), Point(4522, 3006), Point(4522, 2999), Point(4522, 2987), Point(4522, 2974), Point(4522, 2965), Point(4522, 2957), Point(4523, 2951), Point(4523, 2945), Point(4524, 2935), Point(4524, 2924), Point(4524, 2914), Point(4528, 2902), Point(4528, 2896), Point(4530, 2884), Point(4530, 2874), Point(4530, 2866), Point(4530, 2859), Point(4531, 2852), Point(4531, 2845), Point(4523, 2834), Point(4513, 2825), Point(4510, 2818), Point(4507, 2810), Point(4505, 2806), Point(4503, 2799), Point(4503, 2793), Point(4502, 2784), Point(4502, 2780), Point(4495, 2771)];
+  SPS_WalkPath(Path);
+
+  case (Count mod 3) of
+    0: Result := SPS_BlindWalk(Point(4562, 2751));
+    1: Result := SPS_BlindWalk(Point(4431, 2752));
+    2: Result := SPS_BlindWalk(Point(4430, 2640));
+  end;
+end;
+
+begin
+  SetupSRL;
+  Count := 2;
+  DeclarePlayers;
+
+  for Count:=119 to 225 do
+  begin
+    writeln('account ' + IntToStr(Count));
+    if LoggedIn then Logout;
+    DeclarePlayers;
+    LogInPlayer;
+    Wait(RandomRange(6000, 8000));
+    if HandleSetup then
+    begin
+      Wait(RandomRange(7000, 9000));
+      SkipCutscene;
+      if WaitFunc(@TutorialStart, RandomRange(500, 1000), 20000) then
+      begin
+        HandleTutorial;
+        MarkTime(Timer);
+        while TimeFromMark(Timer) < 180000 do
+        begin
+          LodestoneToLumbridge;
+          ToNorthLumbridge;
+          if WalkToGrandExchange then
+            break;
+        end;
+      end;
+    end;
+    Wait(RandomRange(2000, 3000));
+    Logout;
+  end;
+ end.

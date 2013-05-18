@@ -1,0 +1,54 @@
+Error: Out of Global Vars range at line 521
+
+1. get 12 wheat
+enter cook guild
+upstairs
+2. get pie dish
+3. get apple
+upstairs
+4. get grapes
+5. get jug
+6. get pot
+
+7. 12x wheat in hopper/controls
+8. get grapes
+9. get jug
+
+downstairs
+10. get pot
+11. get apple
+12. get pie dish
+
+downstairs
+13. take flour 2x
+14. fill jug 2x
+15. make 2x bread
+16. fill jug 2x
+17. make 2x pastry dough
+18. pastry dough -> pie dish 2x
+19. apple -> pie shell 2x
+
+upstairs
+20. apple
+21. pie dish
+
+upstairs
+22. jug
+23. pot
+24. grapes
+
+downstairs
+downstairs
+
+25. 3x pot of flour
+26. 3x fill jug
+27. 3x make dough
+
+28. 3x pot of flour
+29. 3x fill jug
+30. 3x make pastry dough
+
+
+
+
+

@@ -1,0 +1,374 @@
+// Walk here: http://img717.imageshack.us/img717/8508/mapstart.png
+// Climb up the ladder, put your character here: http://img811.imageshack.us/img811/5749/thieverstart.png
+// Make sure that both the man & woman are inside the room
+program JJsThiever;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+{$i SRL/srl/misc/smartgraphics.simba}
+
+var
+  i, PickPockets: Integer;
+
+procedure Setup;
+begin
+  ClearDebug;
+  SetupSRL;
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+  with Players[0] do
+  begin
+    Name        := '';
+    Pass        := '';
+    Pin         := '';
+    Active      := True;
+  end;
+  LogInPlayer;
+  Wait(2000 + Random(2000));
+  ClickNorth(0);
+  FindNormalRandoms;
+end;
+
+
+// PICKPOCKETING RELATED
+function FindWoman: Boolean;
+var
+  i, j, t: Integer;
+  ATPA: Array[0..1] of TPointArray;
+  Colors, Tol, Area: Array of Integer;
+  BoxSize: Array[0..1] of Integer;
+  HueMod, SatMod: Array of Extended;
+  TBox: Array[0..1] of TBox;
+  ClearTPA: TPointArray;
+
+begin
+  // Details of the red shirt & gray skirt of woman
+  Colors := [1190202, 5397343]
+  Tol := [11, 12]
+  HueMod := [0.22, 0.22]
+  SatMod := [2.43, 0.05]
+  Area := [MSX1, MSY1, MSX2, MSY2]
+  ClearTPA := TPAFromBox(IntToBox(240, 110, 285, 140));
+  MarkTime(t);
+
+  for i:=0 to high(Colors) do
+    begin
+      SetColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(HueMod[i], SatMod[i]);
+      if FindColorsSpiralTolerance(MSCX, MSCY, ATPA[i], Colors[i], Area[0], Area[1], Area[2], Area[3], Tol[i]) then
+        begin
+          //WriteLn('Points: '+ToStr(ATPA[i])+'');
+          ClearTPAFromTPA(ATPA[i], ClearTPA);
+          //WriteLn('Length: '+IntToStr(Length(ATPA[i]))+'');
+          if (Length(ATPA[i])<50) then
+            Exit;
+          TBox[i] := GetTPABounds(ATPA[i]);
+          BoxSize[i] := (TBox[i].x1 + TBox[i].y1 + TBox[i].x2 + TBox[i].y2);
+        end;
+    end;
+  for i:=0 to (high(Colors)-1) do
+    begin
+      for j:=0 to high(ATPA[i]) do
+      if NearbyPointInArray(ATPA[i][j], 3, ATPA[i+1]) then
+        begin
+          if TimeFromMark(t) < 750 then
+            begin
+              MMouse(ATPA[i][j].x, ATPA[i][j].y, 2, RandomRange(-4, 4));
+              //if WaitUptextMulti(['tta', 'ack', 'an', 'Man'], 500) then
+                //begin
+                  //WriteLn('Point: '+ToStr(ATPA[i][j])+'');
+                  //WriteLn('Found a woman');
+                  ClickMouse2(0);
+                  WaitOptionMulti(['ick', 'ock', 'ket', 'PickPocket'], 250);
+                  Result:=True;
+                  Inc(PickPockets);
+                  Exit;
+                //end;
+            end else
+            begin
+              WriteLn('Too many attempts to find the woman, trying again soon');
+              Exit;
+            end;
+        end;
+    end;
+end;
+
+function FindMan: Boolean;
+var
+  i, j, t: Integer;
+  ATPA: Array[0..1] of TPointArray;
+  Colors, Tol, Area: Array of Integer;
+  BoxSize: Array[0..1] of Integer;
+  HueMod, SatMod: Array of Extended;
+  TBox: Array[0..1] of TBox;
+  ClearTPA: TPointArray;
+
+begin
+  // Details of the gray shirt & blue pants of man
+  Colors := [7638418, 3552820]
+  Tol := [19, 11]
+  HueMod := [0.10, 0.51]
+  SatMod := [0.28, 0.11]
+  Area := [MSX1, MSY1, MSX2, MSY2]
+  ClearTPA := TPAFromBox(IntToBox(240, 110, 285, 140));
+  MarkTime(t);
+
+  for i:=0 to high(Colors) do
+    begin
+      SetColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(HueMod[i], SatMod[i]);
+      if FindColorsSpiralTolerance(MSCX, MSCY, ATPA[i], Colors[i], Area[0], Area[1], Area[2], Area[3], Tol[i]) then
+        begin
+          //WriteLn('Points: '+ToStr(ATPA[i])+'');
+          ClearTPAFromTPA(ATPA[i], ClearTPA);
+          //WriteLn('Length: '+IntToStr(Length(ATPA[i]))+'');
+          if (Length(ATPA[i])<50) then
+            Exit;
+          TBox[i] := GetTPABounds(ATPA[i]);
+          BoxSize[i] := (TBox[i].x1 + TBox[i].y1 + TBox[i].x2 + TBox[i].y2);
+        end;
+    end;
+  for i:=0 to (high(Colors)-1) do
+    begin
+      for j:=0 to high(ATPA[i]) do
+      if NearbyPointInArray(ATPA[i][j], 3, ATPA[i+1]) then
+        begin
+          if TimeFromMark(t) < 750 then
+            begin
+              MMouse(ATPA[i][j].x, ATPA[i][j].y, RandomRange(1, 4), RandomRange(-4, 4));
+              //if WaitUptextMulti(['tta', 'ack', 'an', 'Man'], 500) then
+                //begin
+                  //WriteLn('Point: '+ToStr(ATPA[i][j])+'');
+                  //WriteLn('Found a man');
+                  ClickMouse2(0);
+                  WaitOptionMulti(['ick', 'ock', 'ket', 'PickPocket'], 250);
+                  Result:=True;
+                  Inc(PickPockets);
+                  Exit;
+                //end;
+            end else
+            begin
+              WriteLn('Too many attempts to find the man, trying again soon');
+              Exit;
+            end;
+        end;
+    end;
+end;
+
+
+// EATING
+function Eat: boolean;
+var
+  i, c, lp, percentage: Integer;
+  T: TBox;
+  ColorString: String;
+
+begin
+  lp := GetMMLevels('hp', ColorString);
+  if lp < 0 then lp := RandomRange(30, 400);
+  Percentage := Round(lp / 4);
+
+  writeln('LP : ' + IntToStr(LP));
+  writeln('HP percentage: ' + IntToStr(Percentage) + '%');
+
+  if (Percentage <= 10) then
+  begin
+    writeln('low health');
+    GameTab(tab_Inv);
+    if not InvEmpty then
+      for i:=1 to 28 do
+        if ExistsItem(i) then
+        begin
+          T := InvBox(i);
+          SMART_DrawBoxEx(False, False, T, clYellow);
+          c := CountColorTolerance(2768035, T.x1, T.y1+50, T.x2, T.y2+50, 60);
+          writeln('colors @ ' + IntToStr(i) + ': ' + IntToStr(c));
+          if c > 50 then
+          begin
+            Mousebox(T.x1, T.y1, T.x2, T.y2, 1);
+            Wait(RandomRange(1500, 2500));
+            Result := True;
+            break;
+          end;
+      end;
+  end else
+    Result := True;
+end;
+
+// GETTING THERE
+
+{* SwitchTab(Tab: Integer);
+ * Checks if the current tab is right, if not it changes and waits a bit
+}
+procedure SwitchTab(Tab: Integer);
+begin
+  if not(GetCurrentTab = Tab) then
+  begin
+    GameTab(Tab);
+    Wait(RandomRange(500, 1000));
+  end;
+end;
+
+{* LodestoneTo(String location)
+ * Lodestone teleports to Lumbridge or Edgeville
+ * Once arrived in the desired location, it rests until more than 80% energy
+}
+function LodestoneTo(Location: String): boolean;
+var
+  X, Y, HomeTeleport, T: Integer;
+  S: String;
+
+begin
+  SwitchTab(tab_Magic);
+
+  HomeTeleport := DTMFromString('mbQAAAHicY2VgYFjIxsCwgA1CzwDiVUB8lomB4QgQXwPic1C878gnhrY5N1AwP1A/OmbEgsEAAMfVEgE=');
+  if FindDTM(HomeTeleport, X, Y, MIX1, MIY1, MIX2, MIY2) then
+  begin
+    MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+    ClickMouse2(1);
+    if WaitFunc(@LodestoneScreen, 500, 2500) then
+    begin
+      Wait(RandomRange(1000, 2000));
+      case location of
+        'lumbridge': MouseBox(320, 233, 334, 245, 1);
+        'edgeville': MouseBox(289, 148, 299, 162, 1);
+      end;
+      Wait(RandomRange(20000, 22500));
+      Result := True;
+    end;
+  end;
+  FreeDTM(HomeTeleport);
+end;
+
+// Checks if we are at the thieving spot
+function AtThievingSpot: boolean;
+begin
+  Result := PercentBlackMM > 50;
+end;
+
+function LodestoneToSpot: boolean;
+var
+  Path: TPointArray;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['10_8', '10_9', '11_8', '11_9', '12_9']);
+  Path := [Point(4768, 3772), Point(4766, 3760), Point(4763, 3752),
+           Point(4759, 3745), Point(4755, 3740), Point(4750, 3735),
+           Point(4746, 3731), Point(4741, 3724), Point(4736, 3717),
+           Point(4729, 3709), Point(4726, 3702), Point(4721, 3694),
+           Point(4718, 3684), Point(4712, 3674), Point(4701, 3674),
+           Point(4686, 3673), Point(4674, 3673), Point(4664, 3672),
+           Point(4654, 3670), Point(4648, 3672), Point(4639, 3673),
+           Point(4638, 3678)];
+  SPS_WalkPath(Path);
+  Result := SPS_WalkToPos(Point(4639, 3684));
+end;
+
+function ClimbStairs: boolean;
+var
+  TPA: TPointArray;
+  ATPA: T2DPointArray;
+  P: TPoint;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.13, 0.21);
+
+  if FindColorsSpiralTolerance(MSCX, MSCY, TPA, 3622482, MSX1, MSY1, MSX2, MSY2, 5) then
+  begin
+    SplitTPAWrap(TPA, 5, ATPA);
+    SortATPASize(ATPA, True);
+    for i:=0 to high(ATPA) do
+    begin
+      P := MiddleTPA(ATPA[i]);
+      MMouse(P.x, P.y, RandomRange(-3, 3), RandomRange(-3, 3));
+      if WaitUpTextMulti(['limb', 'airs', 'Climb', 'Stairs'], 500) then
+      begin
+        ClickMouse2(1);
+        Wait(RandomRange(5000, 6000));
+        Result := True;
+        break;
+      end;
+    end;
+  end;
+end;
+
+function OpenDoor: boolean;
+var
+  T: Integer;
+
+begin
+  MarkTime(T);
+  while(TimeFromMark(T) < 10000) do
+  begin
+    MouseBox(304, 222-50, 317, 264-50, 2);
+    if WaitUpTextMulti(['pen', 'oor', 'Open', 'Door'], 400) then
+    begin
+      ClickMouse2(1);
+      break;
+    end;
+  end;
+  Result := TimeFromMark(T) < 10000;
+  Wait(RandomRange(2000, 3000));
+end;
+
+procedure WalkToRoom;
+begin
+  Mousebox(639, 127-50, 654, 150-50, 1);
+  Wait(RandomRange(2000, 3000));
+end;
+
+function GetToSpot: boolean;
+begin
+  if not(AtThievingSpot) then
+  begin
+    WriteLn('Walking to spot');
+    if LodestoneTo('lumbridge') then
+      if LodestoneToSpot then
+        if ClimbStairs then
+          if AtThievingSpot then
+            if OpenDoor then
+            begin
+              WalkToRoom;
+              Result := True;
+            end;
+  end else
+    Result := True;
+end;
+
+begin
+  Setup;
+  if GetToSpot then
+  begin
+    i := Random(2);
+    repeat
+      repeat
+        SMART_ClearCanvas;
+        SMART_DrawText(10, 65, UpChars, 'Running for: ' + TimeRunning, clWhite);
+        SMART_DrawText(10, 85, UpChars, 'Pickpocketed ' + IntToStr(PickPockets) + ' times', clWhite);
+
+        case Random(15) of
+          0: MMouse(RandomRange(MSX1, MSX2), RandomRange(MSY1, MSY2), 0, 0);
+        end;
+
+        if Eat then
+        begin
+          case i of
+            0: FindMan;
+            1: FindWoman;
+          end;
+          Wait(500 + Random(1000));
+        end else
+        begin
+          WriteLn('Out of food, terminating script and logging out');
+          TerminateScript;
+          Wait(RandomRange(10000, 20000));
+          Logout;
+        end;
+      until(FindChatBoxText('ail', 8, clBlack) or FindChatBoxText('tun', 8, clBlack));
+      Wait(4000 + Random(1500));
+    until(false);
+  end;
+  WriteLn('We probably failed to get to the spot...');
+end.

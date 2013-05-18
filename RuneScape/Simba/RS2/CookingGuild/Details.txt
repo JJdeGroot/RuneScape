@@ -1,0 +1,23 @@
+SPS_Areas := ['11_9','11_8','];
+
+myPath := [Point(4763, 3773), Point(4769, 3772), Point(4773, 3769), Point(4776, 3765), Point(4775, 3759), Point(4774, 3755), Point(4771, 3750), Point(4768, 3747), Point(4763, 3742), Point(4759, 3737), Point(4755, 3732), Point(4751, 3728), Point(4747, 3725), Point(4744, 3720), Point(4739, 3716), Point(4735, 3713), Point(4733, 3709), Point(4730, 3705), Point(4730, 3697), Point(4727, 3694), Point(4726, 3688), Point(4724, 3685), Point(4721, 3678), Point(4717, 3671), Point(4715, 3665), Point(4713, 3658), Point(4711, 3654), Point(4708, 3648), Point(4707, 3642), Point(4707, 3637), Point(4706, 3632), Point(4705, 3627), Point(4705, 3620), Point(4703, 3613), Point(4703, 3607), Point(4703, 3602), Point(4703, 3595), Point(4703, 3589), Point(4701, 3583), Point(4699, 3576), Point(4698, 3571), Point(4697, 3566), Point(4696, 3561), Point(4694, 3556), Point(4689, 3546), Point(4683, 3543), Point(4674, 3540), Point(4670, 3540), Point(4663, 3540), Point(4658, 3541), Point(4651, 3543), Point(4645, 3543), Point(4636, 3543), Point(4629, 3540), Point(4620, 3539), Point(4612, 3537), Point(4606, 3533), Point(4604, 3527), Point(4602, 3518), Point(4600, 3512), Point(4598, 3504), Point(4597, 3498), Point(4596, 3493), Point(4596, 3490), Point(4597, 3482), Point(4597, 3477), Point(4597, 3473), Point(4596, 3467), Point(4595, 3460), Point(4594, 3453), Point(4590, 3445), Point(4586, 3439), Point(4583, 3434), Point(4576, 3430), Point(4568, 3424), Point(4556, 3418), Point(4549, 3413), Point(4544, 3407), Point(4542, 3399)];
+
+
+
+
+// GENERAL STORe
+myPath := [Point(4763, 3773), Point(4769, 3772), Point(4773, 3769), Point(4776, 3765), Point(4775, 3759), Point(4774, 3755), Point(4771, 3750), Point(4768, 3747), Point(4763, 3742), Point(4759, 3737), Point(4755, 3732), Point(4751, 3728), Point(4747, 3725), Point(4744, 3720), Point(4739, 3716), Point(4735, 3713), Point(4733, 3709), Point(4730, 3705), Point(4730, 3697), Point(4727, 3694), Point(4726, 3688), Point(4724, 3685), Point(4721, 3678), Point(4717, 3671), Point(4715, 3665), Point(4713, 3658), Point(4711, 3654), Point(4708, 3648), Point(4707, 3642), Point(4707, 3637), Point(4706, 3632), Point(4705, 3627), Point(4705, 3620), Point(4703, 3613), Point(4703, 3607), Point(4703, 3602), Point(4703, 3595), Point(4703, 3589), Point(4701, 3583), Point(4699, 3576), Point(4698, 3571), Point(4697, 3566), Point(4696, 3561), Point(4694, 3556), Point(4689, 3546), Point(4683, 3543), Point(4674, 3540), Point(4670, 3540), Point(4663, 3540), Point(4658, 3541), Point(4651, 3543), Point(4645, 3543), Point(4636, 3543), Point(4629, 3540), Point(4620, 3539), Point(4612, 3537), Point(4606, 3533), Point(4604, 3527), Point(4602, 3518), Point(4600, 3512), Point(4598, 3504), Point(4597, 3498), Point(4596, 3493), Point(4596, 3490), Point(4597, 3482), Point(4597, 3477), Point(4597, 3473), Point(4596, 3467), Point(4595, 3460), Point(4594, 3453), Point(4590, 3445), Point(4586, 3439), Point(4583, 3434), Point(4576, 3430), Point(4568, 3424), Point(4556, 3418), Point(4549, 3413), Point(4544, 3407), Point(4542, 3399), Point(4542, 3390), Point(4546, 3383), Point(4551, 3382)];
+
+
+// FROM QUEST
+myPath := [Point(4701, 3569), Point(4701, 3563), Point(4699, 3555), Point(4697, 3550), Point(4692, 3547), Point(4683, 3545), Point(4675, 3544), Point(4668, 3545), Point(4655, 3544), Point(4647, 3544), Point(4637, 3543), Point(4625, 3541), Point(4615, 3540), Point(4609, 3535), Point(4602, 3530), Point(4598, 3525), Point(4597, 3517), Point(4595, 3511), Point(4596, 3505), Point(4596, 3497), Point(4594, 3488), Point(4595, 3481), Point(4596, 3469), Point(4593, 3460), Point(4592, 3454), Point(4589, 3437), Point(4584, 3433), Point(4578, 3429), Point(4572, 3426), Point(4566, 3423), Point(4559, 3418), Point(4554, 3413), Point(4548, 3409), Point(4544, 3402), Point(4543, 3389), Point(4547, 3385), Point(4551, 3387)];
+
+(4671, 3539)
+
+
+// BILL
+  SetColorSpeed2Modifiers(0.67, 0.07);
+6188652, 13
+
+ SetColorSpeed2Modifiers(0.20, 1.65);
+10537684, 18

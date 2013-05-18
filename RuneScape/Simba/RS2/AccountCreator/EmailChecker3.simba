@@ -1,0 +1,217 @@
+program EmailChecker;
+{$i SRL/SRL.simba}
+{$loadlib Appa_Simba}
+
+const
+  login = '';
+  pass = '';
+  activation = 'https://secure.runescape.com/m=email-register/submit_code.ws?code=';
+
+// Navigates to a certain page with a timeout
+function appa_NavigateTo(URL: string; TimeOut: Integer): Boolean;
+var
+  t: Integer;
+
+begin
+  if (not appa_Showing) then
+    Exit;
+
+  appa_Navigate(URL);
+  Wait(RandomRange(1000, 2000));
+  MarkTime(t);
+  while (not appa_PageLoaded) and appa_Showing and (TimeFromMark(t) < TimeOut) do
+    Wait(RandomRange(300, 600));
+
+  Result := appa_PageState >= 3;
+end;
+
+// Prints out all elements
+procedure PrintElements;
+var
+  Elements: TAppaElementArray;
+  i: Integer;
+
+begin
+  appa_GetElements(Elements);
+  for i:=0 to high(Elements) do
+  begin
+    WriteLn('Element ' + IntToStr(i) + ' Box: ' + ToStr(Elements[i].Box));
+    WriteLn('Element ' + IntToStr(i) + ' ClassName: ' + ToStr(Elements[i].ClassName));
+    WriteLn('Element ' + IntToStr(i) + ' ID: ' + ToStr(Elements[i].ID));
+    WriteLn('Element ' + IntToStr(i) + ' innerHTML: ' + ToStr(Elements[i].innerHTML));
+    WriteLn('Element ' + IntToStr(i) + ' outerHTML: ' + ToStr(Elements[i].outerHTML));
+    WriteLn('Element ' + IntToStr(i) + ' Tag: ' + ToStr(Elements[i].Tag));
+  end;
+end;
+
+// Prints all the form details out
+procedure PrintForms;
+var
+ Forms: TAppaFormArray;
+ i, j: Integer;
+begin
+  appa_GetForms(Forms);
+  for i:=0 to high(Forms) do
+  begin
+    WriteLn('Forms ' + IntToStr(i) + ' Action: ' + ToStr(Forms[i].Action));
+    WriteLn('Elements ' + IntToStr(i));
+    for j:=0 to high(Forms[i].Elements) do
+    begin
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' ClassName: ' + ToStr(Forms[i].Elements[j].ClassName));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' Name: ' + ToStr(Forms[i].Elements[j].Name));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' ID: ' + ToStr(Forms[i].Elements[j].ID));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' outerHTML: ' + ToStr(Forms[i].Elements[j].outerHTML));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' Tag: ' + ToStr(Forms[i].Elements[j].Tag));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' Value: ' + ToStr(Forms[i].Elements[j].Value));
+     end;
+    WriteLn('Forms ' + IntToStr(i) + ' Method: ' + ToStr(Forms[i].Method));
+    WriteLn('Forms ' + IntToStr(i) + ' Name: ' + ToStr(Forms[i].Name));
+
+    //appa_FormElementAction(const FormIndex, elIndex INteger, const act Tappaelementarray, const param: ansistring);
+
+  end;
+end;
+
+// Moves the mouse to a random spot in a box
+procedure appa_ClickBox(B: TBox; ClickType: boolean);
+var
+  X, Y: Integer;
+
+begin
+  X := RandomRange(B.X1, B.X2);
+  Y := RandomRange(B.Y1, B.Y2);
+  appa_MoveMouse(X, Y);
+  appa_HoldMouse(X, Y, True);
+  Wait(RandomRange(50, 70));
+  appa_ReleaseMouse(X, Y, ClickType);
+  writeln(Point(X, Y));
+end;
+
+// Sends multiple keys
+procedure appa_SendKeys(s: string);
+var
+  i, KeyNr: LongInt;
+
+begin
+  for i:=1 to Length(s) do
+  begin
+    if(s[i] = '@') then
+      KeyNr := Ord('@')
+    else
+      KeyNr := GetKeyCode(s[i]);
+
+    writeln(s[i]);
+    writeln(keynr);
+
+    appa_SendKey(keynr);
+
+    appa_KeyDown(KeyNr);
+    Wait(RandomRange(100, 200));
+    appa_KeyUp(KeyNr);
+
+        {
+    if(s[i] = '@') then
+      appa_SendKey(Ord('@'))
+    else
+      appa_SendKey(GetKeyCode(s[i]));
+           }
+      {
+    writeln(s[i]);
+    writeln(Shift);
+
+    if(Shift) then
+      appa_KeyDown(VK_SHIFT);
+    appa_KeyDown(GetKeyCode(s[i]));
+    Wait(100);
+    appa_KeyUp(GetKeyCode(s[i]));
+    if(Shift) then
+      appa_KeyUp(VK_SHIFT);
+    Wait(100);
+    }
+  end;
+end;
+
+// Logs in to your hotmail account
+function OpenEmailBox: boolean;
+var
+  Forms: TAppaFormArray;
+  Elements: TAppaElementArray;
+  i, j: Integer;
+  Box: TBox;
+
+begin
+  appa_ShowForm; //Show the form
+  appa_SetSize(1000, 600);
+
+  if appa_NavigateTo('http://www.hotmail.com', 10000) then
+  begin
+    if(Pos('mail.live.com', appa_CurrentPage) > 0) then
+    begin
+      Result := True;
+      Exit;
+    end;
+
+    appa_GetForms(Forms);
+
+    //http://paste.villavu.com/raw/667/
+    for i:=0 to high(Forms) do
+      for j:=0 to high(Forms[i].Elements) do
+        case Forms[i].Elements[j].Name of
+          'login':  appa_FormElementAction(i, j, appa_SetValue, login);
+          'passwd': appa_FormElementAction(i, j, appa_SetValue, pass);
+        end;
+
+    Wait(RandomRange(300, 600));
+    appa_GetElements(Elements);
+    for i:=0 to high(Elements) do
+      if(Elements[i].ID = 'idSIButton9') then
+      begin
+        Box := IntToBox(Elements[i].Box.X1+5, Elements[i].Box.Y1+5, Elements[i].Box.X2-5, Elements[i].Box.Y2-5);
+        appa_ClickBox(Box, True);
+        Result := True;
+      end;
+   end;
+end;
+
+// Activates your account straight from the e-mail
+function ActivateAccount: boolean;
+var
+  Elements: TAppaElementArray;
+  i, Position: Integer;
+  Link: String;
+  Box: TBox;
+
+begin
+  appa_GetElements(Elements);
+  for i:=0 to high(Elements) do
+    if (Pos(activation, Elements[i].innerHTML) > 0) then
+    begin
+      Link := Between('account: <a href="', '" target="', Elements[i].innerHTML);
+      WriteLn('Basic link: ' + Link);
+
+      while(Pos('amp;', Link) > 0) do
+      begin
+        Position := Pos('amp;', Link);
+        Delete(Link, Position, 4);
+        writeln('Modified link: ' + Link);
+      end;
+
+      if appa_NavigateTo(Link, 10000) then
+      begin
+        Result := True;
+        break;
+      end;
+      // <a href="https://secure.runescape.com/m=email-register/submit_code.ws?code=0zhToMl1x3MziupHAn4C5khabjqJ6V2-FsAuig&amp;address=accounttest123%2B12%40outlook.com&amp;js=1"
+      //https://secure.runescape.com/m=email-register/submit_code.ws?code=0zhToMl1x3MziupHAn4C5khabjqJ6V2-FsAuig&amp;address=accounttest123%2B12%40outlook.com
+    end;
+end;
+
+begin
+  SetupSRL;
+  //OpenEmailBox;
+  PrintElements;
+  //PrintForms;
+  //writeln(ActivateAccount);
+  //writeln(Between('abc', 'fgh', 'abcdefgh'));
+
+end.

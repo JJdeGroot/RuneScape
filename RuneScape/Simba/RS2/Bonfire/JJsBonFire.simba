@@ -1,0 +1,397 @@
+program JJsCooker;
+{$DEFINE SMART}
+{$i srl/srl/misc/smart.simba}
+{$i srl/srl.simba}
+{$i ObjectDTM/ObjDTMInclude.simba}
+
+var
+  StartTime, BurnedLogs, LogXp: integer;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      { Fill this in with your details }
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+
+   LogXp  := 60;  {Replace 60 with your Firemaking xp value}
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  StartTime:=GetSystemTime;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+end;
+
+procedure Antiban;
+begin
+  case Random(5000) of
+    0..2: begin; HoverSkill('firemaking', False); Wait(300 + Random(500)); MMouse(256, 161, 250, 160); end;
+    3: begin; HoverSkill('random', False); Wait(300 + Random(500)); MMouse(256, 161, 250, 160); end;
+    4..6: RandomRClick;
+    7..8: PickUpMouse;
+    9..12: RandomMovement;
+    13..14: BoredHuman;
+    15: ExamineInv;
+    16..19: SleepAndMoveMouse(Random(5000));
+  end;
+end;
+
+function DetectSpirit: String;
+var
+  SpiritColors: TPointArray;
+  SpiritColorsSplit: T2DPointArray;
+  P: TPoint;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.16, 0.30);
+
+  if CountColorTolerance(4219032, MSX1, MSY1, MSX2, MSY2, 12) > 75 then
+  begin
+    WriteLn('Spirit detected');
+    if FindColorsTolerance(SpiritColors, 4219032, MSX1, MSY1, MSX2, MSY2, 12) then
+    begin
+      SortTPAFrom(SpiritColors, Point(MSCX, MSCY));
+      SpiritColorsSplit := SplitTPAEx(SpiritColors, 10, 20);
+      SortATPASize(SpiritColorsSplit, True);
+      P := MiddleTPA(SpiritColorsSplit[0]);
+      MMouse(P.X, P.Y, 2, 2);
+      if WaitUpTextMulti(['ollec', 'eward', 'ire s', 'irit'], 250) then
+        begin
+          ClickMouse2(1);
+          Result := 'Yes';
+          Wait(3000 + Random(3000));
+        end;
+    end;
+  end;
+end;
+
+procedure Bankbooth;
+var
+  arP: TPointArray;
+  ararP: T2DPointArray;
+  i, arL, X, Y: Integer;
+  P: TPoint;
+
+begin
+  FindNormalRandoms;
+  { Detects the bank booth }
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.06, 0.22);
+  FindColorsSpiralTolerance(X, Y, arP, 2905702, 156, 88, 239, 192, 5);
+  SortTPAFrom(arP, Point(MSCX, MSCY));
+  ararP := SplitTPAEx(arP, 80, 80);
+  arL := High(ararP);
+  for i := 0 to arL do
+    begin
+      { Banks via the bank booth }
+      P := MiddleTPA(ararP[i]);
+      MMouse(P.x, P.y, RandomRange(-20, -5), RandomRange(-5, 5));
+      Wait(50 + Random(50));
+      if WaitUpTextMulti(['Bank', 'ank'], 250) then
+        GetMousePos(X, Y);
+          case Random(4) of
+            0..2: begin; Mouse(X, Y, 0, 0, 0); WaitOptionMulti(['Bank', 'ank'], 250); end;
+            3: Mouse(X, Y, 0, 0, 1);
+          end;
+        Wait(1250 + Random(750));
+        if(PinScreen) then
+          InPin(Players[0].Pin);
+          if BankScreen then
+            begin
+                { Check if needed to empty inv }
+                if not(InvEmpty) then
+                begin
+                  { Deposits everything in the inventory }
+                  Mousebox(352, 297, 385, 320, 1);
+                  Wait(200 + Random(200));
+                  Mousebox(38, 92, 73, 123, 0);
+                  WaitOptionMulti(['aw-A', 'w-A', 'Withdraw-All'], 250);
+                  WriteLn('Withdrawed logs');
+                  Wait(200 + Random(200));
+                end else
+                begin
+                  Mousebox(38, 92, 73, 123, 0);
+                  WaitOptionMulti(['aw-A', 'w-A', 'Withdraw-All'], 250);
+                  WriteLn('Withdrawed logs');
+                  Wait(200 + Random(200));
+                end;
+          end;
+    end;
+end;
+
+procedure Banker;
+var
+  arP: TPointArray;
+  ararP: T2DPointArray;
+  i, arL, X, Y: Integer;
+  P: TPoint;
+
+begin
+  FindNormalRandoms;
+  { Detects the banker }
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.07, 0.14);
+  FindColorsSpiralTolerance(X, Y, arP, 4862264, 129, 111, 188, 176, 15);
+  SortTPAFrom(arP, Point(MSCX, MSCY));
+  ararP := SplitTPAEx(arP, 10, 20);
+  arL := High(ararP);
+  for i := 0 to arL do
+    begin
+      { Banks via the banker }
+      P := MiddleTPA(ararP[i]);
+      MMouse(P.x, P.y, 5, 5);
+      Wait(50 + Random(50));
+      if WaitUpTextMulti(['alk', 'alk-to', 'Talk'], 250) then
+        GetMousePos(X, Y);
+        Mouse(X, Y, 0, 0, 0);
+        if WaitOptionMulti(['ank Ba', 'Bank Banker'], 250) then
+          Wait(1250 + Random(750));
+          if(PinScreen) then
+            InPin(Players[0].Pin);
+            if BankScreen then
+              begin
+                { Check if needed to empty inv }
+                if not(InvEmpty) then
+                begin
+                  { Deposits everything in the inventory }
+                  Mousebox(352, 297, 385, 320, 1);
+                  Wait(200 + Random(200));
+                  Mousebox(38, 92, 73, 123, 0);
+                  WaitOptionMulti(['aw-A', 'w-A', 'Withdraw-All'], 250);
+                  WriteLn('Withdrawed logs');
+                  Wait(200 + Random(200));
+                end else
+                begin
+                  Mousebox(38, 92, 73, 123, 0);
+                  WaitOptionMulti(['aw-A', 'w-A', 'Withdraw-All'], 250);
+                  WriteLn('Withdrawed logs');
+                  Wait(200 + Random(200));
+                end;
+              end else
+                begin;
+                  Bankbooth;
+                end;
+    end;
+end;
+
+procedure Banking;
+begin;
+  Case Random(7) of
+    0..4: Bankbooth;
+    5..6: Banker;
+  end;
+end;
+
+procedure MakeFire;
+var
+  X, Y, Logs, q, xCoord, yCoord, xCoord2, yCoord2: Integer;
+  PBox: TBox;
+
+begin;
+  { Walking to a firemaking spot }
+  WriteLn('Walking to a firemaking spot');
+
+  xCoord := RandomRange(91, 99);
+  yCoord := RandomRange(52, 56);
+  ObjDTM_Walk(''+(IntToStr(xCoord))+':'+(IntToStr(yCoord))+':5:1:7:61:38:1:7:33:84:3:7:121:54:10:7:115:76:10:7:70:79', 3, 5, 5, True);
+
+  Wait(1250 + Random(1000));
+  FindNormalRandoms;
+  if GetCurrentTab = (tab_Inv) then
+    begin
+      WriteLn('Current tab is the inventory tab, correct')
+    end else
+    begin
+      FTab(tab_Inv);
+      WriteLn('Changed tabs to the inventory tab')
+    end;
+  if not(InvFull) then
+    begin
+      xCoord2 := RandomRange(82, 90);
+      yCoord2 := RandomRange(100, 106);
+      ObjDTM_Walk(''+(IntToStr(xCoord2))+':'+(IntToStr(yCoord2))+':5:1:7:31:104:3:7:123:75:1:7:61:58:10:7:117:121:10:7:69:117', 3, 5, 5, True);
+      Wait(1000 + Random(2000));
+      Banking;
+      ObjDTM_Walk(''+(IntToStr(xCoord))+':'+(IntToStr(yCoord))+':5:1:7:61:38:1:7:33:84:3:7:121:54:10:7:115:76:10:7:70:79', 3, 5, 5, True);
+      Wait(1000 + Random(2000));
+    end else
+
+  { Failsafe when standing on a fire }
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.15, 1.20);
+  if CountColorTolerance(2067940, 244, 159, 276, 193, 16) > 30 then
+    { Standing in a fire, moving }
+    begin;
+      MouseBox(211, 99, 318, 161, 1);
+      Wait(1200 + Random(800));
+    end;
+
+   FindNormalRandoms;
+
+  //ColorToleranceSpeed(2);
+  //SetColorSpeed2Modifiers(0.15, 2.06);
+  //if CountColorTolerance(4891101, MSX1, MSY1, MSX2, MSY2, 14) < 150 then
+  //begin
+    { Light a log }
+    Logs := DTMFromString('mrAAAAHic42BgYJjHBsETgXgyEM8H4jVAvAqIVwDxYSYGhp1AvA+Iz0DxCSA+CMS7gNhNjwtoChNO/B9I4sOMBDAMAAAVzhPn');
+    if FindDTM(Logs, X, Y, MIX1, MIY1, MIX2, MIY2) then
+      begin
+        MMouse(X, Y, 2, 2);
+        Mouse(X, Y, 0, 0, 0);
+        WaitOptionMulti(['ight', 'Light'], 150);
+        Wait(150 + Random(300));
+        Inc(BurnedLogs);
+      end;
+    FreeDTM(Logs);
+    { Check for fire animation }
+    PBox := IntToBox(282, 145, 320, 195);
+    FindNormalRandoms;
+    Marktime(q);
+    repeat
+      Wait(50 + Random(50));
+      Antiban;
+      Wait(50 + Random(50));
+    until (Animating(PBox, 100, 200)) or (TimeFromMark(q)>10000);
+    WriteLn('We have ignited a log')
+    Wait(150 + Random(250));
+  //end else
+  //begin
+    //WriteLn('There is a fire already');
+  //end;
+end;
+
+function AddLogs: Boolean;
+var
+  FireColors: TPointArray;
+  FireColorsSplit: T2DPointArray;
+  P: TPoint;
+
+begin;
+  FindNormalRandoms;
+
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.15, 1.20);
+  if FindColorsTolerance(FireColors, 2067940, 202, 128, 310, 229, 16) then
+  begin
+    SortTPAFrom(FireColors, Point(MSCX, MSCY));
+    FireColorsSplit := SplitTPAEx(FireColors, 15, 15);
+    SortATPASize(FireColorsSplit, True);
+    P := MiddleTPA(FireColorsSplit[0]);
+    MMouse(P.X, P.Y, 2, 2);
+    Wait(15 + Random(75))
+    ClickMouse2(0);
+    if WaitOptionMulti(['dd-l', 'add-', 'add-logs'], 250) then
+      begin
+        Result:=True;
+        Exit;
+      end else
+      begin
+        AddLogs;
+      end;
+  end;
+end;
+
+procedure WaitFiremaking;
+var
+  X, Y, Logs, e: Integer;
+
+begin
+  FindNormalRandoms;
+
+  MarkTime(e);
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.39, 0.80);
+  Logs := DTMFromString('mrAAAAHic42BgYJjHBsETgXgyEM8H4jVAvAqIVwDxYSYGhp1AvA+Iz0DxCSA+CMS7gNhNjwtoChNO/B9I4sOMBDAMAAAVzhPn');
+  repeat
+    Wait(200 + Random(400));
+    Antiban;
+    if DetectSpirit = 'Yes' then
+      begin
+        AddLogs;
+      end;
+  until not(FindDTM(Logs, X, Y, MIX1, MIY1, MIX2, MIY2)) or (TimeFromMark(e) > RandomRange(95000, 97500));
+  {if (CountColorTolerance(13620186, 202, 128, 310, 229, 7) > 40) then
+    begin
+      if AddLogs then
+      begin
+        MarkTime(w);
+        repeat
+          Wait(200 + Random(400));
+          Antiban;
+          if DetectSpirit = 'Yes' then
+          begin
+            AddLogs;
+          end;
+        until not(FindDTM(Logs, X, Y, MIX1, MIY1, MIX2, MIY2)) or (TimeFromMark(w) > 45000);
+      end else
+      begin
+        if FindDTM(Logs, X, Y, MIX1, MIY1, MIX2, MIY2) then
+          begin
+            MMouse(X, Y, 2, 2);
+            ClickMouse2(0);
+            Wait(25 + random(75));
+            WaitOptionMulti(['ight', 'Light'], 250);
+            Wait(2500 + Random(2000));
+            AddLogs;
+          end;
+      end;
+    end else
+    begin
+      WriteLn('No ashes next to us');
+    end;}
+  FreeDTM(logs);
+end;
+
+procedure WalkToBanker;
+var
+  xCoord2, yCoord2: Integer;
+
+begin
+  FindNormalRandoms;
+
+  xCoord2 := RandomRange(83, 89);
+  yCoord2 := RandomRange(102, 106);
+  ObjDTM_Walk(''+(IntToStr(xCoord2))+':'+(IntToStr(yCoord2))+':5:1:7:31:104:3:7:123:75:1:7:61:58:10:7:117:121:10:7:69:117', 3, 5, 5, True);
+  Wait(1500 + Random(1000));
+end;
+
+procedure Test;
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.15, 2.06);
+  WriteLn('Fire colors: '+IntToStr(CountColorTolerance(4891101, MSX1, MSY1, MSX2, MSY2, 14))+'');
+end;
+
+begin
+  SetUpLogin;
+  Wait(1000 + Random(3000));
+  ObjDTM_Setup;
+  repeat
+    Banking;
+    MakeFire;
+    if AddLogs then
+      begin
+        WaitFiremaking;
+        WalkToBanker;
+      end;
+  until not(LoggedIn);
+end.

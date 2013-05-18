@@ -1,0 +1,244 @@
+program JJsRedberryPicker;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+{$i srl/srl/misc/paintsmart.simba}
+
+var
+  Debug: Boolean;
+  RedBerry, Q: Integer;
+  WorldHop: Array of Integer;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  ClickNorth(0);
+  Wait(2000 + Random(500));
+end;
+
+function ObjFinder(Hue, Sat: Extended; Color, Tolerance, X1, Y1, X2, Y2: Integer; Width, Height:Integer; Sort: Boolean; Uptext: Array of String; xOffset, yOffset, UptextWaitTime: Integer): Boolean;
+var
+  X, Y, i: Integer;
+  ColorTPA: TPointArray;
+  ColorATPA: T2DPointArray;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(Hue, Sat);
+  if FindColorsTolerance(ColorTPA, Color, X1, Y1, X2, Y2, Tolerance) then
+    begin
+      SplitTPAExWrap(ColorTPA, Width, Height, ColorATPA);
+      if Debug then
+        begin
+          SMART_ClearCanvas;
+          WriteLn('Counted colors: '+IntToStr(CountColorTolerance(Color, X1, Y1, X2, Y2, Tolerance))+'');
+          WriteLn('TPA Length: '+IntToStr(Length(ColorTPA))+'');
+          SMART_DrawDotsEx(False, ColorTPA, clYellow);
+          SMART_DrawBoxes(False, [GetTPABounds(ColorTPA)], clPurple);
+          for i:=0 to High(ColorATPA) do
+            SMART_DrawBoxes(False, [GetTPABounds(ColorATPA[i])], clAqua);
+        end;
+      SortATPASize(ColorATPA, Sort);
+      for i:=0 to High(ColorATPA) do
+        begin
+          MiddleTPAEx(ColorATPA[i], X, Y);
+          MMouse(X, Y, xOffset, yOffset);
+          if WaitUpTextMulti(Uptext, UptextWaitTime) then
+            begin
+              Result := True;
+              Break;
+            end;
+        end;
+    end;
+end;
+
+procedure PickBerry;
+begin
+  //ObjFinder(Hue, Sat, Color, Tol, X1, Y1, X2, Y2, Width, Height, Sort, Uptext, Xoffset, yoffset, uptetwaittime);
+  if ObjFinder(0.01, 1.13, 2437069, 16, MSX1, MSY1, MSX2, MSY2, 10, 20, False, ['edbe', 'y bu', 'Redberry'], RandomRange(-2, 2), RandomRange(2, 8), 1000) then
+    begin
+      case Random(7) of
+        0..4: ClickMouse2(1);
+        5..6: begin
+                ClickMouse2(0);
+                WaitOptionMulti(['ick', 'from', 'Pick-from'], 500);
+              end;
+      end;
+      FFlag(0);
+      repeat
+        Wait(50 + Random(50));
+      until not(IsMoving);
+      Wait(1000 + Random(500));
+      Inc(RedBerry);
+    end else
+    begin
+      Inc(Q);
+      if Q > High(WorldHop) then
+        Q := 0;
+      if Debug then
+        WriteLn('Time to hop worlds');
+      ExitToLobby;
+      OpenWorldScreen;
+      SelectWorld(WorldHop[Q]);
+      LoginPlayer;
+      Wait(2000 + Random(500));
+      if Debug then
+        WriteLn('Switched worlds, logged in again');
+    end;
+end;
+
+function WalkToBank: Boolean;
+var
+  ToBank: TPointArray;
+  X, Y: Integer;
+
+begin
+  FindNormalRandoms;
+  if not(RunEnergy(RandomRange(70, 100))) then
+    RestUntil(RandomRange(90, 100));
+  ToBank := [Point(4948, 3162), Point(4953, 3162), Point(4959, 3162),
+             Point(4965, 3161), Point(4976, 3159), Point(4983, 3157),
+             Point(4991, 3154), Point(4997, 3151), Point(5001, 3146),
+             Point(5006, 3140), Point(5009, 3134), Point(5010, 3125),
+             Point(5009, 3115), Point(5005, 3107), Point(5004, 3097),
+             Point(5003, 3088), Point(5002, 3081), Point(5001, 3071),
+             Point(5004, 3062), Point(5003, 3052), Point(5002, 3045),
+             Point(5001, 3035), Point(5000, 3027), Point(4996, 3020),
+             Point(4993, 3014), Point(4989, 3004), Point(4983, 2993),
+             Point(4982, 2983), Point(4983, 2974), Point(4983, 2963),
+             Point(4979, 2954), Point(4973, 2946), Point(4968, 2939),
+             Point(4963, 2936), Point(4955, 2936), Point(4948, 2936),
+             Point(4941, 2935), Point(4921, 2935), Point(4913, 2935),
+             Point(4905, 2935), Point(4897, 2935), Point(4889, 2934),
+             Point(4879, 2935), Point(4870, 2937), Point(4860, 2938),
+             Point(4852, 2938)];
+  SPS_Setup(RUNESCAPE_SURFACE, ['12_7', '11_7', '12_8']);
+  if SPS_WalkPath(ToBank) then
+    begin
+      if FindSymbol(X, Y, 'bank') then
+        begin
+          MMouse(X, Y, RandomRange(-3, 3), RandomRange(-3, 3));
+          ClickMouse2(1);
+          FFlag(0);
+          repeat
+            Wait(50 + Random(50));
+          until not(IsMoving);
+          Wait(1000 + Random(500));
+          Result:=True;
+        end;
+    end;
+end;
+
+function WalkToBerry: Boolean;
+var
+  ToBerry: TPointArray;
+begin
+  FindNormalRandoms;
+  if not(RunEnergy(RandomRange(70, 100))) then
+    RestUntil(RandomRange(90, 100));
+  ToBerry := [Point(4850, 2962), Point(4850, 2956), Point(4851, 2948),
+              Point(4851, 2942), Point(4857, 2937), Point(4869, 2937),
+              Point(4880, 2937), Point(4891, 2938), Point(4902, 2938),
+              Point(4915, 2938), Point(4936, 2936), Point(4943, 2936),
+              Point(4949, 2936), Point(4959, 2940), Point(4966, 2946),
+              Point(4973, 2951), Point(4980, 2960), Point(4982, 2972),
+              Point(4983, 2984), Point(4983, 2997), Point(4989, 3008),
+              Point(4994, 3018), Point(4997, 3028), Point(5000, 3042),
+              Point(5002, 3053), Point(5001, 3064), Point(5001, 3079),
+              Point(5001, 3086), Point(5002, 3097), Point(5004, 3111),
+              Point(5005, 3123), Point(5010, 3136), Point(4998, 3149),
+              Point(4987, 3158), Point(4976, 3161), Point(4968, 3163)];
+  SPS_Setup(RUNESCAPE_SURFACE, ['12_7', '11_7', '12_8']);
+  if SPS_WalkPath(ToBerry) then
+    Result:=True;
+  Wait(1500 + Random(750));
+end;
+
+function Banking: Boolean;
+var
+  X, Y: Integer;
+
+begin
+  FindNormalRandoms;
+  OpenBank('veb', False, False);
+  if WaitFunc(@BankScreen, RandomRange(50, 100), 3000) then
+    begin
+      MouseBox(357, 300, 382, 315, 1);
+      Wait(500 + Random(500));
+      CloseBank;
+      Wait(1000 + Random(1000));
+      Result := True;
+    end else
+    begin
+      if FindSymbol(X, Y, 'bank') then
+        begin
+          MMouse(X, Y, RandomRange(-3, 3), RandomRange(-3, 3));
+          ClickMouse2(1);
+          FFlag(0);
+          repeat
+            Wait(50 + Random(50));
+          until not(IsMoving);
+          Wait(1000 + Random(500));
+          OpenBank('veb', False, False);
+          if WaitFunc(@BankScreen, RandomRange(50, 100), 3000) then
+            begin
+              MouseBox(357, 300, 382, 315, 1);
+              Wait(500 + Random(500));
+              CloseBank;
+              Wait(1000 + Random(1000));
+              Result := True;
+            end;
+        end;
+    end;
+end;
+
+procedure Proggy;
+begin
+  WriteLn('============== JJ''s Redberry Picker =============');
+  WriteLn('Running for: '+MsToTime(GetTimeRunning, Time_Formal)+'');
+  WriteLn('Collected '+IntToStr(RedBerry)+' Redberry''s at '+IntToStr(RedBerry * (3600000/GetTimeRunning))+' per hour');
+  WriteLn('==================================================');
+end;
+
+begin
+  SetUpLogin;
+  Debug := True;
+  WorldHop := [10, 11, 13, 14];
+  repeat
+    if WalkToBerry then
+      begin
+        repeat
+          PickBerry;
+          Proggy;
+        until(InvFull);
+        if WalkToBank then
+          if not(Banking) then
+            begin
+              WriteLn('Something went wrong with the banking, logging out');
+              Logout;
+            end;
+      end;
+  until not(LoggedIn);
+end.

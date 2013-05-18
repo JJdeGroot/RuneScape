@@ -1,0 +1,184 @@
+program Test;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+{$i SRL/SRL/misc/paintsmart.simba}
+
+var
+  Colors, Area, Tol: array of Integer;
+  Arr: array of TPointArray;
+  HueMod, SatMod: Array of Extended;
+  Demo, D: TPointArray;
+  SortFrom: TPoint;
+  MaxDist: Integer;
+  FilterArr, TrimArr: Integer;
+  x, y: Integer;
+  a: Integer;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+end;
+
+Procedure Declare;
+begin
+  Colors := [7896705, 4088178];
+  Tol := [17, 9]; // Tolerance on each color
+  HueMod := [0.33, 0.12]; // Hue Mod on the color
+  SatMod := [0.12, 1.10]; // Sat Mod on the color
+  MaxDist := 10; // Maximum distance between each color
+  Area := [MSX1, MSY1, MSX2, MSY2]; // x1, y1, x2, y2 to search in
+  SortFrom := Point(MSCX, MSCY); // Point to sort each TPA from
+  FilterArr := -1; // Max distance from SortFrom (-1 to ignore)
+  TrimArr := -1; // Max TPA size (-1 to ignore)
+end;
+
+function FindTPACluster(Colors: TIntegerArray; Tol: TIntegerArray; SortFrom: TPoint; Filter, Trim: Integer; MinDist, MaxDist: Extended; Strict: Boolean; x1, y1, x2, y2: Integer): array of TPointArray;
+var
+  TPA, Res: TPointArray;
+  aPoints: array of TPointArray;
+  Dist: array of Extended;
+  Which: array of Integer;
+  hDist, hPoints, hColors: Integer;
+  Error, Len: Integer;
+  r, d, t: Integer;
+  w, ww: Integer;
+  i, ii, iii: Integer;
+  Match, Count: Integer;
+  Duplicate: Boolean;
+begin
+  MarkTime(t);
+  SetLength(aPoints, Length(Colors));
+  hColors := High(Colors);
+  Error := 0;
+  r := 0;
+  for i := 0 to hColors do
+  begin
+    SetColorToleranceSpeed(2);
+    SetColorspeed2Modifiers(HueMod[i], SatMod[i]);
+    if (FindColorsTolerance(TPA, Colors[i], x1, y1, x2, y2, Tol[i])) then
+    begin
+      SortTPAFrom(TPA, SortFrom);
+      if (Filter <> -1) then
+        FilterPointsDist(TPA, 0, Filter, SortFrom.x, SortFrom.y);
+      if (Trim <> -1) and (Length(TPA) > Trim) then
+        SetLength(TPA, Trim);
+      aPoints[i - Error] := TPA;
+    end else
+    begin
+      if Strict then
+      begin
+        Writeln('Error: not enough colors found!');
+        Exit;
+      end;
+      Len := Length(aPoints) - 1;
+      SetLength(aPoints, Len);
+      Inc(Error);
+    end;
+    if (Error >= hColors) then
+    begin
+      Writeln('Error: not enough colors found!');
+      Exit;
+    end;
+  end;
+  SetLength(Dist, Length(aPoints) - 1);
+  SetLength(Which, Length(aPoints) - 1);
+  hPoints := High(aPoints);
+  hDist := High(Dist);
+  for i := 0 to hPoints do
+  begin
+    Count := 0;
+    for w := 0 to hDist do
+    begin
+      if (hPoints - w = hPoints - i) or (hPoints - w < hPoints - i) then
+        Which[w] := w + 1
+      else
+        Which[w] := w;
+    end;
+    for ii := 0 to High(aPoints[i]) do
+    begin
+      Match := 0;
+      for iii := 0 to hDist do
+      begin
+        if (Count > High(aPoints[Which[iii]])) then
+        begin
+          Inc(Count);
+          Break;
+        end;
+        Dist[iii] := Distance(aPoints[i][ii].x, aPoints[i][ii].y, aPoints[Which[iii]][Count].x, aPoints[Which[iii]][Count].y);
+        if (Dist[iii] >= MinDist) and (Dist[iii] <= MaxDist) then
+          Inc(Match)
+        else
+        begin
+          Inc(Count);
+          Break;
+        end;
+      end;
+      if (Match >= hPoints) then
+      begin
+        SetLength(Res, Length(aPoints));
+        Res[0] := aPoints[i][ii];
+        for ww := 0 to hDist do
+          Res[ww + 1] := aPoints[Which[ww]][Count];
+        SortTPAByX(Res, True);
+        if (Length(Result) >= 1) then
+        begin
+          Duplicate := False;
+          for d := 0 to High(Result) do
+          begin
+            if (Result[d] = Res) then
+              Duplicate := True;
+          end;
+          if Duplicate then
+          begin
+            Inc(Count);
+            Continue;
+          end;
+        end;
+        SetLength(Result, r + 1);
+        Result[r] := Res;
+        Inc(r);
+        Res := [];
+      end;
+      Inc(Count);
+    end;
+  end;
+  Writeln('Took: '+IntToStr(TimeFromMark(t))+' ms, found '+IntToStr(Length(Result))+' unique cluster(s)');
+end;
+
+procedure KillHobgoblin;
+begin
+  Arr := FindTPACluster(Colors, Tol, SortFrom, FilterArr, TrimArr, 0, MaxDist, True, Area[0], Area[1], Area[2], Area[3]);
+  SMART_ClearCanvas;
+  for a := 0 to High(Arr) do
+    SMART_DrawCircle(False, MiddleTPA(Arr[a]), MaxDist, False, clred);
+end;
+
+begin
+  SetUpLogin;
+  KillHobgoblin;
+end.

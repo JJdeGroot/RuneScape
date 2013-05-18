@@ -1,0 +1,183 @@
+[SIZE="6"]Hey! :)[/SIZE]
+
+[SIZE="5"][B]Introduction[/B][/SIZE]
+My goal is to build a Great Orb Project script. The script procedures should look as human like as possible and I want the script to be as flawless as possible. I decided to make a development blog to keep everything seperated because it's going to be a big project!
+
+Once I manage to make something that suits my desires I will probably use the script to apply as SRL Member and release the whole script to SRL Member+ to avoid leechers abusing the script.
+
+[B]Information about the Great Orb Project[/B] 
+Full article here: [url=http://runescape.wikia.com/wiki/The_Great_Orb_Project][X][/url]
+Introduction
+[quote="RuneScape Wiki"]The Great Orb Project (often shortened to GOP) is a Runecrafting activity located in the Runecrafting Guild. It was released on 12 August 2008. It is a research project which involves two teams gathering different orbs near various Runecrafting altars. To play this game, players must have at least level 50 Runecrafting, and have completed the Rune Mysteries quest.[/quote]
+Objective
+[quote="RuneScape Wiki"]The objective of the game is for players to move as many orbs corresponding to their team colour as they can to the altars, as well as keeping orbs of the opposite team away from the altar. The team with the most orbs that has gone into the altar when the timer runs out wins the round.[/quote]
+Rewards
+[quote="RuneScape Wiki"]In addition to the essence received after each round, Runecrafting guild tokens will be awarded at the end of the game. For each altar that a team wins, each player on that team receives 100 tokens. For each altar lost, players receive 10 tokens. For each tied altar, players receive 25 tokens. An additional 200 tokens for members, or 150 tokens for free players, are awarded to players on the team that won the most altars. If both teams win the same number of altars, then the majority bonus is split evenly between both teams (100 tokens for members and 75 for free players). Therefore, the maximum number of tokens members can receive is 1,000, while for free players it is 750. [/quote]
+
+[SIZE="5"][B]Overview:[/B][/SIZE]
+[list][*]Starting the game
+[list][*]Detecting a normal wizard
+[*]Detecting Wizard Acantha 
+[*]Detect Wizard Vief
+[*]Detecting the portal to start the game[/list]
+[*]Playing the game
+[list][*]Detecting the altars (Air, Mind, Water, Earth, Fire, Body)
+[*]Detecting orbs
+[*]Detecting barriers
+[*]Attract orbs
+[*]Repel orbs
+[*]Destroying barriers
+[*]Placing barriers
+[*]Crafting runes
+[*]Walking around, etc.[/list][/list]
+
+
+[SIZE="5"][B]My progress[/B][/SIZE]
+[list][*]Detecting a normal wizard[/list]
+[i]Last worked on at 07-04-2012[/i]
+
+Detecting the wizards to join a game
+Grey armour part [Also finds the boots of other NPC's]
+ColorToleranceSpeed(2);
+SetColorSpeed2Modifiers(0.20, 0.07);
+Color 4409934
+Tolerance 17
+
+Blue armour part [Also finds other NPC's]
+ColorToleranceSpeed(2);
+SetColorSpeed2Modifiers(0.15, 0.50);
+Color 8419420
+Tolerance 26
+
+As far as I know there is no other good option of detecting the normal wizard. The main colors are grey and blue. By using auto color aid for the grey color I found out that other NPC's around the area are (unfortunately) using the same grey color for their boots and hair color. 
+
+By using auto color aid for the blue color I found out that the map in the middle uses the same blue color. By picking my colors well I found a nice combination of Hue/Sat/Tol/Color that can detect 90% of the blue color on the wizards. Unfortunately this also detects the blue cape from one of the other NPC's and another blue color on another NPC. 
+
+A way to work around this is by using FindColoredAreaTolerance which detects an area of colors I think. Another, easier solution is to simply walk to the east side of the area to avoid the other NPC's. I decided to use FindColoredAreaTolerance [b]and[/b] I will let my character walk to the east side in the future. For now, this is the code that works and has a failsafe if it detects another NPC:
+
+[simba]procedure DetectWizard;
+var
+  X, Y: integer;
+
+begin
+  // This will detect a wizard and join a game \\
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.15, 0.50);
+  repeat
+    FindColoredAreaTolerance(X, Y, 8419420, MSX1, MSY1, MSX2, MSY2, 900, 26);
+    MMouse(X, Y, 2, 2);
+    if not(WaitUpTextMulti(['ief', 'orvak', 'cantha', 'lriss'], 250)) then
+      if WaitUpTextMulti(['izard', 'iza'], 250) then
+        Mouse(X, Y, 0, 0, 0);
+  until(WaitOptionMulti(['oin', 'in-ga'], 250));
+end;  [/simba]
+
+
+[list][*]Detecting Wizard Acantha [/list]
+[i]Last worked on at 07-04-2012[/i]
+Detect Wizard Acantha to join the green team.
+
+ColorToleranceSpeed(2);
+SetColorSpeed2Modifiers(0.11, 0.61);
+Color 4149822 Tolerance 12
+
+Green hat on table -> FindColoredAreaTolerance
+Area of >500 will only find acantha. 600 to be safe
+
+[simba]procedure DetectAcantha;
+var
+  X, Y: integer;
+
+begin
+  // This will detect Acantha and join a game \\
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.11, 0.61);
+  repeat
+    FindColoredAreaTolerance(X, Y, 4149822, MSX1, MSY1, MSX2, MSY2, 600, 12);
+    MMouse(X, Y, 2, 2);
+    if WaitUpTextMulti(['cant', 'Acantha'], 250) then
+        Mouse(X, Y, 0, 0, 0);
+  until(WaitOptionMulti(['oin', 'Join'], 250));
+end;[/simba]
+
+
+
+[list][*]Detect Wizard Vief[/list]
+[i]Last worked on at 08-04-2012[/i]
+All NPC's:
+Wizard, Wizard Vief, Wizard Korvak, Wizard Acantha, Wizard Elriss
+
+Detect Wizard Vief to join the blue team.
+
+
+Color 3386576
+Tolerance 27
+ColorToleranceSpeed(2);
+SetColorSpeed2Modifiers(0.09, 1.27);
+----> problem is that it detects the yellow part of the world map aswell even with a large area
+
+ColorToleranceSpeed(2);
+SetColorSpeed2Modifiers(0.02, 1.45);
+Color 3916753 & Tol 16
+
+
+
+[list][*]Detecting the portal to start the game[/list]
+Detecting the purple portal to enter/start the game.
+
+
+[list][*]Detecting the altars (Air, Mind, Water, Earth, Fire, Body)[/list]
+This is probably going to be one of the most time consuming parts. The script must be able to detect each of the above mentioned altars correctly.
+
+
+[list][*]Detecting orbs[/list]
+The script must be able to detect the different types of orbs so it can either attract/repel the orbs or build barriers.
+
+
+[list][*]Detecting barriers[/list]
+The script must be able to detect barriers to avoid bot-like behaviour.
+
+
+[list][*]Attract orbs[/list]
+The script must be able to attract orbs to lower the bot-like behaviour and help people that are playing the minigame legitimately. This is also necessary to avoid getting kicked.
+
+
+[list][*]Repel orbs[/list]
+The script must be able to repel orbs to lower the bot-like behaviour and help people that are playing the minigame legitimately. This is also necessary to avoid getting kicked.
+
+
+[list][*]Destroying barriers[/list]
+The script should be capable to destroy barriers if it's helpful to destroy them.
+
+
+[list][*]Placing barriers[/list]
+The script should be capable to place barriers if it could possible help the outcome of the minigame.
+
+
+[list][*]Crafting runes[/list]
+The scripts should craft runes at an altar of choice after finishing a sub-part of the game.
+
+[list][*]Detect the portal to teleport to the next altar[/list]
+[i]Last worked on at 08-04-2012[/i]
+Just started my first two .. well actually 1,5 games as the game ended because some people rage quitted. Anyways, detecting the portal is fairly simple as there are no other purple colors around. Trying my best to get every portal at every altar detected using one auto color aid. And it turned out that it's possible!
+
+(pic)
+
+Pretty happy with that. I'm not done though, will play a couple more games to get even more colors in there. Once that's done I can make a middle TPA function to click in the middle. Considering the object is around 40 px height and 20 px width I can make the MMouse pretty random once I can figure out the middle. I can see myself using MMouse(MiddlePortal.X, MiddlePortal.Y, 10, 20) to stay under that radar.
+Will work on this again!
+
+Portal in game, just did 1,5 game but it detects nearly everything of the portal already. Love auto color aid!
+Color 11946163
+Tolerance 24
+ColorToleranceSpeed(2);
+SetColorSpeed2Modifiers(0.38, 1.51);
+
+[list][*]Walking around, etc.[/list]
+The script must be capable of walking around to points where it can perform helpful actions.
+
+
+[list][*]Reserved for future usage[/list]
+Reserved for future usage
+
+
+Thanks for reading through the whole post! If you have any tips, be sure to leave a comment and let me know! :)

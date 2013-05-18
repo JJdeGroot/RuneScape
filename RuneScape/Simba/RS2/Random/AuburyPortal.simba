@@ -1,0 +1,111 @@
+program New;
+{$DEFINE SMART}
+{$i SRL/srl.simba}
+{$i SRL/SRL/misc/SmartGraphics.simba}
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+  with Players[0] do
+  begin
+    Name        := '';
+    Pass        := '';
+    Pin         := '';
+    BoxRewards  := ['XP','xp','lamp'];
+    LampSkill   := Skill_Hitpoints;
+    Active      := True;
+  end;
+end;
+
+// Enters the portal in the rune essence mine
+function EnterPortal: boolean;
+var
+  PortalColors: TPointArray;
+  Splitted: T2DPointArray;
+  P: TPoint;
+  i, smallestX, smallestY, biggestX, biggestY, xSize, ySize: Integer;
+
+begin
+  // Attempts to find the portal colors
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(4.71, 2.55);
+  if FindColorsSpiralTolerance(MSCX, MSCY, PortalColors, 13489057, MSX1, MSY1, MSX2, MSY2, 10) then
+  begin
+    (* Colors have been found, they will be drawn on SMART in the color red
+       After that it will get splitted into an ATPA with a distance of 3 *)
+    SMART_DrawDotsEx(True, PortalColors, clRed);
+    Splitted := SplitTPA(PortalColors, 3);
+    SortATPASize(Splitted, True);
+
+    (* ATPA has been sorted on size, large to small. The biggest one will get
+       drawn on SMART in the color cyan. A box around will also be drawn. *)
+    SMART_DrawDotsEx(False, Splitted[0], clAqua);
+    SMART_DrawBoxEx(False, False, GetTPABounds(Splitted[0]), clGreen);
+
+    // Calculating the X and Y size of our best TPA
+    smallestX := MSX2;
+    smallestY := MSY2;
+    for i:=0 to high(Splitted[0]) do
+    begin
+      // Check if the X is bigger or smaller than our extreme values
+      if Splitted[0][i].x < smallestX then
+        smallestX := Splitted[0][i].x
+      else
+        if Splitted[0][i].x > biggestX then
+          biggestX := Splitted[0][i].x;
+
+      // Check if the Y is bigger or smaller than our extreme values
+      if Splitted[0][i].y < smallestY then
+        smallestY := Splitted[0][i].y
+      else
+        if Splitted[0][i].y > biggestY then
+          biggestY := Splitted[0][i].y;
+    end;
+
+    (* Calculating the actual size. We take 40% of the size because the outline
+       of a circle is two times the radius. To be sure we click on a clickable
+       part we take 40% instead of 50%. *)
+
+    //writeln('bigggestX : ' + IntToStr(biggestX) + ' en smallestX: ' + IntToStr(smallestX));
+    //writeln('bigggestY : ' + IntToStr(biggestY) + ' en smallestY: ' + IntToStr(smallestY));
+    xSize := ((biggestX - smallestX) * 4) / 10;
+    ySize := ((biggestY - smallestY) * 4) / 10;
+
+    (* The middle of the biggest TPA will get calculated and we will move the
+       mouse to a spot around the middle. We draw this oval on SMART. *)
+    P := MiddleTPA(Splitted[0]);
+    SMART_DrawEllipse(False, P, xSize, ySize, False, clYellow);
+    MouseOval(P.x, P.y, xSize, ySize, 2);
+
+    // Checking if the uptext is correct
+    if WaitUpTextMulti(['nter', 'ortal', 'Enter', 'Portal', 'tal', 'ter'], 500) then
+    begin
+      (* The uptext is correct, the portal has been detected! We perform a
+       left mouse click and wait until we have stopped moving. Result = true *)
+      ClickMouse2(1);
+      FFlag(0);
+      while IsMoving do
+        Wait(RandomRange(100, 200));
+      Result := True;
+    end;
+
+    SMART_ClearCanvas;
+  end;
+end;
+
+begin
+  // Setting up Simba
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayerToLob;
+  OpenWorldScreen;
+  SelectWorld(2);
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+
+  // The actual script
+  EnterPortal;
+end.

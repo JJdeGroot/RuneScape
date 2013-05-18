@@ -1,0 +1,31 @@
+function AbyssNPCWalk: String;
+var
+  i, Highest, HighestBox: Integer;
+  NPCDots: Array[0..8] of Integer;
+  X1, Y1, X2, Y2: Array of Integer;
+  PossibleResults: Array of String;
+
+begin
+  PossibleResults := ['North', 'Middle', 'South', 'NorthEast', 'East', 'SouthEast', 'NorthWest', 'West', 'SouthWest'];
+  X1 := [-25, -25, -25, 25, 25, 25, -75, -75, -75];
+  Y1 := [-75, -25, 25, -75, -25, 25, 25, -25, -75];
+  X2 := [25, 25, 25, 75, 75, 75, -25, -25, -25];
+  Y2 := [-25, 25, 75, -25, 25, 75, 75, 25, -25];
+
+  ColorToleranceSpeed(1);
+  SMART_ClearCanvas;
+  Highest:=0;
+  for i:=0 to 8 do
+    begin
+      SMART_DrawBoxEx(False, IntToBox(MMCX+X1[i], MMCY+Y1[i], MMCX+X2[i], MMCY+Y2[i]), clRed);
+      NPCDots[i] := CountColorTolerance(645100, MMCX+X1[i], MMCY+Y1[i], MMCX+X2[i], MMCY+Y2[i], 35);
+      if (NPCDots[i] > Highest) then
+        begin
+          Highest := NPCDots[i];
+          HighestBox := i;
+        end;
+    end;
+  WriteLn(''+IntToStr(HighestBox)+'');
+  MouseBox(MMCX+X1[1], MMCY+Y1[1], MMCX+X2[1], MMCY+Y2[1], 1);
+  Result := PossibleResults[HighestBox];
+end;

@@ -1,0 +1,189 @@
+program Minesweeper;
+{$i SRL/srl.simba}
+
+var
+  Width, Height, HorizontalSize, VerticalSize: Integer;
+  BoxDetails: Array[0..99] of String;
+  Debug: Boolean;
+  K: Integer;
+
+// The details of the Minesweeper field you are using
+procedure Setup;
+begin
+  Width := 20;
+  Height := 20;
+  VerticalSize := 10;
+  HorizontalSize := 10;
+end;
+
+// Identifying every box of the Minesweeper field
+procedure IdentifyGrid;
+var
+  X, Y, i, j: Integer;
+  Boxes: Array[0..99] of TBox;
+  Unknown, One, Two, Three, Four, Five, Vlag, Bomb: Integer;
+  DTMs: TIntegerArray;
+
+begin
+  Unknown := DTMFromString('mWAAAAHicY2FgYEhiZWAoAuJkKH2MkYHhGhBfBeLjQPz//3+GAwcOgGkQRgeMaBgEAEkOEDk=');
+  One := DTMFromString('mQwAAAHicY2ZgYHBmZWBwZYXQXEwMDPxAzA7EDAn7ERgJMCJhIAAAqnkEZA==');
+  Two := DTMFromString('mQwAAAHicY2ZgYPjCwsDwCYg/AjE3EwMDHxCzA7HIAhE4RgaMSBgIAAJBBWg=');
+  Three := DTMFromString('mQwAAAHicY2ZgYHjAwsBwF4q5mRgY2IGYH4j/MyAwMmBEwkAAAA0oBdE=');
+  Four := DTMFromString('mQwAAAHicY2ZgYMhhZWDIYIXQXEwMDDxAzA/EDNqhCIwEGJEwEAAAiB8DAQ==');
+  Five := DTMFromString('mQwAAAHicY2ZgYNBjZWAwAGJdIP7GyMDwGYh/A3EoAwIjA0YkDAQAz88Ehw==');
+  Vlag := DTMFromString('mQwAAAHicY2ZgYAhiZWCIAuIwINZjYmAwBWJDIAaB/1CMDBiRMBAAAJ3rA7A=');
+  Bomb := DTMFromString('mQwAAAHicY2ZgYJBgZWCQAmJZIOZkYmDgZ4LQuAAjEgYCAB3XAIw=');
+  DTMs := [Unknown, One, Two, Three, Four, Five, Vlag, Bomb];
+  for i:=0 to 9 do
+    for j:=0 to 9 do
+      Boxes[i*10+j] := IntToBox(Width * i, Height * j, Width * i + Width, Height * j + Height);
+
+  for i:=0 to high(Boxes) do
+    for j:=0 to high(DTMs) do
+      if FindDTM(DTMs[j], X, Y, Boxes[i].X1, Boxes[i].Y1, Boxes[i].X2, Boxes[i].Y2) then
+      begin
+        case j of
+          0: begin; BoxDetails[i] := 'unknown'; break; end;
+          1: begin; BoxDetails[i] := 'one'; break; end;
+          2: begin; BoxDetails[i] := 'two'; break; end;
+          3: begin; BoxDetails[i] := 'three'; break; end;
+          4: begin; BoxDetails[i] := 'four'; break; end;
+          5: begin; BoxDetails[i] := 'five'; break; end;
+          6: begin; BoxDetails[i] := 'flag'; break; end;
+          7: begin; BoxDetails[i] := 'bomb'; break; end;
+        end;
+      end else
+        if j = high(DTMs) then
+          BoxDetails[i] := 'none';
+
+  FreeDTMs(DTMs);
+end;
+
+function BombCheck(BoxNumber: Integer): Integer;
+var
+  Options: TStringArray;
+  i: Integer;
+
+begin
+  Options := ['one', 'two', 'three', 'four', 'five'];
+  for i:=0 to high(Options) do
+    if (BoxDetails[BoxNumber] = Options[i]) then
+    begin
+      writeln('Bombs!!');
+      Result := (i+1);
+      break;
+    end;
+end;
+
+function FastSafeCheck(BoxNumber: Integer): Array[0..7] of Boolean;
+var
+  i, j, k, l, North, East, South, West, NorthEast,
+  SouthEast, SouthWest, NorthWest, CheckBox: Integer;
+  Directions: TIntegerArray;
+  NorthRow, EastRow, SouthRow, WestRow: Array[0..9] of Integer;
+  Rows: T2DIntegerArray;
+  FalseNorth, FalseEast, FalseSouth, FalseWest: TIntegerArray;
+  FalseDirections: T2DIntegerArray;
+
+begin
+  North := -1;
+  East := VerticalSize;
+  South := 1;
+  West := (East * -1);
+  NorthEast := North + East;
+  SouthEast := South + East;
+  SouthWest := South + West;
+  NorthWest := North + West;
+  Directions := [North, NorthEast, East, SouthEast, South, SouthWest, West, NorthWest];
+
+  for i:= 0 to 9 do
+  begin
+    NorthRow[i] := (VerticalSize * i);
+    EastRow[i] := (HorizontalSize * VerticalSize) - VerticalSize + i;
+    SouthRow[i] := (VerticalSize - 1) + (VerticalSize * i);
+    WestRow[i] := i;
+  end;
+  Rows := [NorthRow, EastRow, SouthRow, WestRow];
+
+  FalseNorth := [0, 1, 7];
+  FalseEast := [0, 7, 3];
+  FalseSouth := [3, 4, 5];
+  FalseWest := [5, 6, 7];
+  FalseDirections := [FalseNorth, FalseEast, FalseSouth, FalseSouth];
+
+  {
+   * For all directions check if the box is unknown and check if the box is
+     in the north/east/south/west row. If it is in there then check if the
+     direction isn't a direction that isn't possible from that spot
+  }
+  for i:=0 to high(Directions) do
+  begin
+    CheckBox := BoxNumber + Directions[i];
+    if (CheckBox >= 0) then
+      if (CheckBox <= (VerticalSize * HorizontalSize -1)) then
+      begin
+        writeln(IntToStr(i) + ' location: ' + IntToStr(CheckBox) + ' and style: ' + BoxDetails[CheckBox]);
+        if (BoxDetails[CheckBox] = 'unknown') then
+        begin
+          for j:=0 to 3 do
+            for k:=0 to 9 do
+            begin
+              if (BoxNumber = Rows[j][k]) then
+              for l:=0 to 2 do
+                if (i = FalseDirections[j][l]) then
+                begin
+                  Result[i] := false;
+                  Break;
+                end;
+            end;
+          Result[i] := True;
+        end;
+      end;
+  end;
+end;
+
+function SafeCheck(BoxNumber: Integer): Integer;
+var
+  Safe: Array of Boolean;
+  Bombs, i: Integer;
+  Spots: TIntegerArray;
+
+begin
+  IdentifyGrid;
+  Bombs := BombCheck(BoxNumber);
+  writeln(Bombs);
+
+  if not(Bombs = 0) then
+  begin
+    Safe := FastSafeCheck(BoxNumber);
+    for i:=0 to high(Safe) do
+      if (Safe[i] = true) then
+      begin
+        SetLength(Spots, Length(Spots)+1);
+        Spots[Length(Spots)-1] := i;
+        writeln(IntToStr(i) + ': true');
+      end;
+  end;
+
+  if (Length(Spots) > 0) then
+  begin
+    for i:=0 to high(Spots) do
+    begin
+      //Safe := FastSafeCheck(Spots[i])
+    end;
+  end;
+end;
+
+begin
+  SetupSRL;
+  ActivateClient;
+  ImageResetClientArea;
+  Setup;
+  Debug := True;
+
+  SafeCheck(0);
+
+  {ClickBox;
+  for K:=0 to high(BoxDetails) do
+    writeln((IntToStr(k) + ': ' + BoxDetails[k]));  }
+end.

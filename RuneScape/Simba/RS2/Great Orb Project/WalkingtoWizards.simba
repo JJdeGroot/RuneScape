@@ -1,0 +1,122 @@
+program TestSPS;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  //ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+end;
+
+procedure StartGame;
+var
+  i: Integer;
+  DesiredWizard: String;
+  MyPos: TPoint;
+  RandomWizard: Array of String;
+
+begin
+  DesiredWizard := 'Random';
+  SPS_Setup(RUNESCAPE_SURFACE, ['0_5']);
+  MyPos := SPS_GetMyPos;
+  WriteLn('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+
+  RandomWizard := ['Wizards', 'Wizard Acantha', 'Wizard Vief', 'Random']
+  for i:=0 to 3 do
+  begin
+    if DesiredWizard = RandomWizard[i] then
+      begin
+        case RandomWizard[i] of
+          RandomWizard[0]: begin;
+                             case Random(3) of
+                               0: begin;
+                                    WriteLn('We are walking to the '+RandomWizard[i]+' at the west side');
+                                    SPS_BlindWalk(Point(RandomRange(211, 223), RandomRange(2243, 2255))); //Wizards west
+                                    JoinWizards;
+                                  end;
+                               1..2: begin;
+                                       WriteLn('We are walking to the '+RandomWizard[i]+' at the east side');
+                                       SPS_BlindWalk(Point(RandomRange(247, 263), RandomRange(2239, 2259))); // Wizards east
+                                       JoinWizards;
+                                     end;
+                             end;
+                           end;
+          RandomWizard[1]: begin;
+                             WriteLn('We are walking to '+RandomWizard[i]+'');
+                             SPS_BlindWalk(Point(RandomRange(215, 223), RandomRange(2227, 2239)));
+                             JoinAcantha;
+                           end;
+          RandomWizard[2]: begin;
+                             WriteLn('We are walking to '+RandomWizard[i]+'');
+                             SPS_BlindWalk(Point(RandomRange(247, 263), RandomRange(2227, 2239)));
+                             JoinVief;
+                           end;
+          RandomWizard[3]: begin;
+                             WriteLn('We are walking to a random generated wizard location');
+                             case Random(3) of
+                               0: begin;
+                                    case random(3) of
+                                      0: begin;
+                                           WriteLn('We are walking to the Wizards at the west side');
+                                           SPS_BlindWalk(Point(RandomRange(211, 223), RandomRange(2243, 2255))); //Wizards west
+                                           JoinWizards;
+                                         end;
+                                      1..2: begin;
+                                              WriteLn('We are walking to the Wizards at the east side');
+                                              SPS_BlindWalk(Point(RandomRange(247, 263), RandomRange(2239, 2259))); // Wizards east
+                                              JoinWizards;
+                                            end;
+                                     end;
+                                   end;
+                               1: begin;
+                                    WriteLn('We are walking to Wizard Acantha');
+                                    SPS_BlindWalk(Point(RandomRange(215, 223), RandomRange(2227, 2239)));
+                                    JoinAcantha;
+                                  end;
+                               2: begin;
+                                    WriteLn('We are walking to Wizard Vief');
+                                    SPS_BlindWalk(Point(RandomRange(247, 263), RandomRange(2227, 2239)));
+                                    JoinVief;
+                                  end;
+                             end;
+                           end;
+        end;
+      end;
+  end;
+end;
+
+  //SPS_BlindWalk(Point(RandomRange(227, 243), RandomRange(2223, 2235))); // Portal to enter
+  //SPS_BlindWalk(Point(RandomRange(215, 223), RandomRange(2227, 2239))); // Wizard Acantha
+  //SPS_BlindWalk(Point(RandomRange(247, 263), RandomRange(2227, 2239))); // Wizard Vief
+  //SPS_BlindWalk(Point(RandomRange(247, 263), RandomRange(2239, 2259))); // Wizards east
+  //SPS_BlindWalk(Point(RandomRange(211, 223), RandomRange(2243, 2255))); // Wizards west
+
+
+begin
+  SetUpLogin;
+  JoinGame;
+end.

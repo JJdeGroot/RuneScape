@@ -1,0 +1,245 @@
+program JJsCheeseMaker;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i srl/srl/misc/paintsmart.simba}
+
+var
+  Debug: Boolean;
+  N, Renew, Eggs, Scrolls: Integer;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  ClickNorth(0);
+  MakeCompass(RandomRange(265, 275));
+  Wait(2000 + Random(500));
+end;
+
+function ObjFinder(Hue, Sat: Extended; Color, Tolerance, X1, Y1, X2, Y2: Integer; Width, Height:Integer; Sort: Boolean; xOffset, yOffset, UptextWaitTime: Integer): Boolean;
+var
+  X, Y, i: Integer;
+  ColorTPA, Spider: TPointArray;
+  ColorATPA: T2DPointArray;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(Hue, Sat);
+  if FindColorsTolerance(ColorTPA, Color, X1, Y1, X2, Y2, Tolerance) then
+    begin
+      SetColorSpeed2Modifiers(0.24, 1.73);
+      if FindColorsTolerance(Spider, 2789857, MSCX-75, MSCY-75, MSCX+75, MSCY+75, 13) then
+        begin
+          ColorTPA := ClearTPAFromTPA(ColorTPA, TPAFromBox(GetTPABounds(Spider)));
+          ColorTPA := ClearTPAFromTPA(ColorTPA, TPAFromBox(IntToBox(247, 137, 275, 187)));
+          SplitTPAExWrap(ColorTPA, Width, Height, ColorATPA);
+          if Debug then
+            begin
+              SMART_ClearCanvas;
+              WriteLn('Counted colors: '+IntToStr(CountColorTolerance(Color, X1, Y1, X2, Y2, Tolerance))+'');
+              WriteLn('TPA Length: '+IntToStr(Length(ColorTPA))+'');
+              SMART_DrawDotsEx(False, ColorTPA, clYellow);
+              SMART_DrawBoxes(False, [GetTPABounds(ColorTPA)], clPurple);
+              SMART_DrawBoxes(False, [GetTPABounds(Spider)], clWhite);
+              SMART_DrawBoxes(False, [IntToBox(247, 137, 275, 187)], clRed);
+              for i:=0 to High(ColorATPA) do
+                SMART_DrawBoxes(False, [GetTPABounds(ColorATPA[i])], clAqua);
+            end;
+          SortATPASize(ColorATPA, Sort);
+          for i:=0 to High(ColorATPA) do
+            begin
+              MiddleTPAEx(ColorATPA[i], X, Y);
+              MMouse(X, Y, xOffset, yOffset);
+              SetColorSpeed2Modifiers(Hue, Sat);
+              if FindColorsTolerance(ColorTPA, Color, X-5, Y-5, X+5, Y-5, Tolerance) then
+                begin
+                  Result := True;
+                  Break;
+                end;
+            end;
+        end;
+    end;
+end;
+
+procedure SpawnEggs;
+var
+  Spawns, X, Y, SumPot: Integer;
+
+begin
+  if Debug then
+    SMART_DrawCircle(False, Point(706, 143), 13, False, clRed);
+
+  if not(InvFull) then
+    begin
+      repeat
+        Inc(Spawns);
+        Inc(Scrolls);
+        if (Scrolls > RandomRange(5, 8)) then
+          begin
+            Scrolls := 0;
+            if (FindColorTolerance(X, Y, 14538270, MIX1, MIY1, MIX2, MIY2, 25)) then
+              MouseBox(570, 227, 586, 241, 1);
+          end;
+        case Random(7) of
+          0..4: MouseCircle(706, 143, 13, 1);
+          5..6: begin
+                  MouseCircle(706, 143, 13, 0);
+                  WaitOptionMulti(['ast', 'Cast'], 500);
+                end;
+        end;
+        Wait(1000 + Random(1000));
+      until(Spawns > RandomRange(2, 5));
+    end;
+end;
+
+procedure PickUpEggs;
+var
+  EggCols: Integer;
+
+begin
+  repeat
+    if ObjFinder(0.32, 0.09, 2309493, 14, MSCX-150, MSCY-150, MSCX+150, MSCY+150, 4, 4, True, RandomRange(-2, 2), RandomRange(-2, 2), 500) then
+      begin
+        EggCols := CountColorTolerance(2309493, MSX1, MSY1, MSX2, MSY2, 14);
+        if (EggCols < 200) then Exit;
+        if Debug then
+          WriteLn('Egg colors: '+IntToStr(EggCols)+'');
+        ClickMouse2(0);
+        WaitOptionMulti(['ake', 'Take'], 300);
+        FFlag(1);
+        repeat
+          Wait(50 + Random(50));
+        until not(IsMoving);
+        Wait(500 + Random(500));
+      end;
+  until(InvFull) or (EggCols<300) ;
+end;
+
+procedure ResetTime;
+begin;
+  N := 0;
+  MarkTime(N);
+end;
+
+function RenewSpider: Boolean;
+var
+  X, Y: Integer;
+
+begin
+  if (TimeFromMark(n) > RandomRange(14250, 14500)) or (Renew = 0) then
+    begin
+      Inc(Renew);
+      if FindColor(X, Y, 127, 0, 338, 518, 479) then
+        begin
+          ResetTime;
+          Withdraw(2, 0, 1);
+          Wait(300 + Random(300));
+          MouseCircle(706, 143, 13, 0);
+          if WaitOptionMulti(['enew', 'Renew'], 1000) then
+            begin
+              Wait(500 + Random(500));
+              Result := True;
+            end;
+        end;
+    end;
+end;
+
+procedure Banking;
+var
+  X, Y: Integer;
+
+begin
+  OpenBankChest(SRL_BANK_SW);
+  FFlag(1);
+  repeat
+    Wait(50 + Random(50));
+  until not(IsMoving);
+  Wait(500 + Random(500));
+
+  if WaitFunc(@BankScreen, RandomRange(50, 100), 3000) then
+    begin
+      case Random(2) of
+        0: MouseBox(613, 223, 631, 237, 0);
+        1: MouseBox(570, 260, 589, 273, 0);
+      end;
+      WaitOptionMulti(['All', 'Withdraw-All'], 500)
+      Wait(300 + Random(300));
+
+      if not(FindColorTolerance(X, Y, 14538270, MIX1, MIY1, MIX2, MIY2, 25)) then
+        Withdraw(1, 0, 1);
+
+      RenewSpider;
+    end;
+end;
+
+function WalkToBank: Boolean;
+begin
+  if RadialWalkTolerance(15400959, 10, 50, 30, 3, 3, 35) then
+    begin
+      FFlag(1);
+      repeat
+        Wait(50 + Random(50));
+      until not(IsMoving);
+      Wait(500 + Random(500));
+      Result := True;
+    end;
+end;
+
+function WalkToSpot: Boolean;
+begin
+  if RadialWalkTolerance(6386290, 240, 260, 20, 3, 3, 25) then
+    begin
+      FFlag(1);
+      repeat
+        Wait(50 + Random(50));
+      until not(IsMoving);
+      Wait(500 + Random(500));
+      Result := True;
+    end;
+end;
+
+procedure Proggy;
+begin
+  WriteLn('=============== JJ''s Egg Spawner ==============');
+  WriteLn('Running for: '+MsToTime(GetTimeRunning, Time_Formal)+'');
+  WriteLn('Collected '+IntToStr(Eggs)+' Red spider eggs');
+  WriteLn('================================================');
+end;
+
+begin
+  SetUpLogin;
+  Debug := True;
+  MarkTime(N);
+  repeat
+    Banking;
+    WalkToSpot;
+    repeat
+      SpawnEggs;
+      PickUpEggs;
+    until(InvFull);
+    IncEx(Eggs, 26);
+    WalkToBank;
+    Proggy;
+  until not(LoggedIn);
+end.

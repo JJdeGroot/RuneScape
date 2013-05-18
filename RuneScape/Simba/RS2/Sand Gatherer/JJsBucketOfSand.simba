@@ -1,0 +1,432 @@
+program BucketOfSandGatherer;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+
+var
+  Sands: Integer;
+
+procedure Setup;
+begin
+  ClearDebug;
+  SetupSRL;
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+  with Players[0] do
+  begin
+    Name        := '';
+    Pass        := '';
+    Pin         := '';
+    Active      := True;
+  end;
+  LogInPlayer;
+  Wait(1000 + Random(2000));
+  ClickNorth(SRL_ANGLE_HIGH);
+end;
+
+function TeleToHouse: boolean;
+var
+  HouseDTM, X, Y: Integer;
+  TPA: TPointArray;
+
+begin
+  if not(GetCurrentTab = tab_Inv) then
+  begin
+    FTab(tab_Inv);
+    Wait(RandomRange(500, 1000));
+  end;
+
+  HouseDTM := DTMFromString('mggAAAHicY2NgYFBgZ2AQBmJ9IFYBYlkgVgLi+cwMDAuBeC4QrwXixUA8C4iXL1gA1MUExzKKJ8FYBMjDhhlxYAgAAPIgCUY=');
+  if FindDTM(HouseDTM, X, Y, MIX1, MIY1, MIX2, MIY2) then
+  begin
+    MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+    ClickMouse2(1);
+
+    // Wait until house is loaded
+    Wait(RandomRange(5000, 6000));
+    FindColorsSpiralTolerance(MSCX, MSCY, TPA, 0, MSX1, MSY1, MSX2, MSY2, 20);
+    while Length(TPA) > 10000 do
+    begin
+      Wait(RandomRange(500, 1000));
+      FindColorsSpiralTolerance(MSCX, MSCY, TPA, 0, MSX1, MSY1, MSX2, MSY2, 20);
+    end;
+
+    Result := True;
+  end;
+  FreeDTM(HouseDTM);
+end;
+
+function TeleToCw: Integer;
+var
+  DuelRingDTM, X, Y, T, i, j, Charges: Integer;
+  Numberss: TStringArray;
+  Options: Array of TOptions;
+  TT: TBox;
+
+begin
+  if not(GetCurrentTab = tab_Equip) then
+  begin
+    FTab(tab_Equip);
+    Wait(RandomRange(500, 1000));
+  end;
+
+  DuelRingDTM := DTMFromString('mggAAAHicY2NgYJBmZ2AQB2JhIFYEYjEglgPiOGYGhmwgTgbiFCCOAeIwID6wVBqoiwkDiwBJbJgRB4YAAL6SBSc=');
+  if FindDTM(DuelRingDTM, X, Y, 676, 411-50, 723, 459-50) then
+  begin
+    MMouse(X, Y, RandomRange(-4, 4), RandomRange(-4, 4));
+    ClickMouse2(0);
+    MarkTime(T);
+    while TimeFromMark(T) < 2000 do
+    begin
+      Options := GetChooseOptions('All');
+      if Length(Options) > 0 then
+      begin
+        Numberss := ['1', '2', '3', '4', '5', '6', '7', '8'];
+        for i:=0 to high(Options) do
+          for j:=0 to high(Numberss) do
+            if Pos(Numberss[j], Options[i].Str) > 0 then
+            begin
+              Charges := StrToInt(Numberss[j]);
+              TT := Options[i].Bounds;
+              MouseBox(TT.X1, TT.Y1+30, TT.X2, TT.Y2+30, 1); // 3rd option
+              Result := Charges;
+              writeln('We have ' + IntToStr(Result) + ' charges left');
+              FreeDTM(DuelRingDTM);
+              Wait(RandomRange(4000, 5000));
+              Exit;
+            end;
+      end;
+    end;
+  end;
+  FreeDTM(DuelRingDTM);
+end;
+
+procedure WalkToToolBox;
+begin
+  MMouse(620, 164-50, RandomRange(-2, 2), RandomRange(-2, 2));
+  ClickMouse2(1);
+  Wait(RandomRange(5000, 6000));
+end;
+
+function ClickTools: boolean;
+var
+  TPA: TPointArray;
+  ATPA, ToolsATPA: T2DPointArray;
+  P: TPoint;
+  i, L: Integer;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.00, 1.67);
+  if FindColorsSpiralTolerance(MSCX, MSCY, TPA, 15924733, MSX1, MSY1, MSX2, MSY2, 1) then
+  begin
+    SplitTPAWrap(TPA, 30, ATPA);
+    for i:=0 to high(ATPA) do
+    begin
+      if Length(ATPA[i]) > 50 then
+      begin
+        L := Length(ToolsATPA);
+        SetLength(ToolsATPA, L+1);
+        ToolsATPA[L] := ATPA[i];
+      end;
+
+      L := Length(ToolsATPA);
+      if L > 0 then
+      begin
+        SortATPAFrom(ToolsATPA, Point(MSCX, MSCY));
+        P := MiddleTPA(ToolsATPA[0]);
+        MMouse(P.x, P.y, RandomRange(-6, 6), RandomRange(-6, 6));
+        ClickMouse2(1);
+        Wait(RandomRange(50, 100));
+        Result := True;
+        break;
+      end;
+    end;
+  end;
+end;
+
+function FullInv: boolean;
+var
+  i: Integer;
+
+begin
+  if not(GetCurrentTab = tab_Inv) then
+  begin
+    FTab(tab_Inv);
+    Wait(RandomRange(500, 1000));
+  end;
+
+  for i:=1 to 28 do
+    if not(ExistsItem(i)) then
+    begin
+      Result := False;
+      Exit;
+    end;
+
+  Result := True;
+end;
+
+function GatherBuckets: boolean;
+var
+  T, Fails: Integer;
+
+begin
+  MarkTime(T);
+  while not(FullInv) do
+  begin
+    if TimeFromMark(T) > 30000 then break;
+    if not(ClickTools) then Inc(Fails);
+    if Fails > 5 then break;
+  end;
+  Result := (Fails <= 5) and (TimeFromMark(T) < 30000);
+end;
+
+function ExitPortal: boolean;
+var
+  TPA: TPointArray;
+  ATPA: T2DPointArray;
+  P: TPoint;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.10, 1.72);
+
+  if FindColorsSpiralTolerance(MSCX, MSCY, TPA, 10303868, MSX1, MSY1, MSX2, MSY2, 17) then
+  begin
+    SplitTPAWrap(TPA, 10, ATPA);
+    SortATPASize(ATPA, True);
+    if Length(ATPA[0]) > 50 then
+    begin
+      P := MiddleTPA(ATPA[0]);
+      MMouse(P.x, P.y, RandomRange(-4, 4), RandomRange(-4, 4));
+      ClickMouse2(1);
+      Wait(RandomRange(4000, 5000));
+      Result := True;
+    end;
+  end;
+end;
+
+function WalkToSandpit: boolean;
+var
+  T, X, Y: Integer;
+
+begin
+  SymbolAccuracy := 0.4;
+  MarkTime(T);
+  while TimeFromMark(T) < 10000 do
+  begin
+    if FindSymbol(X, Y, 'sandpit') then
+    begin
+      MMouse(X-5, Y+5, RandomRange(-2, 2), RandomRange(-2, 2));
+      ClickMouse2(1);
+      Wait(RandomRange(4000, 5000));
+      Result := True;
+      break;
+    end;
+  end;
+end;
+
+function ClickBucket: boolean;
+var
+  BucketDTM, X, Y: Integer;
+
+begin
+  if not(GetCurrentTab = tab_Inv) then
+  begin
+    FTab(tab_Inv);
+    Wait(RandomRange(500, 1000));
+  end;
+
+  BucketDTM := DTMFromString('mbQAAAHicY2VgYFjIxsCwCIhnAPEaIF4AxC+YGBh+AvFLJgj7DhB7WYoDVTOhYBEgiY4ZsWAwAADZCQju');
+  if FindDTM(BucketDTM, X, Y, MIX1, MIY1, MIX2, MIY2) then
+  begin
+    MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+    ClickMouse2(1);
+    Result := True;
+  end;
+  FreeDTM(BucketDTM);
+end;
+
+function ClickSandpit: boolean;
+var
+  TPA: TPointArray;
+  ATPA: T2DPointArray;
+  P: TPoint;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.08, 3.52);
+  if FindColorsSpiralTolerance(MSCX, MSCY, TPA, 9097721, MSX1, MSY1, MSX2, MSY2, 5) then
+  begin
+    SplitTPAWrap(TPA, 6, ATPA);
+    SortATPASize(ATPA, True);
+    if Length(ATPA[0]) > 50 then
+    begin
+      P := MiddleTPA(ATPA[0]);
+      MMouse(P.x, P.y, RandomRange(-4, 4), RandomRange(-4, 4));
+      ClickMouse2(1);
+      while IsMoving do
+        Wait(RandomRange(50, 100));
+      Result := True;
+    end;
+  end;
+end;
+
+function Filling: boolean;
+var
+  PS: Integer;
+
+begin
+  PS := PixelShift(IntToBox(247, 197-50, 282, 247-50), 1000);
+  //writeln('Pixelshift: ' + IntToStr(PS));
+  Result := PS > 350;
+end;
+
+procedure WaitUntilFilled;
+var
+  T, Fails: Integer;
+
+begin
+  MarkTime(T);
+
+  while TimeFromMark(T) < 37500 do
+  begin
+    if Fails > 3 then
+      break;
+
+    if not(Filling) then
+      Inc(Fails)
+    else
+      Fails := 0;
+  end;
+end;
+
+procedure WalkToCwBank;
+begin
+  MMouse(640, 166-50, 2, 2);
+  ClickMouse2(1);
+  Wait(RandomRange(4000, 5000));
+end;
+
+function BankBuckets(GetDuelRing: boolean): boolean;
+var
+  BucketDTM, DuelRingDTM, X, Y: Integer;
+
+begin
+  if OpenBankChest(SRL_BANK_CW) then
+    if WaitFunc(@BankScreen, RandomRange(100, 200), 6000) then
+    begin
+      BucketDTM := DTMFromString('mbQAAAHicY2VgYFjExsCwEIhnAPEaIF4AxIeYGBiuAvExKN4BxC0lXkDVTChYBEiiY0YsGAwAzSUI4w==');
+      if FindDTM(BucketDTM, X, Y, MIX1, MIY1, MIX2, MIY2) then
+      begin
+        IncEx(Sands, 27);
+        MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+        ClickMouse2(0);
+        Result := WaitOptionMulti(['All', 'Deposit-All', 'll B'], 500);
+      end;
+
+      if GetDuelRing then
+      begin
+        Result := False;
+        DuelRingDTM := DTMFromString('mggAAAHicY2NgYJBmZ2AQB2JhIFYEYjEglgPiOGYGhmwgTgbiFCCOAeIwID6wVBqoiwkDiwBJbJgRB4YAAL6SBSc=');
+        if FindDTM(DuelRingDTM, X, Y, MSX1, MSY1, MSX2, MSY2) then
+        begin
+          // Getting duel ring
+          MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+          ClickMouse2(1);
+          Wait(RandomRange(500, 1000));
+          CloseBank;
+
+          // Equiping duel ring
+          if not(GetCurrentTab = tab_Inv) then
+          begin
+            FTab(tab_Inv);
+            Wait(RandomRange(500, 1000));
+          end;
+
+          if FindDTM(DuelRingDTM, X, Y, MIX1, MIY1, MIX2, MIY2) then
+          begin
+            MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+            ClickMouse2(1);
+            Result := True;
+            FreeDTM(BucketDTM);
+            Exit;
+          end;
+        end;
+      end;
+
+      CloseBank;
+      FreeDTM(BucketDTM);
+    end;
+end;
+
+function House: boolean;
+begin
+   // To your house and getting a full inventory of buckets
+  if TeleToHouse then
+  begin
+    WalkToToolBox;
+    KeyDown(VK_1);
+    GatherBuckets;
+    KeyUp(VK_1);
+    Result := ExitPortal;
+  end else
+  begin
+    if TeleToCw > 0 then
+    begin
+      WalkToCwBank;
+      BankBuckets(true);
+      House;
+    end;
+  end;
+end;
+
+function Sand: boolean;
+begin
+  // To the sandpit and filling the buckets with sand
+  if ClickBucket then
+    if ClickSandpit then
+    begin
+      WaitUntilFilled;
+      Result := True;
+    end;
+end;
+
+function Banking: boolean;
+var
+  Charges: Integer;
+  NeedDuelRing: boolean;
+
+begin
+  // To castle wars to bank
+  Charges := TeleToCw;
+  if Charges > 0 then
+  begin
+    WalkToCwBank;
+    if Charges = 1 then
+      NeedDuelRing := True;
+    Result := BankBuckets(NeedDuelRing);
+  end else
+  begin
+    writeln('We failed to teleport to the bank, terminating script to be safe');
+    TerminateScript;
+  end;
+end;
+
+procedure Proggy;
+var
+  s: String;
+begin
+  s := MsToTime(GetTimeRunning, Time_Formal);
+  writeln('Gathered ' + IntToStr(Sands) + ' buckets of sand in ' + s);
+end;
+
+begin
+  Setup;
+  while(House) do
+  begin
+    if Sand then
+      Banking;
+    Proggy;
+  end;
+end.

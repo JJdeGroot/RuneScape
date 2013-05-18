@@ -1,0 +1,175 @@
+{*
+SRL AIO Fighter
+~~~~~~~~~
+This script is the result of a project where multiple SRL Members worked on.
+Our goal is to create a high quality script by collaborating with eachother.
+
+Project source code can be found at: http://code.google.com/p/srl-aio-fighter/
+*}
+program SRL_AIO_Fighter;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i SRL/srl/misc/smartgraphics.simba}
+
+var
+  DevMode: boolean;
+
+// Logs everything in a file, so you can easily upload logs
+procedure Log(Details: String);
+var
+  FileName, SavePath, FullName: string;
+  FileNum: Integer;
+
+begin
+  if DevMode then
+  begin
+    SavePath := SRL_SavePath + 'AIO Fighter/';
+    if not DirectoryExists(SavePath) then
+      CreateDirectory(SavePath);
+
+    FileName := 'AIO Fighter log ('+SRL_StartTime+').txt';
+    FileName := Replace(FileName, '/', '-');
+    FileName := Replace(FileName, ':', ' ');
+
+    if not(FileExists(SavePath + FileName)) then
+      FileNum := CreateFile(SavePath + FileName)
+    else
+      FileNum := AppendFile(SavePath + FileName);
+
+    if FileNum >= 0 then
+      WriteFileString(FileNum, '['+MsToTime(GetTimeRunning(), TIME_BARE)+']: ' + Details + chr(13) + chr(10));
+
+    CloseFile(FileNum);
+  end;
+end;
+
+(*
+GetAllTexts
+~~~~~~~~~
+Description: Attempts to read the texts in the area X1, Y1, X2, Y2 with the
+             given color and tolerance
+By: J J
+Example: GetAllTexts(MSX1, MSY1, MSX2, MSY2, clBlack, 10);
+*)
+procedure GetAllTexts(X1, Y1, X2, Y2, Color, Tolerance: Integer);
+var
+  i: Integer;
+  Fonts: TStringArray;
+  s: String;
+
+begin
+  Fonts := ['CharsNPC', 'SmallChars', 'StatChars', 'UpChars', 'FriendChars', 'LoginChars'];
+
+  for i:=0 to high(Fonts) do
+    try
+      s := GetTextAtExWrap(X1, Y1, X2, Y2, 0, 0, 2, Color, Tolerance, Fonts[i]);
+    except
+      Log('GetKeyBinds --> Failed to grab text #' + IntToStr(i));
+    finally
+      Log('GetKeyBinds --> Font "' + Fonts[i] + '", Detected text: ' + s);
+    end;
+end;
+
+(*
+GetKeyBinds
+~~~~~~~~~
+Description: Returns the keys that have been bound to each slot, left to right.
+By: J J
+Example: BoundedKeys := GetKeyBinds;
+*)
+function GetKeyBinds: Array[0..11] of String;
+var
+  s: String;
+  i: Integer;
+
+begin
+  for i:=0 to high(Result) do
+  begin
+    if DevMode then
+      SMART_DrawBoxEx(False, False, IntToBox(48+36*i, 315, 57+36*i, 324), clGreen);
+
+    Result[i] := GetTextAtExWrap(48+36*i, 315, 57+36*i, 324, 0, 0, 2, 3111603, 10, 'UpChars');
+    Log('GetKeyBinds --> Slot #' + IntToStr(i) + ' : ' + Result[i]);
+  end;
+end;
+
+(*
+GetTypedMessage
+~~~~~~~~~
+Description: Returns what the user has typed, removes the username.
+             This is a modified version of GetChatBoxText
+By: ZephyrsFury / J J
+Example: writeln(GetTypedMessage);
+*)
+function GetTypedMessage: String;
+var
+  Position, i: Integer;
+  Splitted: TStringArray;
+  cArr: TPointArray;
+  B: TBox;
+
+begin
+  {
+  Result := GetTextAtExWrap(8, 509-50, 512, 523-50, 0, 0, 2, clBlack, 10, 'SmallChars');
+  Position := Pos('·', Result);
+
+  if Position > 0 then
+  begin
+    writeln('found');
+    Explode('·', Result);
+    for i:=0 to high(Splitted) do
+      writeln('Splitted[' + IntToStr(i) + '] : ' + Splitted[i]);
+  end;
+  Result := ReplaceWrap(Result, ' ', '', [rfReplaceAll, rfIgnoreCase]);
+  Log('GetTypedMessage --> ' + Result);
+  }
+  Result := '';
+  if (FindColorsTolerance(cArr, clBlack, MCX1, 459, MCX2, 472, 5)) then
+  begin
+    B := GetTPABounds(cArr);
+    Result := Trim(GetTextAtExWrap(b.x1-1, 459, B.x2+1, 472, 0, 5, 2, clBlack, 5, SmallChars));
+    writeln(Result);
+  end;
+end;
+
+function UseAbility(Slot: Integer): boolean;
+var
+  X, Y, i: integer;
+  TextFound: Boolean;
+  s: String;
+
+begin
+  writeln(Pos('[PressEntertoChat]', GetTypedMessage));
+  {
+  if Pos('[PressEntertoChat]', GetTypedMessage) = 0) then
+    ToggleActionBar(False);
+    Wait(RandomRange(500, 1000));
+    ToggleActionBar(True);
+  end;
+  }
+
+  if not IsActionBarOpen then
+    ToggleActionBar(True);
+
+  //Result := SendKeys(Slot, 200, 100);
+end;
+
+procedure Test;
+begin
+
+
+end;
+
+begin
+  SetupSRL;
+  //ClickNorth(SRL_ANGLE_HIGH);
+
+  DevMode := True;
+  SMART_ClearCanvas;
+  //GetKeyBinds;
+  //GetAllTexts(MCX1, MCY1, MCX2, MCY2, clBlack, 10);
+  //UseAbility(1);
+  GetTypedMessage;
+  //UseAbility(0);
+  //Log('test');
+end.

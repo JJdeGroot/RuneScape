@@ -1,0 +1,372 @@
+program CharmScript;
+{$DEFINE SMART}
+{$i srl/srl/misc/smart.simba}
+{$i srl/srl.simba}
+{$i SRL/SRL/misc/paintsmart.simba}
+
+
+var
+  X, Y, n, Charms, Kills, StartTime, BreakTime: integer;
+
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      // Fill in the fields with your details
+      Name := 'username';
+      Pass := 'password';
+      Pin := 'pin(not needed for this script)';
+      Active := True;
+      // Taking breaks and for how long?
+      Booleans[0] := True;  // Take breaks = True, no breaks = False
+      Integers[0] := 180;   // Minimum time to play before breaking (in minutes)
+      Integers[1] := 300;   // Maximum time to play before breaking (in minutes)
+    end;
+end;
+
+
+procedure ResetBreakTimer;
+begin
+  BreakTime := GetSystemTime + RandomRange(Players[CurrentPlayer].Integers[0] * 60000, Players[CurrentPlayer].Integers[1] * 60000);
+end;
+
+
+procedure TakeBreak;
+var
+    H, M, S, T, BreakFor: Integer;
+
+begin
+  if (GetSystemTime >= BreakTime) and Players[CurrentPlayer].Booleans[0] then
+    begin
+      Wait(15000 + Random(10000));
+      Logout;
+      BreakFor := RandomRange(10 * 60000, 30 * 60000);   // Break between 10-30 minutes
+      ConvertTime(BreakFor, H, M, S);
+      Writeln('Break for: ' + IntToStr(M)+ 'm:' + IntToStr(S)+ 's');
+      MarkTime(T);
+        repeat
+          wait(1000);
+          until (BreakFor < TimeFromMark(T))
+      LogInPlayer;
+      ResetBreakTimer;
+      Wait(1000 + Random(3000));
+      ClickNorth(0);
+      MarkTime(n);
+    end;
+end;
+
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 27;
+  Smart_Members := True;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  ResetBreakTimer;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+  MarkTime(n);
+end;
+
+
+procedure Antiban2;
+begin
+  case Random(30000) of
+    0..4:       begin
+                  WriteLn('Antiban active');
+                  HoverSkill('strength', False);
+                  Wait(50 + Random(50));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    1000..1009: begin
+                  WriteLn('Antiban active');
+                  HoverSkill('hitpoints', False);
+                  Wait(50 + Random(50));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    2000..2009: begin
+                  WriteLn('Antiban active');
+                  HoverSkill('summoning', False);
+                  Wait(50 + Random(50));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    3000..3004: begin
+                  WriteLn('Antiban active');
+                  HoverSkill('random', False);
+                  Wait(50 + Random(50));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    4000..4009: begin
+                  WriteLn('Antiban active');
+                  RandomRClick;
+                  Wait(250 + Random(500));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    5000..5019: begin
+                  WriteLn('Antiban active');
+                  PickUpMouse;
+                  Wait(100 + Random(200));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    6000..6019: begin
+                  WriteLn('Antiban active');
+                  RandomMovement;
+                  Wait(100 + Random(100));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    7000..7019: begin
+                  WriteLn('Antiban active');
+                  BoredHuman;
+                  Wait(300 + Random(600));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    8000..8009: begin
+                  WriteLn('Antiban active');
+                  ExamineInv;
+                  Wait(150 + Random(250));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                 end;
+    9000..9019: begin
+                  WriteLn('Antiban active');
+                  SleepAndMoveMouse(1000 + Random(5000));
+                  Wait(200 + Random(200));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                 end;
+  end;
+end;
+
+
+function AttackMonster(var fx, fy: Integer): Boolean;
+var
+  arP: TPointArray;
+  ararP: T2DPointArray;
+  tmpCTS, i, arL, q, a: Integer;
+  P: TPoint;
+
+begin
+  case Random(200) of
+    0: begin;
+         Wait(200 + Random(200));
+         ClickNorth(0);
+         Wait(200 + Random(200));
+       end;
+  end;
+MarkTime(q);
+a:=0;
+  repeat
+
+    tmpCTS := GetColorToleranceSpeed;
+    ColorToleranceSpeed(2);
+    SetColorSpeed2Modifiers(0.33, 1.07);
+
+    if not(FindColorsTolerance(arP, 7157061, MSX1, MSY1, MSX2, MSY2, 13)) then
+    begin;
+      WriteLn('Attempt '+IntToStr(a)+' of finding a monster')
+      inc(a);
+      Antiban2
+      Wait(50 + Random(50));
+      if (a>=49) then
+        begin
+          Writeln('Moving around');
+          FindColorSpiralTolerance(X, Y, 587493, 580, 27, 672, 145, 20);
+          MMouse(X, Y, 5, 5);
+          Mouse(X, Y, 0, 0, 1);
+            repeat Wait(50 + Random(50))
+            until(IsMoving=False);
+          Wait(200 + Random(400));
+        end;
+      if (a>=52) then
+        begin
+          WriteLn('Something wrent wrong, checking what happened');
+          FindNormalRandoms;
+          if not(FindNormalRandoms) then
+            begin
+              WriteLn('We are not in a random event, something else must have happened. Terminating script to be safe');
+              TerminateScript;
+            end else
+          WriteLn('We are in a random event, trying to solve it');
+          FindNormalRandoms;
+        end;
+      if (a>=54) then
+        begin
+          WriteLn('No idea what happened, terminating script to be safe');
+          TerminateScript;
+        end;
+    end;
+
+    ColorToleranceSpeed(2);
+    SetColorSpeed2Modifiers(0.33, 1.07);
+    FindColorsTolerance(arP, 7157061, MSX1, MSY1, MSX2, MSY2, 13);
+    SortTPAFrom(arP, Point(MSCX, MSCY));
+    ararP := SplitTPAEx(arP, 50, 50);
+    arL := High(ararP);
+
+    for i := 0 to arL do
+    begin
+      P := MiddleTPA(ararP[i]);
+      MMouse(P.x, P.y, 5, 5);
+      if WaitUpTextMulti(['ela', 'bom'], 150) then
+        case Random(8) of
+          0..4: Mouse(P.X, P.Y, 0, 0, 1);
+          5..7: begin;
+                  Mouse(P.X, P.Y, 0, 0, 0);
+                  WaitOptionMulti(['tta', 'tack'], 150);
+                end;
+        end;
+      if (DidRedClick=True) then
+        begin
+          WriteLn('Monster attacked');
+          Result := True;
+          Exit;
+        end else
+    end;
+
+  until (TimeFromMark(q) >= 15000);
+end;
+
+
+procedure CheckIfDead;
+var
+  X, Y, k, u: integer;
+
+begin
+MarkTime(k);
+ColorToleranceSpeed(2);
+SetColorSpeed2Modifiers(1.54, 4.05);
+  repeat
+    Wait(50 + Random(50));
+    Antiban2;
+    Wait(50 + Random(50));
+  until FindColorSpiralTolerance(X, Y, 7015215, MSX1, MSY1, MSX2, MSY2, 5) or (TimeFromMark(k) >= 20000);
+  WriteLn('Monster is dead');
+  Inc(Kills);
+  MarkTime(u);
+  repeat
+    Wait(50 + Random(50));
+    Antiban2;
+    Wait(50 + Random(50));
+  until(TimeFromMark(u) > RandomRange(5400, 5600));
+end;
+
+
+procedure CheckLoot;
+var
+  X, Y: integer;
+
+begin
+ColorToleranceSpeed(2);
+SetColorSpeed2Modifiers(1.03, 1.28);
+  if FindColorSpiralTolerance(X, Y, 6397613, MSX1, MSY1, MSX2, MSY2, 4) then
+    begin;
+      MMouse(X, Y, 0, 0);
+        if WaitUpTextMulti(['ake Go', 'harm'], 150) then
+          begin
+            case Random(3) of
+              0..1: begin; Mouse(X, Y, 0, 0, True); inc(Charms); end;
+              2:    begin;
+                      Mouse(X, Y, 0, 0, False);
+                      if WaitOptionMulti(['ake Go', 'harm'], 150) then
+                        begin
+                          inc(Charms);
+                        end else
+                    end;
+            end;
+            Wait(100 + Random(200));
+              repeat
+                //WriteLn('We are moving')
+                Wait(50 + Random(50));
+              until (IsMoving=False);
+              if (IsMoving=False) then
+                begin
+                  WriteLn('We aren`t moving anymore');
+                end else
+                begin
+                  repeat
+                    Wait(50 + Random(50))
+                  until (IsMoving=False);
+                end;
+          WriteLn('Collected a gold charm');
+          end else
+            begin;
+              Mouse(X, Y, 0, 0, False);
+              if WaitOptionMulti(['ake Go', 'harm'], 150) then
+                begin
+                  Wait(100 + Random(200));
+                    repeat
+                      //WriteLn('We are moving')
+                      Wait(50 + Random(50));
+                    until (IsMoving=False);
+                    if (IsMoving=False) then
+                      begin
+                        WriteLn('We aren`t moving anymore');
+                      end else
+                      begin
+                        repeat
+                          Wait(50 + Random(50))
+                        until (IsMoving=False);
+                      end;
+                  WriteLn('Collected a gold charm');
+                  inc(Charms);
+                end else
+          end;
+    end;
+end;
+
+
+procedure OnScreenProggy;
+var
+  Sec, CbExp, HpExp, CbExpRate, HpExpRate, CharmRate, KillsRate:Integer;
+  Kills2, CbExp2, HpExp2, Charms2: String;
+begin
+  Sec:=(1+((GetSystemTime-StartTime)/1000));
+  CbExp:=(20*(Kills));
+  HpExp:=((CbExp)/3);
+  KillsRate :=((3600*(Kills))/(Sec));
+  CbExpRate:=((3600*(CbExp))/(Sec));
+  HpExpRate:=((3600*(HpExp))/(Sec));
+  CharmRate:=((3600*(Charms))/(Sec));
+
+  Kills2 := ''+IntToStr(Kills)+' monsters killed at '+IntToStr(KillsRate)+' per hour';
+  CbExp2 := ''+IntToStr(CbExp)+' combat experience gained at '+IntToStr(CbExpRate)+' per hour'
+  HpExp2 := ''+IntToStr(HpExp)+' hitpoints experience gained at '+IntToStr(HpExpRate)+' per hour'
+  Charms2 := ''+IntToStr(Charms)+' gold charms gained at '+IntToStr(CharmRate)+' per hour'
+
+  SMART_ClearCanvas;
+  SMART_DrawText(5, 269, UpCharsEx, Kills2, clYellow);
+  SMART_DrawText(5, 286, UpCharsEx, CbExp2, clYellow);
+  SMART_DrawText(5, 303, UpCharsEx, HpExp2, clYellow);
+  SMART_DrawText(5, 320, UpCharsEx, Charms2, clYellow);
+end;
+
+
+begin
+  SetUpLogin;
+  OnScreenProggy;
+  StartTime:=GetSystemTime;
+  repeat
+    AttackMonster(X, Y);
+    CheckIfDead;
+    CheckLoot;
+    OnScreenProggy;
+    TakeBreak;
+  until not(LoggedIn);
+end.

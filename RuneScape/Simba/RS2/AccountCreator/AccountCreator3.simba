@@ -1,0 +1,93 @@
+{ * - AccountCreator made by J J - * }
+program AccountCreator;
+{$i SRL/SRL.simba}
+{$loadlib Appa_Simba}
+
+const
+  mailname = '';       // Your email name
+  mailextension = '@gmail.com';   // Your email provider
+  pass = '';           // Your email password
+  passwords = '';         // Your runescape passwords for the accounts
+
+var
+  Counter: Integer;
+
+// Moves the mouse to a random spot in a box
+procedure appa_ClickBox(B: TBox; ClickType: boolean);
+var
+  X, Y: Integer;
+
+begin
+  X := RandomRange(B.X1, B.X2);
+  Y := RandomRange(B.Y1, B.Y2);
+  appa_MoveMouse(X, Y);
+  appa_HoldMouse(X, Y, True);
+  Wait(RandomRange(50, 70));
+  appa_ReleaseMouse(X, Y, ClickType);
+  //writeln(Point(X, Y));
+end;
+
+// Prints all the form details out
+procedure PrintForms;
+var
+ Forms: TAppaFormArray;
+ i, j: Integer;
+begin
+  appa_GetForms(Forms);
+  for i:=0 to high(Forms) do
+  begin
+    WriteLn('Forms ' + IntToStr(i) + ' Action: ' + ToStr(Forms[i].Action));
+    WriteLn('Elements ' + IntToStr(i));
+    for j:=0 to high(Forms[i].Elements) do
+    begin
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' ClassName: ' + ToStr(Forms[i].Elements[j].ClassName));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' Name: ' + ToStr(Forms[i].Elements[j].Name));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' ID: ' + ToStr(Forms[i].Elements[j].ID));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' outerHTML: ' + ToStr(Forms[i].Elements[j].outerHTML));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' Tag: ' + ToStr(Forms[i].Elements[j].Tag));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' Value: ' + ToStr(Forms[i].Elements[j].Value));
+     end;
+    WriteLn('Forms ' + IntToStr(i) + ' Method: ' + ToStr(Forms[i].Method));
+    WriteLn('Forms ' + IntToStr(i) + ' Name: ' + ToStr(Forms[i].Name));
+
+    //appa_FormElementAction(const FormIndex, elIndex INteger, const act Tappaelementarray, const param: ansistring);
+
+  end;
+end;
+
+// Registers a new RuneScape account
+function RegisterAccount: boolean;
+var
+  i, j: Integer;
+  Forms: TAppaFormArray;
+  Email: String;
+
+begin
+  Email := mailname + '+' + IntToStr(Counter) + mailextension;
+  writeln(Email);
+  appa_Navigate('https://secure.runescape.com/m=account-creation/');
+  Wait(5000);
+
+  appa_GetForms(Forms);
+  for i:=0 to high(Forms) do
+    for j:=0 to high(Forms[i].Elements) do
+      case Forms[i].Elements[j].Name of
+        'email1':  appa_FormElementAction(i, j, appa_SetValue, Email);
+        'email2': appa_FormElementAction(i, j, appa_SetValue, Email);
+        'password1': appa_FormElementAction(i, j, appa_SetValue, passwords);
+        'age': appa_FormElementAction(i, j, appa_SetValue, '18');
+        'submit': Result := True;
+      end;
+
+  appa_ClickBox(IntToBox(539, 853, 684, 892), True);
+  writeln('Account ' + IntToStr(Counter) + ' created');
+  Wait(15000);
+end;
+
+begin
+  SetupSRL;
+  appa_ShowForm;
+  appa_SetSize(1000, 1000);
+  for Counter:=300 to 305 do    //+4 per keer (5 accs per keer)
+    RegisterAccount;
+end.

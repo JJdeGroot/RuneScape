@@ -1,0 +1,114 @@
+program Test;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+//{$i sps/sps.simba}
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+end;
+
+procedure Test;
+var
+  X, Y: Integer;
+
+begin
+  {EARTH ALTAR | Brown color of the area}
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.18, 1.81);
+  WriteLn('Counted colors: '+IntToStr(CountColorTolerance(3497590, MMX1, MMY1, MMX2, MMY2, 8))+'');
+  if FindColoredAreaTolerance(X, Y, 3497590, MMX1, MMY1, MMX2, MMY2, 100000, 8) then
+    WriteLn('We are at the Earth Altar');
+
+  {FIRE ALTAR | Yellow color of the river}
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.07, 2.64);
+  WriteLn('Counted colors: '+IntToStr(CountColorTolerance(6274014, MMX1, MMY1, MMX2, MMY2, 15))+'');
+  if FindColoredAreaTolerance(X, Y, 6274014, MMX1, MMY1, MMX2, MMY2, 10000, 15) then
+    WriteLn('We are at the Fire Altar');
+
+  {AIR ALTAR | Green color of the area}
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.95, 1.87);
+  WriteLn('Counted colors: '+IntToStr(CountColorTolerance(2056526, MMX1, MMY1, MMX2, MMY2, 9))+'');
+  if FindColoredAreaTolerance(X, Y, 2056526, MMX1, MMY1, MMX2, MMY2, 50000, 9) then
+    WriteLn('We are at the Air Altar');
+
+  {BODY ALTAR | Gray color of the area}
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(5.57, 0.18);
+  WriteLn('Counted colors: '+IntToStr(CountColorTolerance(7763818, MMX1, MMY1, MMX2, MMY2, 9))+'');
+   if FindColoredAreaTolerance(X, Y, 7763818, MMX1, MMY1, MMX2, MMY2, 50000, 9) then
+    WriteLn('We are at the Mind Altar');
+
+  {MIND | White color of the area}
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(23.13, 17.86);
+  WriteLn('Counted colors: '+IntToStr(CountColorTolerance(16119532, MMX1, MMY1, MMX2, MMY2, 2))+'');
+  if FindColoredAreaTolerance(X, Y, 16119532, MMX1, MMY1, MMX2, MMY2, 500, 2) then
+    WriteLn('We are at the Body Altar');
+
+  {WATER ALTAR | Blue color of the water}
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(3.22, 0.91);
+  WriteLn('Counted colors: '+IntToStr(CountColorTolerance(10129543, MMX1, MMY1, MMX2, MMY2, 5))+'');
+  if FindColoredAreaTolerance(X, Y, 10129543, MMX1, MMY1, MMX2, MMY2, 10000, 5) then
+    WriteLn('We are at the Water Altar');
+end;
+
+function DefineArea:String;
+var
+  AltarMMCol, AltarMMTol, ColorCount: Array of Integer;
+  AltarMMHue, AltarMMSat: Array of Extended;
+  PossibleAltars: Array of String;
+  i: Integer;
+
+begin;
+  AltarMMCol := [6274014, 3035750, 2056526, 16119532, 7763818, 10129543];
+  AltarMMTol := [15, 12, 9, 2, 9, 5];
+  AltarMMHue := [0.07, 0.16, 0.95, 23.13, 5.57, 3.22];
+  AltarMMSat := [2.64, 1.29, 1.87, 17.86, 0.18, 0.91];
+  PossibleAltars := ['Fire', 'Earth', 'Air', 'Mind', 'Body', 'Water'];
+  ColorCount := [3000, 5000, 5000, 400, 3000, 5000];
+
+  for i := 0 to 5 do
+  begin
+    ColorToleranceSpeed(2);
+    SetColorspeed2Modifiers(AltarMMHue[i], AltarMMSat[i]);
+    if CountColorTolerance(AltarMMCol[i], MMX1, MMY1, MMX2, MMY2, AltarMMTol[i]) > ColorCount[i] then
+      WriteLn('We are at the '+PossibleAltars[i]+' Altar');
+      Result:=PossibleAltars[i];
+      Exit;
+  end;
+end;
+
+begin
+  SetUpLogin;
+  //SetUpSRL;
+  //Test;
+  DefineArea;
+end.

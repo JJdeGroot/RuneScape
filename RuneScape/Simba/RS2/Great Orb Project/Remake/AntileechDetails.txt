@@ -1,0 +1,22 @@
+Added {$i srl/GOP_Proggy.simba} 
+GOP_Proggy added var Leech: Boolean;
+GOP_Proggy line 879 Leech set to true
+GopRemake line 381-385 added TerminateScript if Leech = true, also draws leech in the screen
+
+Instructions for SRL Members to set it up:
+1) Download all the files
+2) Unzip the SPS Maps
+3) Place the SPS Maps in C:\Simba\Includes\SPS\img\runescape_surface
+4) Place the GOP_Proggy.simba in C:\Simba\Includes\SRL
+5) Open the GOP_Proggy file and go to line 879, set Leech := False
+6) Open the JJsGopRemake file and go to line 1049
+Fill in one of these:
+'Wizards' (Random team) or 'Wizard Acantha' (Green team) or 'Wizard Vief' (Yellow team)
+7) Start the script
+
+Enjoy, greetz
+
+J J
+
+
+

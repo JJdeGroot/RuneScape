@@ -1,0 +1,114 @@
+program JJsCakeStealer;
+{$DEFINE SMART8}
+{$i srl/srl.simba}
+{$i P07Include.simba}
+
+function HoverStall: boolean;
+var
+  i, r: Integer;
+  P: TPoint;
+  TPA: TPointArray;
+  ATPA: T2DPointArray;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.05, 0.58);
+
+  if FindColorsSpiralTolerance(P07_MSCX, P07_MSCY, TPA, 8361378, P07_MSX1, P07_MSY1, P07_MSX2, P07_MSY2, 7) then
+  begin
+    writeln('Found colors');
+    SplitTPAWrap(TPA, 3, ATPA);
+    SortATPAFrom(ATPA, Point(P07_MSCX, P07_MSCY));
+
+    for i:=0 to high(ATPA) do
+      if Length(ATPA[i]) > 100 then
+      begin
+        writeln('ATPA Length #' + IntToStr(i) + ' > 100');
+        r := RandomRange(0, Length(ATPA[i])-1);
+        P := ATPA[i][r];
+        if Distance(P.x, P.y, P07_MSCX, P07_MSCY) < 100 then
+        begin
+          writeln('distance < 100');
+          MMouse(P.x, P.y, 0, 0);
+          Result := True;
+          break;
+        end;
+      end;
+  end;
+end;
+
+function CanSteal: boolean;
+begin
+  Result := P07_WaitUptextMultiCustom(['Baker', 'stall'], 3000);
+end;
+
+procedure Steal;
+begin
+  ClickMouse2(1);
+  Wait(RandomRange(1000, 1500));
+end;
+
+procedure DropFood;
+var
+  xsx, ysy, R, C, i: Integer;
+
+begin
+  writeln('Going to drop!');
+
+  xsx := 565;
+  ysy := 215;
+
+  for i:=0 to 27 do
+  if P07_ItemExists(i) then
+    begin
+      C := (Round(i/4));
+      R := (i -(C*4));
+      MouseBox(xsx+(R*42), ysy+(C*36), xsx+(R*42)+27, ysy+(C*36)+25, 3);
+
+      if P07_WaitUptextMultiCustom(['Eat', 'ake', 'read', 'hoc'], 500) then
+      begin
+        ClickMouse2(0);
+        P07_WaitOptionMulti(['Drop'], 500);
+      end;
+    end;
+end;
+
+function InCombat: boolean;
+var
+  HpBarColors: Integer;
+
+begin
+  HpBarColors := CountColorTolerance(65280, 235, 144, 286, 168, 10);
+  writeln('hp bar colors: ' + IntToStr(HpBarColors));
+end;
+
+begin
+  SetupSRL;
+  SetupP07Include;
+  SRL_EnableNavBar;
+  WriteLn('Script started!');
+
+  repeat
+    InCombat;
+
+    if not P07_InvFull then
+    begin
+      writeln('Inv not full yet, stealing!');
+
+      if not CanSteal then
+        HoverStall
+      else
+        Steal;
+
+      case Random(RandomRange(5, 15)) of
+        0: HoverStall;
+      end;
+    end else
+    begin
+      writeln('Inv full, dropping!');
+      DropFood;
+    end;
+  until(false);
+
+  WriteLn('Script ended!');
+end.

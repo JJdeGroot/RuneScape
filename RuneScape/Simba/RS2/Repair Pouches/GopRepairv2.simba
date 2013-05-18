@@ -1,0 +1,223 @@
+program Test;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+{$i srl/srl/misc/paintsmart.simba}
+
+var
+  Debug: Boolean;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+end;
+
+procedure RunWait;
+begin
+  FFlag(0);
+  repeat
+    Wait(100 + Random(100));
+  until not(IsMoving);
+  Wait(500 + Random(500));
+end;
+
+function EnterPortal: Boolean;
+var
+  Portal: TPointArray;
+  P: TPoint;
+
+begin
+  // Teleporting to the wizards tower
+  if not(GetCurrentTab = Tab_Equip) then
+    FTab(Tab_Equip);
+  Mousebox(631, 216, 654, 237, 0);
+  if WaitOptionMulti(['ele', 'port', 'lepo'], 1000) then
+  begin
+    Wait(5000 + Random(2000));
+    MakeCompass(RandomRange(30, 150));
+    Wait(500 + Random(500));
+
+    // Detecting the portal
+    ColorToleranceSpeed(2);
+    SetColorSpeed2Modifiers(0.05, 2.32);
+    if FindColorsTolerance(Portal, 13796530, MSX1, MSY1, MSX2, MSY2, 12) then
+    begin
+      if Debug then
+        SMART_DrawDotsEx(False, Portal, clWhite);
+      P := MiddleTPA(Portal);
+      MMouse(P.X, P.Y, RandomRange(-2, 2), RandomRange(-2, 2));
+      if WaitUpTextMulti(['nter', 'ortal'], 1000) then
+      begin
+        case Random(7) of
+          0..4: ClickMouse2(1);
+          5..6: begin
+                  ClickMouse2(0);
+                  WaitOptionMulti(['nter'], 1000);
+                end;
+        end;
+
+        // Waiting to select the option
+        RunWait;
+
+
+        case Random(3) of
+          0..1: TypeSendEx('1', False);
+          2: MouseBox(124, 392, 395, 403, 1);
+        end;
+
+        // Waiting for the animation and returning the camera angle
+        Wait(4000 + Random(2000));
+        MakeCompass(0);
+        Wait(500 + Random(500));
+        Result := True;
+      end;
+    end;
+  end;
+end;
+
+function FindKorvak: Boolean;
+var
+  i, Attempt: Integer;
+  P: TPoint;
+  TPA1, TPA2: TPointArray;
+  ATPA1: T2DPointArray;
+
+begin
+  // Finding the top
+  repeat
+    ColorToleranceSpeed(2);
+    SetColorSpeed2Modifiers(0.09, 1.72);
+    if FindColorsSpiralTolerance(MSCX, MSCY, TPA1, 5616856, MSX1, MSY1, MSX2, MSY2, 20) then
+    begin
+      if Debug then
+        SMART_DrawDotsEx(False, TPA1, clRed);
+      SplitTPAExWrap(TPA1, 3, 3, ATPA1);
+      SortATPASize(ATPA1, True);
+      for i:=0 to high(ATPA1) do
+      begin
+        if (Length(ATPA1[i]) > 10) then
+        begin
+          P := MiddleTPA(ATPA1[i]);
+          if Debug then
+            SMART_DrawCircle(False, P, 3, False, clWhite);
+
+          // Finding the hair
+          if Debug then
+            SMART_DrawBoxes(False, [IntToBox(P.X-10, P.Y-15, P.X+10, P.Y)], clYellow);
+          ColorToleranceSpeed(2);
+          SetColorSpeed2Modifiers(0.52, 0.07);
+          if FindColorsSpiralTolerance(P.X, P.Y, TPA2, 4344909, P.X-10, P.Y-15, P.X+10, P.Y, 11) then
+          begin
+            if Debug then
+              SMART_DrawDotsEx(False, TPA2, clPurple);
+            if (Length(TPA2) > 10) then
+            begin
+              WriteLn('Found Korvak');
+              MMouse(P.X, P.Y+10, RandomRange(-3, 3), RandomRange(-6, 6));
+              if WaitUpTextMulti(['orv', 'vak'], 500) then
+              begin
+                case Random(7) of
+                  0..4: ClickMouse2(1);
+                  5..6: begin
+                          ClickMouse2(0);
+                          WaitOptionMulti(['alk', 'to'], 500);
+                        end;
+                end;
+                Result := True;
+                RunWait;
+                if not(AreTalking) then
+                  Inc(Attempt);
+                Break;
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+  until (AreTalking) or (Attempt>=3);
+end;
+
+procedure ToKorvak;
+begin
+  RadialWalkTolerance(6842644, 0, 20, 75, RandomRange(-2, 2), RandomRange(-15, -10), 30);
+  RunWait;
+end;
+
+procedure KorvakTalk(Option: String);
+begin
+  if AreTalking then
+  begin
+    repeat
+      if not(ClickContinue(True, True)) then
+        TypeSendEx(Option, False);
+    until not(AreTalking);
+  end;
+end;
+
+function DegMedPouch: Boolean;
+begin
+  //if FindDTM... then
+  Result := True;
+end;
+
+procedure NewMedPouch;
+var
+  X, Y, PouchDTM: Integer;
+
+begin
+  if not(GetCurrentTab = Tab_Inv) then
+    FTab(Tab_Inv);
+
+  PouchDTM := DTMFromString('mggAAAHicY2NgYJjPxsAwF4inA/ESIF4IxCuB+CQTA8NuID4LxIeA+CoQnwdiP3cboC4mDPwfqygDAyMODAEA9WAKmQ==');
+  if FindDTM(PouchDTM, X, Y, MIX1, MIY1, MIX2, MIY2) then
+  begin
+    MMouse(X, Y, RandomRange(-1, 1), RandomRange(-1, 1));
+    ClickMouse2(0);
+    if WaitOptionMulti(['rop', 'Drop'], 500) then
+    begin
+      Wait(500 + Random(500));
+      if FindKorvak then
+        KorvakTalk('2');
+    end;
+  end;
+  FreeDTM(PouchDTM);
+end;
+
+
+begin
+  SetUpLogin;
+  Debug := True;
+  SMART_ClearCanvas;
+  if EnterPortal then
+  begin
+    ToKorvak;
+    if FindKorvak then
+    begin
+      KorvakTalk('1');
+      if DegMedPouch then
+        NewMedPouch;
+    end;
+  end;
+end.

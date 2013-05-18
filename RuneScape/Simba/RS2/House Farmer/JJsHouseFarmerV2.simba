@@ -1,0 +1,678 @@
+program JJsHouseFarmerV2;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+{$i SRL/SRL/misc/paintsmart.simba}
+
+var
+  X, Y, t, PlantX, PlantY, StartTime, PlantsMade, PlantsToMake, AntibanChance: Integer;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  // Fill in
+  PlantsToMake := 1000;  // Your desired amount of plants
+  AntibanChance := 12000 // Atleast 8000. The higher the number the lower the antiban rate.
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+end;
+
+procedure Status(Text: String);
+var
+  StatusBox: TBox;
+
+begin
+  StatusBox := IntToBox(0, 0, MSX2, 30);
+  SMART_ClearCanvasArea(StatusBox);
+  SMART_DrawText(5, 5, UpCharsEx, Text, clAqua);
+end;
+
+procedure Antiban;
+begin
+  case Random(AntiBanChance) of
+    0..9:       begin
+                  WriteLn('Antiban active');
+                  HoverSkill('farming', False);
+                  Wait(100 + Random(300));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                end;
+    1000..1004: begin
+                  WriteLn('Antiban active');
+                  HoverSkill('construction', False);
+                  Wait(100 + Random(300));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                end;
+    2000..2006: begin
+                  WriteLn('Antiban active');
+                  RandomRClick;
+                  Wait(200 + Random(600));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                end;
+    3000..3009: begin
+                  WriteLn('Antiban active');
+                  PickUpMouse;
+                  Wait(150 + Random(450));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                end;
+    4000..4009: begin
+                  WriteLn('Antiban active');
+                  RandomMovement;
+                  Wait(200 + Random(400));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                end;
+    5000..5014: begin
+                  WriteLn('Antiban active');
+                  BoredHuman;
+                  Wait(500 + Random(1000));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                end;
+    6000..6004: begin
+                  WriteLn('Antiban active');
+                  ExamineInv;
+                  Wait(250 + Random(400));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                 end;
+    7000..7014: begin
+                  WriteLn('Antiban active');
+                  SleepAndMoveMouse(1000 + Random(5000));
+                  Wait(100 + Random(300));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                 end;
+    8000..8019: begin
+                  WriteLn('Antiban active');
+                  case Random(7) of
+                    0: Wait(1000 + Random(10000));
+                    1: Wait(2000 + Random(4000));
+                    2: Wait(3000 + Random(1500));
+                    3: Wait(7500 + Random(2500));
+                    4: Wait(5000 + Random(5000));
+                    5: Wait(5000 + Random(20000));
+                    6: Wait(20000 + Random(5000));
+                  end;
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                end;
+  end;
+end;
+
+procedure WaitUntilWalking;
+begin
+  Wait(300 + Random(300));
+  if (IsMoving=True) then
+    begin
+      repeat
+        Wait(50 + Random(100));
+      until(IsMoving=False);
+    end;
+  Wait(300 + Random(300));
+end;
+
+procedure DefinePlant;
+var
+  Plant: TPointArray;
+  PlantSplit: T2DPointArray;
+
+begin
+  WriteLn('Time to define the location of the plant');
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.20, 0.34);
+  if FindColorsSpiralTolerance(X, Y, Plant, 8823709, MSCX - 30, MSCY, MSCX + 30, MSCY + 70, 20) then
+    begin
+      SplitTPAExWrap(Plant, 15, 15, PlantSplit);
+      SortATPASize(PlantSplit, True);
+      MiddleTPAEx(PlantSplit[0], X, Y);
+      PlantX := X;
+      PlantY := Y;
+    end;
+end;
+
+procedure DefinePlantV2;
+var
+  Plant: TPointArray;
+  PlantSplit: T2DPointArray;
+
+begin
+  WriteLn('Time to define the location of the plant');
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.06, 1.91);
+  if FindColorsSpiralTolerance(X, Y, Plant, 1263415, MSX1, MSY1, MSX2, MSY2, 11) then
+    begin
+      SplitTPAExWrap(Plant, 15, 15, PlantSplit);
+      SortATPASize(PlantSplit, True);
+      MiddleTPAEx(PlantSplit[0], X, Y);
+      PlantX := X;
+      PlantY := Y;
+    end;
+end;
+
+function FindPlantSpot: String;
+var
+  PlantSpot1, PlantSpot2: TPointArray;
+  PlantSpot1Split, PlantSpot2Split: T2DPointArray;
+
+begin
+  WriteLn('Time to find the plant spot');
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.20, 0.34);
+  if FindColorsSpiralTolerance(X, Y, PlantSpot1, 8823709, 135, MSCY, 205, MSCY + 70, 20) then
+    begin
+      SplitTPAExWrap(PlantSpot1, 15, 15, PlantSpot1Split);
+      SortATPASize(PlantSpot1Split, True);
+      MiddleTPAEx(PlantSpot1Split[0], X, Y);
+      MMouse(X, Y - RandomRange(28, 36), RandomRange(-2, 2), RandomRange(-2, 2));
+      Wait(20 + Random(60));
+      ClickMouse2(1);
+      WaitUntilWalking;
+      DefinePlant;
+      MMouse(PlantX, PlantY, RandomRange(-3, 3), RandomRange(-3, 3));
+      if WaitUpTextMulti(['2', '2 more'], 500) then
+        begin
+          ClickMouse2(0);
+          if WaitOptionMulti(['uil', 'ild', 'Build'], 500) then
+            Result:='build';
+        end;
+    end else
+    begin
+      SetColorSpeed2Modifiers(0.06, 1.91);
+      if FindColorsSpiralTolerance(X, Y, PlantSpot2, 1263415, MSX1, MSY1, MSX2, MSY2, 11) then
+        begin
+          SplitTPAExWrap(PlantSpot2, 15, 15, PlantSpot2Split);
+          SortATPASize(PlantSpot2Split, True);
+          MiddleTPAEx(PlantSpot2Split[0], X, Y);
+          MMouse(X, Y, RandomRange(-2, 2), RandomRange(-2, 2));
+          if WaitUpTextMulti(['2', '2 more'], 500) then
+            begin
+              ClickMouse2(0);
+              if WaitOptionMulti(['mov', 'emove', 'Remove'], 500) then
+                begin
+                  WaitUntilWalking;
+                  DefinePlantV2;
+                  Wait(1000 + Random(100));
+                  TypeSendEx('1', False);
+                  Result:='remove';
+                end;
+            end;
+        end else
+        begin
+          WriteLn('We haven`t been able to find the plant spot, terminating script!');
+          TerminateScript;
+        end;
+    end;
+end;
+
+procedure MakePlant;
+var
+  i, PlantDTM: Integer;
+
+begin
+  WriteLn('Time to make the plant');
+  t:=0;
+  PlantDTM := DTMFromString('mlwAAAHicY2dgYCgC4hwgzgfiYiAuA+JyqLgXELsBsS8Q+0P5rkDsDsQ6VhxAkgkr5gKSrDgwSAUjDgwFALQVBdM=');
+  if FindDTM(PlantDTM, X, Y, MSX1, MSY1, MSX2, MSY2) then
+    begin
+      if WaitUpTextMulti(['uil', 'uild', 'Build'], 250) then
+        begin
+          ClickMouse2(1);
+          Wait(RandomRange(1450, 1550));
+          MMouse(PlantX, PlantY, RandomRange(-3, 3), RandomRange(-3, 3));
+        end else
+        begin
+          MouseBox(97, 59, 132, 90, 1);
+          Wait(RandomRange(1450, 1550));
+          MMouse(PlantX, PlantY, RandomRange(-3, 3), RandomRange(-3, 3));
+        end;
+    end else
+    begin
+      MarkTime(t);
+      repeat
+        Wait(50 + Random(50));
+      until (WaitUpTextMulti(['uil', 'uild', 'Build'], 500)) or (TimeFromMark(t) > 1000)
+      if TimeFromMark(t) > 1000 then
+        begin
+          MouseBox(97, 59, 132, 90, 2);
+          if WaitUpTextMulti(['uil', 'uild', 'Build'], 500) then
+            begin
+              ClickMouse2(1);
+              Wait(RandomRange(1450, 1550));
+              MMouse(PlantX, PlantY, RandomRange(-3, 3), RandomRange(-3, 3));
+            end;
+        end else
+        begin
+          ClickMouse2(1);
+          i:=RandomRange(250, 1500);
+          Wait(i);
+          MMouse(PlantX, PlantY, RandomRange(-3, 3), RandomRange(-3, 3));
+          Wait(RandomRange(1450, 1550) - i);
+        end;
+    end;
+  FreeDTM(PlantDTM);
+end;
+
+procedure BuildPlant;
+begin
+  WriteLn('Time to build the plant');
+  t:=0;
+  if WaitUpTextMulti(['2', '2 more'], 500) then
+    begin
+      ClickMouse2(0);
+      if WaitOptionMulti(['uil', 'uild', 'Build'], 500) then
+        begin
+          Wait(RandomRange(400, 700));
+          MouseBox(97, 59, 132, 90, 2);
+        end;
+    end else
+    begin
+      MarkTime(t);
+      repeat
+        Wait(50 + Random(50));
+      until (WaitUpTextMulti(['2', '2 more'], 500)) or (TimeFromMark(t) > 1000)
+      if TimeFromMark(t) > 1000 then
+        begin
+          MMouse(PlantX, PlantY, RandomRange(-3, 3), RandomRange(-3, 3));
+          if WaitUpTextMulti(['2', '2 more'], 500) then
+            begin
+              ClickMouse2(0);
+              if WaitOptionMulti(['uil', 'uild', 'Build'], 500) then
+                begin
+                  Wait(RandomRange(400, 700));
+                  MouseBox(97, 59, 132, 90, 2);
+                end;
+            end;
+        end else
+        begin
+          ClickMouse2(0);
+          if WaitOptionMulti(['uil', 'uild', 'Build'], 500) then
+            begin
+              Wait(RandomRange(400, 700));
+              MouseBox(97, 59, 132, 90, 2);
+            end
+        end;
+    end;
+end;
+
+function NoPlants: Boolean;
+var
+  BaggedPlantDTM: Integer;
+
+begin
+  //BaggedPlantDTM := DTMFromString('mlwAAAHicY2dgYJjGxMAwE4h7gHg6EC8A4glAPA+IDzAyMKxlhNCngPgwEO8E4j1AbGpsDNTNhBX/Z8ANGPFgKAAA33ULGQ==');
+  //BaggedPlantDTM := DTMFromString('mbQAAAHicY2VgYDjDBsGHgPgaEJ8G4lZmBoZiIG4G4jYg7gViG0tLoGomFPyfAROAZBjRMBgAALLxCHc=');
+  BaggedPlantDTM := DTMFromString('mbQAAAHicY2VgYDjDBsGHgPgaEJ8G4lZmBoZiIG4G4jYg7gViG0tLoGomFMzPgAlAMoxoGAwAiMEHhw==');
+  if not(FindDTM(BaggedPlantDTM, X, Y, MIX1, MIY1, MIX2, MIY2)) then
+    Result:=True;
+  FreeDTM(BaggedPlantDTM);
+end;
+
+procedure RemovePlant;
+begin
+  WriteLn('Time to remove the plant');
+  t:=0;
+  if WaitUpTextMulti(['2', '2 more'], 500) then
+    begin
+      ClickMouse2(0);
+      if WaitOptionMulti(['mov', 'emove', 'Remove'], 500) then
+        begin
+          Wait(900 + Random(250));
+          TypeSendEx('1', False);
+          Wait(RandomRange(1150, 1250));
+          MMouse(PlantX, PlantY, RandomRange(-3, 3), RandomRange(-3, 3));
+        end;
+    end else
+    begin
+      MarkTime(t);
+      repeat
+        Wait(50 + Random(50));
+      until (WaitUpTextMulti(['mov', 'emove', 'Remove'], 500)) or (TimeFromMark(t) > 1000)
+      if TimeFromMark(t) > 1000 then
+        begin
+          MMouse(PlantX, PlantY, RandomRange(-3, 3), RandomRange(-3, 3));
+          if WaitUpTextMulti(['2', '2 more'], 500) then
+            begin
+              ClickMouse2(0);
+              if WaitOptionMulti(['mov', 'emove', 'Remove'], 500) then
+                begin
+                  Wait(900 + Random(250));
+                  TypeSendEx('1', False);
+                  if NoPlants then
+                    Exit;
+                  Wait(RandomRange(1150, 1250));
+                  MMouse(PlantX, PlantY, RandomRange(-3, 3), RandomRange(-3, 3));
+                end;
+            end;
+        end else
+        begin
+          ClickMouse2(0);
+          if WaitOptionMulti(['mov', 'emove', 'Remove'], 500) then
+            begin
+              Wait(900 + Random(250));
+              TypeSendEx('1', False);
+              Wait(RandomRange(1150, 1250));
+              MMouse(PlantX, PlantY, RandomRange(-3, 3), RandomRange(-3, 3));
+            end
+        end;
+    end;
+end;
+
+function Banking: Boolean;
+var
+  i: Integer;
+  BankingColor, BankingTol, BankingWidth, BankingHeight: Array of Integer;
+  BankingHue, BankingSat: Array of Extended;
+  BankingUptext: Array of String;
+  Colors: TPointArray;
+  SplitColors: T2DPointArray;
+
+begin
+  BankingUpText := ['alk', 'ank', 'alk']
+  BankingColor := [4729907, 11327706, 3231266];
+  BankingTol := [10, 21, 7];
+  BankingHue := [0.15, 0.05, 0.05];
+  BankingSat := [0.50, 1.67, 0.17];
+  BankingWidth := [5, 15, 5];
+  BankingHeight := [12, 10, 12];
+
+  if FindNormalRandoms then
+    Status('Random event');
+
+  WriteLn('Time to bank');
+  i := Random(3);
+  WriteLn(''+IntToStr(i)+'');
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(BankingHue[i], BankingSat[i]);
+  if FindColorsSpiralTolerance(X, Y, Colors, BankingColor[i], MSX1, MSY1, MSX2, MSY2, BankingTol[i]) then
+    begin
+      SplitTPAExWrap(Colors, BankingWidth[i], BankingHeight[i], SplitColors);
+      SortATPASize(SplitColors, True);
+      MiddleTPAEx(SplitColors[0], X, Y);
+      MMouse(X, Y, RandomRange(-2, 2), RandomRange(-2, 2));
+      if WaitUpTextMulti([BankingUptext[i]], 500) then
+        begin
+          case i of
+            0: begin
+                 ClickMouse2(0);
+                 if WaitOptionMulti(['Bank '], 500) then
+                    Result:=True;
+                 Exit;
+               end;
+            1: begin
+                 ClickMouse2(1);
+                 Result:=True;
+                 Exit;
+               end;
+            2: begin
+                 ClickMouse2(0);
+                 if WaitOptionMulti(['Bank '], 500) then
+                   Result:=True;
+                   Exit;
+               end;
+          end;
+        end;
+   end;
+end;
+
+procedure Withdrawing;
+begin
+  if Banking then
+    begin
+      WaitUntilWalking;
+      Wait(1500 + Random(500));
+      if PinScreen then
+        InPin(Players[0].Pin);
+      if BankScreen then
+        begin
+          WriteLn('Bankscreen is up');
+          Withdraw(0, 0, 28);
+          WriteLn('Withdrawed new plants');
+        end else
+        begin
+          Banking;
+          Wait(2000 + Random(1000));
+          if BankScreen then
+            begin
+              Withdraw(0, 0, 28);
+            end else
+            begin
+              WriteLn('We haven`t been able to bank.. Terminating');
+              TerminateScript;
+            end;
+        end;
+    end;
+end;
+
+function EnterPortalInside: Boolean;
+var
+  PortalColors: TPointArray;
+  PortalSplit: T2DPointArray;
+
+begin
+  if FindNormalRandoms then
+    Status('Random event');
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.44, 1.61);
+  if FindColorsSpiralTolerance(X, Y, PortalColors, 7942529, MSX1, MSY1, MSX2, MSY2, 20) then
+    begin
+      SplitTPAExWrap(PortalColors, 25, 25, PortalSplit);
+      SortATPASize(PortalSplit, True);
+      MiddleTPAEx(PortalSplit[0], X, Y);
+      MMouse(X, Y, RandomRange(-2, 2), RandomRange(-2, 2));
+      if WaitUpTextMulti(['nter', 'ortal', 'Enter', 'Portal'], 500) then
+        begin
+          ClickMouse2(1);
+          Result:=True;
+        end;
+    end;
+end;
+
+function EnterPortalOutside: Boolean;
+var
+  PortalColors: TPointArray;
+  PortalSplit: T2DPointArray;
+
+begin
+  if FindNormalRandoms then
+    Status('Random event');
+  MakeCompass(RandomRange(260, 290));
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.23, 0.34);
+  if FindColorsSpiralTolerance(X, Y, PortalColors, 8412798, MSX1, MSY1, MSX2, MSY2, 15) then
+    begin
+      SplitTPAExWrap(PortalColors, 5, 5, PortalSplit);
+      SortATPASize(PortalSplit, True);
+      MiddleTPAEx(PortalSplit[0], X, Y);
+      MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+      if WaitUpTextMulti(['nter', 'ortal', 'Enter', 'Portal'], 500) then
+        begin
+          ClickMouse2(1);
+          Result:=True;
+        end;
+    end;
+end;
+
+
+procedure BankToPortal;
+var
+  MyPos: TPoint;
+  BankToPortalPath: TPointArray;
+
+begin
+  if FindNormalRandoms then
+    Status('Random event');
+  BankToPortalPath := [Point(3338, 2983), Point(3342, 2983), Point(3346, 2982), Point(3350, 2982), Point(3352, 2982), Point(3357, 2980), Point(3361, 2977), Point(3362, 2974), Point(3363, 2969), Point(3363, 2965), Point(3364, 2962), Point(3364, 2958), Point(3364, 2953), Point(3365, 2949), Point(3366, 2944), Point(3368, 2938), Point(3370, 2934), Point(3372, 2929), Point(3373, 2923), Point(3373, 2916), Point(3373, 2910), Point(3371, 2905), Point(3368, 2899), Point(3368, 2896), Point(3365, 2890), Point(3365, 2886), Point(3365, 2881), Point(3365, 2876), Point(3365, 2872), Point(3365, 2866), Point(3366, 2859), Point(3366, 2853), Point(3366, 2848)];
+  SPS_Setup(RUNESCAPE_SURFACE, ['8_7','8_6']);
+  MyPos := SPS_GetMyPos;
+  WriteLn('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  SPS_WalkPath(BankToPortalPath);
+  Wait(1500 + Random(1000));
+  //WaitUntilWalking;
+end;
+
+procedure PortalToWell;
+var
+  MyPos: TPoint;
+  PortalToWellPath: TPointArray;
+
+begin
+  if FindNormalRandoms then
+    Status('Random event');
+  PortalToWellPath := [Point(3366, 2841), Point(3368, 2839), Point(3372, 2837), Point(3374, 2833), Point(3374, 2828), Point(3374, 2825), Point(3368, 2822), Point(3364, 2820), Point(3361, 2818)];
+  SPS_Setup(RUNESCAPE_SURFACE, ['8_7','8_6']);
+  SPS_WalkPath(PortalToWellPath);
+  MyPos := SPS_GetMyPos;
+  WriteLn('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  WaitUntilWalking;
+end;
+
+procedure WellToBank;
+var
+  MyPos: TPoint;
+  WellToBankPath1, WellToBankPath2: TPointArray;
+
+begin
+  WellToBankPath1 := [Point(3363, 2825), Point(3363, 2830), Point(3363, 2838), Point(3363, 2848), Point(3364, 2854), Point(3364, 2859), Point(3364, 2867), Point(3363, 2873), Point(3363, 2881), Point(3363, 2888), Point(3362, 2895), Point(3363, 2905), Point(3363, 2914), Point(3363, 2926), Point(3363, 2934)];
+  WellToBankPath2 := [Point(3362, 2930), Point(3362, 2936), Point(3362, 2942), Point(3363, 2948), Point(3362, 2955), Point(3361, 2960), Point(3360, 2966), Point(3358, 2973), Point(3354, 2981), Point(3348, 2982), Point(3340, 2982)];
+  MyPos := SPS_GetMyPos;
+  WriteLn('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  SPS_WalkPath(WellToBankPath1);
+  Wait(500 + Random(500));
+  if FindNormalRandoms then
+    Status('Random event');
+  SPS_WalkPath(WellToBankPath2);
+  Wait(1500 + Random(1000));
+  if FindNormalRandoms then
+    Status('Random event');
+  //WaitUntilWalking;
+end;
+
+function FillWaterCan: Boolean;
+var
+  PortalColors: TPointArray;
+  PortalSplit: T2DPointArray;
+
+begin
+  if FindNormalRandoms then
+    Status('Random event');
+  if GetCurrentTab = not(tab_Inv) then
+    FTab(tab_Inv);
+  MouseBox(563, 218, 592, 242, 1);
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.14, 0.08);
+  if FindColorsSpiralTolerance(X, Y, PortalColors, 5529186, MSCX, MSCY-100, MSCX+100, MSCY+100, 16) then
+    begin
+      SplitTPAExWrap(PortalColors, 3, 3, PortalSplit);
+      SortATPASize(PortalSplit, True);
+      MiddleTPAEx(PortalSplit[0], X, Y);
+      MMouse(X, Y, RandomRange(-6, 6), RandomRange(-6, 6));
+      if WaitUpTextMulti(['ell', 'Well'], 500) then
+        begin
+          ClickMouse2(1);
+          Wait(2000 + Random(1000));
+          Result:=True;
+        end;
+    end;
+end;
+
+procedure Proggy;
+var
+  Sec, Exp, ExpRate: Integer;
+  TextBox: TBox;
+
+begin
+  TextBox := IntToBox(0, 265, MSX2, MSY2);
+  Sec := (1+((GetSystemTime-StartTime)/1000));
+  Exp := (31*PlantsMade);
+  ExpRate :=((3600*(Exp))/(Sec));
+
+  SMART_ClearCanvasArea(TextBox);
+  SMART_DrawText(5, 269, UpCharsEx, 'JJ''s House Farmer V2', clGreen);
+  SMART_DrawText(5, 286, UpCharsEx, 'Running for: '+TimeRunning+'', clWhite);
+  SMART_DrawText(5, 303, UpCharsEx, ''+IntToStr(Exp)+' Farming xp gained at '+IntToStr(ExpRate)+' per hour', clWhite);
+  SMART_DrawText(5, 320, UpCharsEx, ''+IntToStr(Exp)+' Construction xp gained at '+IntToStr(ExpRate)+' per hour', clWhite);
+end;
+
+begin
+  SetUpLogin;
+  StartTime:=GetSystemTime;
+  Status('Starting up');
+  Proggy;
+  repeat
+    // Getting the plants and walking to the house
+    Status('Banking');
+    Withdrawing;
+    Status('Walking to portal');
+    BankToPortal;
+    Status('Going through portal');
+    EnterPortalOutside;
+    WaitUntilWalking;
+    TypeSendEx('2', False);
+    Wait(1000 + Random(2000)); // <-- Slow PC/Laggy connection? INCREASE!
+    MakeCompass(0);
+    Wait(1000 + Random(2000)); // <-- Slow PC/Laggy connection? INCREASE!
+    // Making/removing the plants the plants
+    Status('Finding the plant spot');
+    case FindPlantSpot of
+      'remove': begin
+                  WriteLn('We had to remove the plant');
+                  Wait(RandomRange(1400, 1600));
+                  MMouse(PlantX, PlantY, RandomRange(-3, 3), RandomRange(-3, 3));
+                end;
+      'build':  begin
+                  WriteLn('Plant build spot found');
+                  Wait(RandomRange(800, 1000));
+                  MouseBox(97, 59, 132, 90, 2);
+                  MakePlant;
+                end;
+    end;
+    WriteLn('Plant X: '+IntToStr(PlantX)+' and Plant Y: '+IntToStr(PlantY)+'');
+    Status('Making/removing plants');
+    repeat
+      BuildPlant;
+      MakePlant;
+      RemovePlant;
+      Inc(PlantsMade);
+      Antiban;
+      Proggy;
+    until(NoPlants);
+
+    // Filling water cans and walking back to the bank
+    Status('Going through portal');
+    EnterPortalInside;
+    Wait(3000 + Random(1500)); // <-- Slow PC/Laggy connection? INCREASE!
+    Status('Walking to the well');
+    PortalToWell;
+    Status('Filling our watering cans');
+    FillWaterCan;
+    Status('Walking to the bank');
+    WellToBank;
+    Proggy;
+  until not(LoggedIn) or (PlantsMade >= PlantsToMake);
+end.

@@ -1,0 +1,22 @@
+Gray:
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.23, 0.20);
+  9411230, 28
+
+Brown:
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.17, 1.24);
+  4020585, 11
+
+
+
+
+
+245, 110 = links
+245, 105 = midden
+275, 110 = rechts
+
+
+245, 105, 275, 130
+
+

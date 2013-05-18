@@ -1,0 +1,113 @@
+program Test;
+//{$DEFINE SMART}
+{$i srl/srl.simba}
+//{$i sps/sps.simba}
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+end;
+
+procedure Test;
+var
+  MindAltarDTM, X, Y: integer;
+
+begin
+  MindAltarDTM := DTMFromString('mwQAAAHicjc27CoAwEETRScAniuDPBgQ7sfBjRXyUut4qpWbhwMw0W0myXFpxQYXUoUeDh+2EOTJKL7WocdN3bDiwzJPGIXwyXmQJ3I94LzVTGXc=');
+  if not(FindDTM(MindAltarDTM, X, Y, MMX1, MMY2, MMX2, MMY2)) then
+    begin
+      RadialWalkTolerance(9474711, 0, 359, 75, 5, 5, 5);
+    end else
+    begin
+      WriteLn('We have found the MindAltarDTM on the minimap');
+    end;
+  FreeDTM(MindAltarDTM);
+end;
+
+procedure FindTheMindAltar;
+var
+  MindAltarDTM, X, Y: Integer;
+  aFound: Extended;
+
+begin
+  //if not(FindColorSpiralTolerance(X, Y, 6249310, MSX1, MSY1, MSX2, MSY2, 10)) then
+  if not(FindColoredAreaTolerance(X, Y, 6249310, MSX1, MSY1, MSX2, MSY2, 350, 6)) then
+    begin
+      MindAltarDTM := DTMFromString('mwQAAAHic42RgYGBmZ2BgB+IvbAwMbEBaFIj/AtnfgVgIyBYEYgkmBgZOIBYHYg0gFgNiLiBWBGIFIOYF4q62FobaqnK8+D/QPlYiMBMBDAcAPz4Slg==');
+      if not(FindDTMRotated(MindAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound)) then
+        begin
+          RadialWalkTolerance(9474711, 0, 359, 75, 5, 5, 5);
+          if FindDTMRotated(MindAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+            begin
+              WriteLn('We have found the MindAltarDTM on the minimap this time');
+              MMouse(X, Y, 2, 2);
+              Wait(25 + Random(125));
+              ClickMouse2(1);
+            end else
+            begin
+              RadialWalkTolerance(9474711, 0, 359, 25, 5, 5, 5);
+              if FindDTMRotated(MindAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                begin
+                  WriteLn('We have found the MindAltarDTM on the minimap this time');
+                  MMouse(X, Y, 2, 2);
+                  Wait(25 + Random(125));
+                  ClickMouse2(1);
+                end else
+                begin
+                  WriteLn('Something has went wrong, not able to navigate to the Mind Altar');
+                end;
+            end;
+        end else
+        begin
+          WriteLn('We have found the MindAltarDTM on the minimap');
+          MMouse(X, Y, 2, 2);
+          Wait(25 + Random(125));
+          ClickMouse2(1);
+        end;
+      FreeDTM(MindAltarDTM);
+    end else
+    begin
+      WriteLn('We can see the mind altar on our main screen!');
+    end;
+end;
+
+procedure Test2;
+var
+  X, Y: Integer;
+
+begin
+  if FindColoredAreaTolerance(X, Y, 6249310, MSX1, MSY1, MSX2, MSY2, 350, 2) then
+    WriteLn('hoi');
+end;
+
+begin
+  SetupSRL;
+  //SetUpLogin;
+  //Test;
+  FindTheMindAltar;
+  //Test2;
+end.

@@ -1,0 +1,306 @@
+program Test;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  //ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+end;
+
+function GreenOrbs: Boolean;
+var
+  X, Y, i: integer;
+  GreenOrbCol: TPointArray;
+  GreenOrbSplit: T2DPointArray;
+  P: TPoint;
+
+begin
+  // This will click on the green orbs \\
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.42, 1.72);
+  WriteLn('Counted green colors: '+IntToStr(CountColorTolerance(4115289, 0, 70, 421, 337, 20))+'');
+  if CountColorTolerance(4115289, 0, 70, 421, 337, 20) < 100 then
+    begin
+      WriteLn('We haven`t been able to find any green orbs on our screen. Moving');
+      RadialWalkTolerance(62451, 0, 359, 75, 0, 0, 6);
+    end else
+      begin
+        SetColorSpeed2Modifiers(0.42, 1.72);
+        if FindColorsSpiralTolerance(MSCX, MSCY, GreenOrbCol, 4115289, 0, 70, 421, 337, 20) then
+          begin
+            SortTPAFrom(GreenOrbCol, Point(MSCX, MSCY));
+            GreenOrbSplit := SplitTPAEx(GreenOrbCol, 20, 20);
+            SortATPASize(GreenOrbSplit, True);
+            for i:=0 to 2 do
+              begin
+                P := MiddleTPA(GreenOrbSplit[i]);
+                MMouse(P.X, P.Y, 2, 2);
+                  if WaitUpTextMulti(['en or', 'Green Orb'], 250) then
+                    begin
+                      ClickMouse2(1);
+                      Result:=True;
+                      Break;
+                    end;
+              end;
+          end else
+            begin
+              WriteLn('We haven`t been able to detect any green orbs');
+            end;
+      end;
+end;
+
+procedure SPSCheck;
+var
+  MyPos:TPoint;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_2']);
+  MyPos:=SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+end;
+
+procedure MindAltarPositions;
+var
+  MyPos: TPoint;
+  MindM, MindN, MindNE, MindE, MindEF, MindSE, MindSEF, MindSEFF, MindS, MindSFI,
+  MindSFII, MindSW, MindSWF, MindW, MindWM, MindWF, MindNWFI, MindNWFII, MindNW: TBox;
+  MindPositions: Array of TBox;
+  i: Integer;
+
+begin
+  //if (GreenOrbs=True) then
+  //begin
+    SPS_Setup(RUNESCAPE_SURFACE, ['99_2']);
+    MyPos := SPS_GetMyPos;
+    Writeln('My position is  x: '+IntToStr(MyPos.x)+' y: '+IntToStr(MyPos.y)+'');
+
+    MindM := IntToBox(39839, 1023, 39871, 1051);
+    MindN := IntToBox(39831, 983, 39871, 1019);
+    MindNE := IntToBox(39871, 991, 39995, 1027);
+    MindE := IntToBox(39879, 1023, 39899, 1051);
+    MindEF := IntToBox(39903, 1035, 39923, 1057);
+    MindSE := IntToBox(39875, 1047, 39895, 1079);
+    MindSEF := IntToBox(39899, 1075, 39919, 1091);
+    MindSEFF := IntToBox(39871, 1103, 39887, 1127);
+    MindS := IntToBox(39843, 1059, 39863, 1091);
+    MindSFI := IntToBox(39859, 1095, 39875, 1127);
+    MindSFII := IntToBox(39827, 1095, 39855, 1127);
+    MindSW := IntToBox(39823, 1047, 39839, 1075);
+    MindSWF := IntToBox(39779, 1063, 39807, 1079);
+    MindW := IntToBox(39815, 1023, 39839, 1055);
+    MindWM := IntToBox(39775, 1027, 39807, 1051);
+    MindWF := IntToBox(39755, 1003, 39775, 1067);
+    MindNWFI := IntToBox(39779, 987, 39807, 1007);
+    MindNWFII := IntToBox(39771, 1011, 39807, 1035);
+    MindNW := IntToBox(39807, 983, 39831, 1015);
+
+    MindPositions := [MindM, MindN, MindNE, MindE, MindEF, MindSE, MindSEF, MindSEFF, MindS, MindSFI,
+                      MindSFII, MindSW, MindSWF, MindW, MindWM, MindWF, MindNWFI, MindNWFII, MindNW];
+
+    for i:=0 to 18 do
+    if PointInBox(MyPos, MindPositions[i]) then
+      begin
+        WriteLn('Our location is located');
+        case i of
+          0: begin
+               WriteLn('We are in the middle of the mind altar');
+               WriteLn('Walking to the altar');
+               case Random(4) of
+                 0: SPS_BlindWalk(Point(RandomRange(39843, 39867), 1027));
+                 1: SPS_BlindWalk(Point(39867, RandomRange(1027, 1047)));
+                 2: SPS_BlindWalk(Point(RandomRange(39843, 39867), 1043));
+                 3: SPS_BlindWalk(Point(39843, RandomRange(1027, 1043)));
+               end;
+             end;
+          1: begin
+               WriteLn('We are north of the mind altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(RandomRange(39847, 39863), RandomRange(999, 1007)));
+               SPS_BlindWalk(Point(RandomRange(39859, 39855), RandomRange(1019, 1027)));
+               case Random(2) of
+                 0: SPS_BlindWalk(Point(RandomRange(39839, 39847), RandomRange(1027, 1031)));
+                 1: SPS_BlindWalk(Point(RandomRange(39867, 39871), RandomRange(1031, 1035)));
+               end;
+             end;
+          2: begin
+               WriteLn('We are north east of the mind altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(RandomRange(39891, 39895), RandomRange(1023, 1027)));
+               SPS_BlindWalk(Point(RandomRange(39871, 39875), RandomRange(1019, 1023)));
+               SPS_BlindWalk(Point(RandomRange(39847, 39854), RandomRange(1023, 1031)));
+             end;
+          3: begin
+               WriteLn('We are east of the mind altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(RandomRange(39883, 39875), 1039));
+               case Random(2) of
+                 0: SPS_BlindWalk(Point(RandomRange(39855, 39859), 1047));
+                 1: SPS_BlindWalk(Point(RandomRange(39847, 39854), RandomRange(1027, 1035)));
+               end;
+             end;
+          4: begin
+               WriteLn('We are far east of the mind altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(RandomRange(39903, 39907), 1039));
+               SPS_BlindWalk(Point(RandomRange(39899, 39903), 1039));
+               SPS_BlindWalk(Point(RandomRange(39883, 39875), 1039));
+               case Random(2) of
+                 0: SPS_BlindWalk(Point(RandomRange(39855, 39859), 1047));
+                 1: SPS_BlindWalk(Point(RandomRange(39847, 39854), RandomRange(1027, 1035)));
+               end;
+              end;
+          5: begin
+               WriteLn('We are south east of the mind altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(RandomRange(39879, 39883), RandomRange(1055, 1063)));
+               SPS_BlindWalk(Point(RandomRange(39863, 39871), RandomRange(1051, 1055)));
+               case Random(2) of
+                 0: SPS_BlindWalk(Point(39855, RandomRange(1047, 1051)));
+                 1: SPS_BlindWalk(Point(RandomRange(39863, 39867), RandomRange(1039, 1043)));
+               end;
+               SPS_BlindWalk(Point(RandomRange(39847, 39851), RandomRange(1027, 1031)));
+              end;
+          6: begin
+               WriteLn('We are far south east of the mind altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(RandomRange(39899, 39903), RandomRange(1071, 1075)));
+               SPS_BlindWalk(Point(RandomRange(39879, 39883), RandomRange(1055, 1063)));
+               SPS_BlindWalk(Point(RandomRange(39863, 39871), RandomRange(1051, 1055)));
+               case Random(2) of
+                 0: SPS_BlindWalk(Point(39855, RandomRange(1047, 1051)));
+                 1: SPS_BlindWalk(Point(RandomRange(39863, 39867), RandomRange(1039, 1043)));
+               end;
+               SPS_BlindWalk(Point(RandomRange(39847, 39851), RandomRange(1027, 1031)));
+             end;
+          7: begin
+               WriteLn('We are extremely far south east of the mind altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(39891, 1099));
+               SPS_BlindWalk(Point(RandomRange(39895, 39899), RandomRange(1075, 1079)));
+               SPS_BlindWalk(Point(RandomRange(39883, 39887), RandomRange(1071, 1075)));
+               SPS_BlindWalk(Point(RandomRange(39879, 39883), RandomRange(1055, 1063)));
+               SPS_BlindWalk(Point(RandomRange(39863, 39871), RandomRange(1051, 1055)));
+               case Random(2) of
+                 0: SPS_BlindWalk(Point(39855, RandomRange(1047, 1051)));
+                 1: SPS_BlindWalk(Point(RandomRange(39863, 39867), RandomRange(1039, 1043)));
+               end;
+               SPS_BlindWalk(Point(RandomRange(39847, 39851), RandomRange(1027, 1031)));
+             end;
+          8: begin
+               WriteLn('We are south of the the mind altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(39855, RandomRange(1063, 1067)));
+               SPS_BlindWalk(Point(39855, 1055));
+               case Random(2) of
+                 0: SPS_BlindWalk(Point(RandomRange(39847, 39851), 1047));
+                 1: SPS_BlindWalk(Point(RandomRange(39863, 39867), RandomRange(1043, 1047)));
+               end;
+               SPS_BlindWalk(Point(RandomRange(39847, 39851), RandomRange(1027, 1031)));
+             end;
+          9: begin
+               WriteLn('We are far south position #1 the mind altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(RandomRange(39847, 39851), RandomRange(1095, 1099)));
+               SPS_BlindWalk(Point(39855, 1079));
+               SPS_BlindWalk(Point(39855, RandomRange(1063, 1067)));
+               SPS_BlindWalk(Point(39855, 1055));
+               case Random(2) of
+                 0: SPS_BlindWalk(Point(RandomRange(39847, 39851), 1047));
+                 1: SPS_BlindWalk(Point(RandomRange(39863, 39867), RandomRange(1043, 1047)));
+               end;
+               SPS_BlindWalk(Point(RandomRange(39847, 39851), RandomRange(1027, 1031)));
+             end;
+          10: begin
+                WriteLn('We are far south position #2 of the mind altar');
+                WriteLn('Walking to the altar');
+                SPS_BlindWalk(Point(RandomRange(39867, 39871), RandomRange(1115, 1119)));
+                SPS_BlindWalk(Point(39871, 1115));
+                SPS_BlindWalk(Point(39855, 1079));
+                SPS_BlindWalk(Point(39855, RandomRange(1063, 1067)));
+                SPS_BlindWalk(Point(39855, 1055));
+                case Random(2) of
+                  0: SPS_BlindWalk(Point(RandomRange(39847, 39851), 1047));
+                  1: SPS_BlindWalk(Point(RandomRange(39863, 39867), RandomRange(1043, 1047)));
+                end;
+                SPS_BlindWalk(Point(RandomRange(39847, 39851), RandomRange(1027, 1031)));
+             end;
+          11: begin
+                WriteLn('We are south west of the mind altar');
+                WriteLn('Walking to the altar');
+              end;
+          12:  begin
+                WriteLn('We are far south west of the mind altar');
+                WriteLn('Walking to the altar');
+              end;
+          13:  begin
+                WriteLn('We are west of the mind altar');
+                WriteLn('Walking to the altar');
+              end;
+          14:  begin
+                WriteLn('We are middle west of the mind altar');
+                WriteLn('Walking to the altar');
+              end;
+          15:  begin
+                WriteLn('We are far west of the mind altar');
+                WriteLn('Walking to the altar');
+              end;
+          16:  begin
+                WriteLn('We are far north west position #1 of the mind altar');
+                WriteLn('Walking to the altar');
+              end;
+          17:  begin
+                WriteLn('We are far north west position #2 of the mind altar');
+                WriteLn('Walking to the altar');
+              end;
+          18:  begin
+                WriteLn('We are north west of the mind altar');
+                WriteLn('Walking to the altar');
+              end;
+        end;
+      end else
+      begin
+        if MyPos = Point(-1, -1) then
+        begin
+          WriteLn('SPS failed');
+        end else
+        begin
+          FindTheMindAltar;
+        end;
+      end;
+  //end else
+  //begin
+    //WriteLn('Green Orbs is false');
+  //end;
+end;
+
+begin
+  SetUpLogin;
+  //GreenOrbs;
+  SPSCheck;
+  MindAltarPositions;
+end.

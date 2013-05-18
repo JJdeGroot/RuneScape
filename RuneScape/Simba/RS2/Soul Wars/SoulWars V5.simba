@@ -1,0 +1,1045 @@
+program JJsSoulWars;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+{$i SRL/SRL/misc/paintsmart.simba}
+{$i SRL/SRL/misc/debug.simba}
+
+var
+  Debug: Boolean;
+  DesiredTeam, JoinedTeam: String;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 44;
+  Smart_Members := True;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayerToLob;
+  OpenWorldScreen;
+  SelectWorld(44);
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+// General procedures & functions //////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+procedure SetupPreferences;
+begin
+  Debug := True;
+  DesiredTeam := 'Blue';
+end;
+
+procedure WaitUntilNotMoving;
+begin
+  Wait(500 + Random(500));
+  repeat
+    Wait(250 + Random(250));
+  until not(IsMoving);
+  Wait(500 + Random(500));
+end;
+
+function ObjFinderOutside(Hue, Sat: Extended; Color, Tolerance, X1, Y1, X2, Y2: Integer; Width, Height:Integer; Sort: Boolean; Uptext: Array of String; xOffset, yOffset, UptextWaitTime: Integer): Boolean;
+var
+  X, Y, i: Integer;
+  ColorTPA: TPointArray;
+  ColorATPA: T2DPointArray;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(Hue, Sat);
+  if FindColorsTolerance(ColorTPA, Color, X1, Y1, X2, Y2, Tolerance) then
+    begin
+      SplitTPAExWrap(ColorTPA, Width, Height, ColorATPA);
+      if Debug then
+        begin
+          SMART_ClearCanvas;
+          WriteLn(''+IntToStr(CountColorTolerance(Color, X1, Y1, X2, Y2, Tolerance))+'');
+          SMART_DrawDotsEx(False, ColorTPA, clYellow);
+          SMART_DrawBoxes(False, [GetTPABounds(ColorTPA)], clRed);
+          DebugATPABounds(ColorATPA);
+        end;
+      SortATPASize(ColorATPA, Sort);
+      for i:=0 to High(ColorATPA) do
+        begin
+          MiddleTPAEx(ColorATPA[i], X, Y);
+          MMouse(X, Y, xOffset, yOffset);
+          if WaitUpTextMulti(Uptext, UptextWaitTime) then
+            begin
+              Result := True;
+              Break;
+            end;
+        end;
+    end;
+end;
+
+function ObjFinderInside(Hue, Sat: Extended; Color, Tolerance, X1, Y1, X2, Y2: Integer; Width, Height:Integer; Sort: Boolean; Uptext: Array of String; xOffset, yOffset, UptextWaitTime: Integer): Boolean;
+var
+  X, Y, i: Integer;
+  ColorTPA: TPointArray;
+  ColorATPA: T2DPointArray;
+  IconBox, DetailBox: TBox;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(Hue, Sat);
+  if FindColorsTolerance(ColorTPA, Color, X1, Y1, X2, Y2, Tolerance) then
+    begin
+      IconBox := IntToBox(267, 20, 383, 80);
+      DetailBox := IntToBox(389, 20, 503, 173);
+      ColorTPA := ClearTPAFromTPA(ColorTPA, TPAFromBox(IconBox));
+      ColorTPA := ClearTPAFromTPA(ColorTPA, TPAFromBox(DetailBox));
+      if Length(ColorTPA) > 10 then
+        begin
+          SplitTPAExWrap(ColorTPA, Width, Height, ColorATPA);
+          if Debug then
+            begin
+              SMART_ClearCanvas;
+              WriteLn(''+IntToStr(CountColorTolerance(Color, X1, Y1, X2, Y2, Tolerance))+'');
+              SMART_DrawDotsEx(False, ColorTPA, clYellow);
+              SMART_DrawBoxes(False, [GetTPABounds(ColorTPA)], clRed);
+              DebugATPABounds(ColorATPA);
+            end;
+          SortATPASize(ColorATPA, Sort);
+          for i:=0 to High(ColorATPA) do
+            begin
+              MiddleTPAEx(ColorATPA[i], X, Y);
+              MMouse(X, Y, xOffset, yOffset);
+              if WaitUpTextMulti(Uptext, UptextWaitTime) then
+                begin
+                  Result := True;
+                  Break;
+                end;
+            end;
+        end;
+    end;
+end;
+
+function CheckIfInCombat(XpCounter, MaxTime: Integer): Boolean;
+var
+  X, Y, OldXp, NewXp, ShieldBitmap, SwordBitmap, t: Integer;
+
+begin
+  ShieldBitmap := BitmapFromString(6, 6, 'meJxzMmU1Pv7PyZS1MpIdSNbf/lcY' +
+                  'zAZkFIeAuOEXQVIbazggghCVzfHsQBEgQ2Q/QuPOZk6IGrjK/W2cQ' +
+                  'EGgSiCCmAYAgGAjCw==');
+  SwordBitmap := BitmapFromString(5, 5, 'meJxzv/svNiEBiC5durRz9Xr3u/+A' +
+                 'qLu7G8iGcFW3gRCQzVK1hSFkM4QLREAuu0U6kIRzAaL/Koo=');
+  OldXp := GetXpBar(XpCounter);
+
+  if Debug then
+    begin
+      SMART_ClearCanvas;
+      WriteLn('OldXp: '+IntToStr(OldXp)+'');
+      SMART_DrawBoxes(False, [IntToBox(MSCX-15, MSCY-50, MSCX+15, MSCY)], clRed); // Shield
+      SMART_DrawBoxes(False, [IntToBox(MSCX-20, MSCY-50, MSCX+10, MSCY)], clYellow); // Sword
+    end;
+
+  MarkTime(t);
+  repeat
+    Wait(50 + Random(50));
+    NewXp := GetXpBar(1);
+    if Debug then
+      WriteLn('NewXp: '+IntToStr(NewXp)+'');
+  until (FindBitmapToleranceIn(ShieldBitmap, X, Y, MSCX-15, MSCY-50, MSCX+15, MSCY, 20)) or (FindBitmapToleranceIn(SwordBitmap, X, Y, MSCX-20, MSCY-50, MSCX+10, MSCY, 20)) or (NewXp > OldXp) or (TimeFromMark(t)>MaxTime);
+  if TimeFromMark(t)<MaxTime then
+    Result := True;
+
+  FreeBitmap(ShieldBitmap);
+  FreeBitmap(SwordBitmap);
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+// Joining a team //////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+function WaitingLobby: Boolean;
+begin
+  if Debug then
+    begin
+      SMART_DrawBoxes(False, [IntToBox(417, 28, 492, 39)], clPurple);
+      WriteLn(''+IntToStr(CountColorTolerance(39423, 417, 28, 492, 39, 1))+'');
+    end;
+  if CountColorTolerance(39423, 417, 28, 492, 39, 1) > 100 then
+    Result := True;
+end;
+
+function WalkToGreenPortal: Boolean;
+var
+  GreenPortalPath: TPointArray;
+  P: TPoint;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['1_13']);
+  P := SPS_GetMyPos;
+  if Debug then
+    WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+
+  GreenPortalPath := [Point(681, 5276), Point(681, 5285), Point(681, 5295),
+                      Point(680, 5302), Point(680, 5308)];
+
+  if not(SPS_WalkPath(GreenPortalPath)) then
+    SPS_BlindWalk(Point(680, 5308));
+  WaitUntilNotMoving;
+
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.42, 0.92);
+  if Debug then
+    WriteLn(''+IntToStr(CountColorTolerance(5083218, MSX1, MSY1, MSX2, MSY2, 16))+'');
+  if CountColorTolerance(5083218, MSX1, MSY1, MSX2, MSY2, 16) > 1500 then
+    Result := True;
+end;
+
+function WalkToRedPortal: Boolean;
+var
+  RedPortalPath: TPointArray;
+  P: TPoint;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['1_13']);
+  P := SPS_GetMyPos;
+  if Debug then
+    WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+
+  RedPortalPath := [Point(680, 5275), Point(680, 5284), Point(680, 5290),
+                    Point(681, 5297), Point(684, 5304), Point(691, 5306),
+                    Point(700, 5308), Point(706, 5308), Point(713, 5308)];
+
+  if not(SPS_WalkPath(RedPortalPath)) then
+    SPS_BlindWalk(Point(713, 5308));
+  WaitUntilNotMoving;
+
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.05, 0.90);
+  if Debug then
+    WriteLn(''+IntToStr(CountColorTolerance(4672919, MSX1, MSY1, MSX2, MSY2, 14))+'');
+  if CountColorTolerance(4672919, MSX1, MSY1, MSX2, MSY2, 14) > 50 then
+    Result := True;
+end;
+
+function WalkToBluePortal: Boolean;
+var
+  BluePortalPath: TPointArray;
+  P: TPoint;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['1_13']);
+  P := SPS_GetMyPos;
+  if Debug then
+    WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+
+  BluePortalPath := [Point(681, 5275), Point(681, 5281), Point(681, 5290),
+                     Point(680, 5296), Point(676, 5303), Point(670, 5305),
+                     Point(662, 5308), Point(655, 5309), Point(649, 5309),
+                     Point(643, 5309)];
+
+  if not(SPS_WalkPath(BluePortalPath)) then
+    SPS_BlindWalk(Point(643, 5309));
+  WaitUntilNotMoving;
+
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.30, 1.66);
+  if Debug then
+    WriteLn(''+IntToStr(CountColorTolerance(12287841, MSX1, MSY1, MSX2, MSY2, 18))+'');
+  if CountColorTolerance(12287841, MSX1, MSY1, MSX2, MSY2, 18) > 20000 then
+    Result := True;
+end;
+
+function EnterGreenPortal: Boolean;
+begin
+  ColorToleranceSPeed(2);
+  SetColorSpeed2Modifiers(0.42, 0.92);
+  if CountColorTolerance(5083218, MSX1, MSY1, MSX2, MSY2, 16) < 2000 then
+    WalkToGreenPortal;
+  if Debug then
+    WriteLn('Green portal colors: '+IntToStr(CountColorTolerance(5083218, MSX1, MSY1, MSX2, MSY2, 16))+'');
+
+  if ObjFinderOutside(0.42, 0.92, 5083218, 16, MSX1, MSY1, MSX2, MSY2, 2, 2, True, ['oin', 'team', 'alance', 'ortal'], RandomRange(-10, 10), RandomRange(-10, 10), 500) then
+    begin
+      case Random(7) of
+        0..4: ClickMouse2(1);
+        5..6: begin
+                ClickMouse2(0);
+                WaitOptionMulti(['oin', 'team', 'alance', 'ortal'], 500);
+              end;
+      end;
+      if WaitFunc(@WaitingLobby, RandomRange(500, 1000), 10000) then
+        Result := True;
+    end;
+end;
+
+function EnterRedPortal: Boolean;
+begin
+  ColorToleranceSPeed(2);
+  SetColorSpeed2Modifiers(0.06, 1.01);
+  if CountColorTolerance(4541312, MSX1, MSY1, MSX2, MSY2, 19) < 50 then
+    WalkToRedPortal;
+  if Debug then
+    WriteLn('Red portal colors: '+IntToStr(CountColorTolerance(4541312, MSX1, MSY1, MSX2, MSY2, 19))+'');
+
+  if ObjFinderOutside(0.06, 1.01, 4541312, 19, MSX1, MSY1, MSX2, MSY2, 5, 5, True, ['ass', 'Red', 'barrier'], 0, 0, 500) then
+    begin
+      case Random(7) of
+        0..4: ClickMouse2(1);
+        5..6: begin
+                ClickMouse2(0);
+                WaitOptionMulti(['ass', 'Red', 'barrier'], 500);
+              end;
+      end;
+      if WaitFunc(@WaitingLobby, RandomRange(500, 1000), 10000) then
+        Result := True;
+    end;
+end;
+
+function EnterBluePortal: Boolean;
+begin
+  ColorToleranceSPeed(2);
+  SetColorSpeed2Modifiers(0.30, 1.66);
+  if CountColorTolerance(12287841, MSX1, MSY1, MSX2, MSY2, 18) < 20000 then
+    WalkToBluePortal;
+  if Debug then
+    WriteLn('Blue portal colors: '+IntToStr(CountColorTolerance(12287841, MSX1, MSY1, MSX2, MSY2, 18))+'');
+
+  if ObjFinderOutside(0.30, 1.66, 12287841, 18, MSX1, MSY1, MSX2, MSY2, 5, 5, False, ['ass', 'Blue', 'barrier'], 0, 0, 500) then
+    begin
+      case Random(7) of
+        0..4: ClickMouse2(1);
+        5..6: begin
+                ClickMouse2(0);
+                WaitOptionMulti(['ass', 'Blue', 'barrier'], 500);
+              end;
+      end;
+      if WaitFunc(@WaitingLobby, RandomRange(500, 1000), 10000) then
+        Result := True;
+    end;
+end;
+
+function DefineTeam: String;
+var
+  i: Integer;
+  CountedColors: Array[0..1] of Integer;
+  Colors, Tolerances: Array of Integer;
+  HueMod, SatMod: Array of Extended;
+
+begin
+  HueMod := [0.59, 0.10]
+  SatMod := [0.44, 2.16]
+  Colors := [8682097, 2017512]
+  Tolerances := [10, 5]
+
+  ColorToleranceSpeed(2);
+  for i:=0 to 1 do
+    begin
+      SetColorSpeed2Modifiers(HueMod[i], SatMod[i]);
+      CountedColors[i] := CountColorTolerance(Colors[i], MMX1, MMY1, MMX2, MMY2, Tolerances[i]);
+      if Debug then
+        WriteLn('Counted colors: '+IntToStr(CountedColors[i])+'');
+      if CountedColors[i] > 1250 then
+        begin
+          case i of
+            0: begin
+                 Result := 'Blue';
+                 JoinedTeam := 'Blue';
+               end;
+            1: begin
+                 Result := 'Red';
+                 JoinedTeam := 'Red';
+               end;
+          end;
+          if Debug then
+            WriteLn('We are part of the: '+JoinedTeam+' team');
+          Break;
+        end;
+    end;
+end;
+
+procedure JoinFailsafe;
+var
+  X, Y: Integer;
+
+begin
+  ColorToleranceSpeed(1);
+  if FindColorSpiralTolerance(X, Y, 328942, MMX1, MMY1, MMX2, MMY2, 20) then
+    begin
+      MMouse(X, Y, RandomRange(-2, 2), RandomRange(-2, 2));
+      ClickMouse2(1);
+    end else
+    begin
+      RadialWalkTolerance(6582386, 70, 290, 50, RandomRange(-2, 2), RandomRange(-2, 2), 30);
+    end;
+  WaitUntilNotMoving;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+// Inside Soul Wars walking ////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+function WalkToMiddleFromBase: Boolean;
+var
+  BluePath, RedPath: TPointArray;
+  P: TPoint;
+
+begin
+  case JoinedTeam of
+    'Red':  begin
+              RedPath :=  [Point(959, 4996), Point(963, 4998), Point(966, 5007),
+                           Point(971, 5013), Point(976, 5015), Point(983, 5018),
+                           Point(985, 5029), Point(984, 5036), Point(983, 5042),
+                           Point(983, 5052), Point(983, 5058), Point(981, 5066),
+                           Point(979, 5075), Point(977, 5083), Point(976, 5091),
+                           Point(970, 5098), Point(963, 5102), Point(956, 5102),
+                           Point(947, 5101), Point(941, 5099), Point(934, 5098),
+                           Point(930, 5093), Point(924, 5088), Point(920, 5084),
+                           Point(917, 5081), Point(906, 5076), Point(897, 5074),
+                           Point(889, 5071), Point(878, 5068), Point(867, 5064),
+                           Point(861, 5062), Point(852, 5059), Point(842, 5055),
+                           Point(831, 5052), Point(823, 5048), Point(812, 5043),
+                           Point(804, 5039), Point(796, 5035), Point(785, 5031),
+                           Point(777, 5029), Point(770, 5029), Point(755, 5031),
+                           Point(740, 5029), Point(727, 5029), Point(716, 5029),
+                           Point(709, 5029), Point(701, 5028), Point(692, 5029),
+                           Point(684, 5028), Point(672, 5026)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['2_12','1_12']);
+              P := SPS_GetMyPos;
+              if Debug then
+                WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+              if not(SPS_WalkPath(RedPath)) then
+                SPS_BlindWalk(Point(672, 5026));
+              WaitUntilNotMoving;
+              Result := True;
+            end;
+    'Blue': begin
+              BluePath := [Point(379, 5055), Point(374, 5054), Point(371, 5052),
+                           Point(369, 5050), Point(365, 5047), Point(360, 5043),
+                           Point(358, 5040), Point(355, 5037), Point(352, 5030),
+                           Point(349, 5017), Point(349, 5012), Point(349, 5007),
+                           Point(349, 5000), Point(351, 4996), Point(354, 4990),
+                           Point(357, 4985), Point(360, 4980), Point(364, 4976),
+                           Point(369, 4971), Point(376, 4967), Point(382, 4964),
+                           Point(388, 4963), Point(394, 4963), Point(401, 4966),
+                           Point(407, 4970), Point(414, 4975), Point(418, 4978),
+                           Point(424, 4982), Point(429, 4986), Point(436, 4991),
+                           Point(446, 4996), Point(454, 5000), Point(457, 5003),
+                           Point(464, 5006), Point(474, 5010), Point(481, 5013),
+                           Point(488, 5016), Point(496, 5020), Point(507, 5022),
+                           Point(517, 5021), Point(527, 5022), Point(538, 5023),
+                           Point(546, 5023), Point(557, 5021), Point(566, 5021),
+                           Point(577, 5022), Point(586, 5022), Point(597, 5023),
+                           Point(606, 5023), Point(616, 5023), Point(624, 5024),
+                           Point(631, 5025), Point(638, 5026), Point(645, 5027),
+                           Point(651, 5027), Point(657, 5027), Point(667, 5027)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['0_12','1_12']);
+              P := SPS_GetMyPos;
+              if Debug then
+                WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+              if not(SPS_WalkPath(BluePath)) then
+                SPS_BlindWalk(Point(667, 5027));
+              WaitUntilNotMoving;
+              Result := True;
+            end;
+  end;
+end;
+
+function WalkToBandagesFromBase: Boolean;
+var
+  BluePath, RedPath: TPointArray;
+  P: TPoint;
+
+begin
+  case JoinedTeam of
+    'Red':  begin
+              RedPath :=  [Point(960, 4997), Point(963, 5004), Point(968, 5008),
+                           Point(974, 5012), Point(979, 5015), Point(986, 5018),
+                           Point(987, 5024), Point(987, 5031), Point(987, 5039),
+                           Point(987, 5046), Point(987, 5053), Point(988, 5061),
+                           Point(991, 5068), Point(993, 5074), Point(996, 5080),
+                           Point(998, 5085), Point(1001, 5091), Point(1002, 5100),
+                           Point(1003, 5107), Point(1000, 5113), Point(993, 5117),
+                           Point(987, 5119)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['2_12']);
+              P := SPS_GetMyPos;
+              if Debug then
+                WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+              if not(SPS_WalkPath(RedPath)) then
+                SPS_BlindWalk(Point(987, 5119));
+              WaitUntilNotMoving;
+              Result := True;
+            end;
+    'Blue': begin
+              BluePath := [Point(377, 5054), Point(370, 5053), Point(361, 5049),
+                           Point(358, 5043), Point(355, 5038), Point(350, 5030),
+                           Point(349, 5023), Point(349, 5017), Point(349, 5008),
+                           Point(349, 5002), Point(347, 4996), Point(345, 4990),
+                           Point(341, 4984), Point(338, 4978), Point(336, 4972),
+                           Point(334, 4965), Point(331, 4957), Point(330, 4949),
+                           Point(334, 4943), Point(339, 4938), Point(346, 4935)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['0_12']);
+              P := SPS_GetMyPos;
+              if Debug then
+                WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+              if not(SPS_WalkPath(BluePath)) then
+                SPS_BlindWalk(Point(346, 4935));
+              WaitUntilNotMoving;
+              Result := True;
+            end;
+  end;
+end;
+
+function WalkToJelliesFromBase: String;
+var
+  BluePath1, BluePath2, RedPath1, RedPath2: TPointArray;
+  P: TPoint;
+
+begin
+  case JoinedTeam of
+    'Blue': begin
+              case Random(2) of
+                0: begin
+                     BluePath1 := [Point(378, 5053), Point(372, 5052), Point(365, 5049),
+                                   Point(359, 5045), Point(354, 5041), Point(352, 5037),
+                                   Point(351, 5031), Point(351, 5025), Point(351, 5018),
+                                   Point(351, 5008), Point(351, 5001), Point(353, 4994),
+                                   Point(357, 4985), Point(360, 4977), Point(364, 4973),
+                                   Point(371, 4968), Point(379, 4964), Point(387, 4962),
+                                   Point(396, 4963), Point(404, 4968), Point(409, 4971),
+                                   Point(417, 4974), Point(425, 4975), Point(434, 4976),
+                                   Point(443, 4976), Point(452, 4976), Point(462, 4976),
+                                   Point(471, 4976), Point(481, 4976), Point(493, 4975),
+                                   Point(505, 4973), Point(517, 4972), Point(524, 4969),
+                                   Point(535, 4967), Point(544, 4963), Point(555, 4958),
+                                   Point(564, 4953), Point(570, 4951), Point(579, 4947),
+                                   Point(589, 4944), Point(601, 4943), Point(610, 4942),
+                                   Point(618, 4942), Point(629, 4942), Point(640, 4941),
+                                   Point(650, 4941), Point(659, 4939), Point(668, 4939),
+                                   Point(677, 4938)];
+                     SPS_Setup(RUNESCAPE_SURFACE, ['0_12','1_12']);
+                     P := SPS_GetMyPos;
+                     if Debug then
+                       WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+                     if not(SPS_WalkPath(BluePath1)) then
+                       SPS_BlindWalk(Point(677, 4938));
+                     WaitUntilNotMoving;
+                     Result := 'North';
+                   end;
+                1: begin
+                     BluePath2 := [Point(377, 5054), Point(370, 5054), Point(362, 5051),
+                                   Point(356, 5045), Point(351, 5040), Point(350, 5034),
+                                   Point(349, 5028), Point(349, 5019), Point(349, 5011),
+                                   Point(349, 5004), Point(351, 4996), Point(353, 4990),
+                                   Point(356, 4983), Point(362, 4977), Point(367, 4971),
+                                   Point(373, 4968), Point(379, 4964), Point(387, 4963),
+                                   Point(394, 4963), Point(402, 4967), Point(409, 4971),
+                                   Point(416, 4977), Point(422, 4982), Point(428, 4986),
+                                   Point(435, 4991), Point(441, 4998), Point(446, 5004),
+                                   Point(453, 5009), Point(462, 5015), Point(468, 5019),
+                                   Point(475, 5024), Point(484, 5030), Point(492, 5035),
+                                   Point(500, 5038), Point(508, 5044), Point(515, 5048),
+                                   Point(523, 5054), Point(531, 5059), Point(541, 5066),
+                                   Point(551, 5071), Point(559, 5076), Point(570, 5079),
+                                   Point(578, 5082), Point(584, 5091), Point(594, 5095),
+                                   Point(605, 5099), Point(615, 5103), Point(623, 5106),
+                                   Point(633, 5110), Point(643, 5115), Point(650, 5116)];
+                     SPS_Setup(RUNESCAPE_SURFACE, ['0_12','1_12']);
+                     P := SPS_GetMyPos;
+                     if Debug then
+                       WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+                     if not(SPS_WalkPath(BluePath2)) then
+                       SPS_BlindWalk(Point(650, 5116));
+                     WaitUntilNotMoving;
+                     Result := 'South'
+                   end;
+              end;
+            end;
+    'Red':  begin
+              case Random(2) of
+                0: begin
+                     RedPath1 := [Point(959, 4997), Point(964, 5002), Point(969, 5009),
+                                  Point(977, 5013), Point(981, 5016), Point(988, 5020),
+                                  Point(989, 5029), Point(989, 5038), Point(989, 5046),
+                                  Point(988, 5055), Point(985, 5065), Point(981, 5074),
+                                  Point(977, 5083), Point(972, 5093), Point(966, 5101),
+                                  Point(956, 5105), Point(944, 5102), Point(932, 5097),
+                                  Point(925, 5090), Point(919, 5084), Point(913, 5077),
+                                  Point(902, 5074), Point(889, 5071), Point(877, 5065),
+                                  Point(868, 5058), Point(859, 5053), Point(850, 5047),
+                                  Point(843, 5041), Point(834, 5035), Point(823, 5028),
+                                  Point(813, 5022), Point(805, 5017), Point(795, 5013),
+                                  Point(786, 5006), Point(774, 5000), Point(766, 4994),
+                                  Point(762, 4987), Point(759, 4978), Point(752, 4971),
+                                  Point(741, 4963), Point(730, 4959), Point(719, 4954),
+                                  Point(706, 4951), Point(693, 4948), Point(680, 4944),
+                                  Point(671, 4938), Point(663, 4933)];
+                     SPS_Setup(RUNESCAPE_SURFACE, ['2_12','1_12']);
+                     P := SPS_GetMyPos;
+                     if Debug then
+                       WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+                     if not(SPS_WalkPath(RedPath1)) then
+                       SPS_BlindWalk(Point(663, 4933));
+                     WaitUntilNotMoving;
+                     Result := 'North';
+                   end;
+                1: begin
+                     RedPath2 := [Point(961, 4997), Point(963, 5003), Point(969, 5011),
+                                  Point(976, 5014), Point(982, 5019), Point(986, 5029),
+                                  Point(986, 5039), Point(986, 5053), Point(986, 5061),
+                                  Point(984, 5069), Point(981, 5077), Point(977, 5087),
+                                  Point(972, 5096), Point(965, 5103), Point(956, 5103),
+                                  Point(946, 5100), Point(934, 5097), Point(925, 5090),
+                                  Point(918, 5085), Point(914, 5078), Point(907, 5075),
+                                  Point(897, 5072), Point(888, 5070), Point(877, 5068),
+                                  Point(870, 5064), Point(857, 5062), Point(848, 5062),
+                                  Point(839, 5062), Point(830, 5062), Point(822, 5063),
+                                  Point(809, 5068), Point(797, 5072), Point(781, 5075),
+                                  Point(771, 5079), Point(762, 5084), Point(751, 5089),
+                                  Point(741, 5095), Point(725, 5102), Point(714, 5107),
+                                  Point(701, 5110), Point(683, 5116), Point(673, 5117),
+                                  Point(664, 5120), Point(653, 5120)];
+                     SPS_Setup(RUNESCAPE_SURFACE, ['2_12','1_12']);
+                     P := SPS_GetMyPos;
+                     if Debug then
+                       WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+                     if not(SPS_WalkPath(RedPath2)) then
+                       SPS_BlindWalk(Point(653, 5120));
+                     WaitUntilNotMoving;
+                     Result := 'South';
+                   end;
+              end;
+            end;
+  end;
+end;
+
+function WalkToPyrefiendsFromBase: Boolean;
+var
+  BluePath, RedPath: TPointArray;
+  P: TPoint;
+
+begin
+  case JoinedTeam of
+    'Blue': begin
+              BluePath := [Point(378, 5053), Point(371, 5051), Point(365, 5047),
+                           Point(358, 5043), Point(353, 5036), Point(350, 5030),
+                           Point(350, 5022), Point(349, 5013), Point(349, 5005),
+                           Point(350, 4997), Point(353, 4990), Point(356, 4986),
+                           Point(359, 4981), Point(362, 4977), Point(366, 4972),
+                           Point(372, 4967), Point(376, 4963), Point(385, 4959),
+                           Point(394, 4959), Point(403, 4962), Point(410, 4969),
+                           Point(416, 4974), Point(424, 4976), Point(436, 4978),
+                           Point(447, 4976), Point(457, 4976), Point(471, 4976),
+                           Point(481, 4974), Point(491, 4971), Point(496, 4964)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['0_12','1_12']);
+              P := SPS_GetMyPos;
+              if Debug then
+                WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+              if not(SPS_WalkPath(BluePath)) then
+                SPS_BlindWalk(Point(496, 4964));
+              WaitUntilNotMoving;
+              Result := True;
+            end;
+    'Red':  begin
+              RedPath :=  [Point(962, 4997), Point(964, 5003), Point(968, 5009),
+                           Point(972, 5013), Point(979, 5015), Point(983, 5021),
+                           Point(984, 5029), Point(984, 5037), Point(984, 5044),
+                           Point(983, 5053), Point(982, 5060), Point(980, 5068),
+                           Point(979, 5075), Point(977, 5081), Point(974, 5092),
+                           Point(967, 5097), Point(957, 5099), Point(948, 5100),
+                           Point(939, 5100), Point(931, 5097), Point(925, 5092),
+                           Point(921, 5086), Point(915, 5078), Point(905, 5075),
+                           Point(895, 5073), Point(884, 5071), Point(872, 5071),
+                           Point(864, 5075), Point(856, 5080), Point(847, 5086),
+                           Point(841, 5093), Point(837, 5101), Point(834, 5107)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['2_12','1_12']);
+              P := SPS_GetMyPos;
+              if Debug then
+                WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+              if not(SPS_WalkPath(RedPath)) then
+                SPS_BlindWalk(Point(834, 5107));
+              WaitUntilNotMoving;
+              Result := True;
+            end;
+  end;
+end;
+
+function WalkToMiddleFromGrave: Boolean;
+var
+  BluePath, RedPath: TPointArray;
+  P: TPoint;
+
+begin
+  case JoinedTeam of
+    'Red':  begin
+              RedPath :=  [Point(853, 4982), Point(852, 4987), Point(850, 4993),
+                           Point(847, 5000), Point(843, 5007), Point(836, 5014),
+                           Point(829, 5019), Point(821, 5024), Point(812, 5030),
+                           Point(801, 5032), Point(791, 5032), Point(781, 5029),
+                           Point(773, 5029), Point(760, 5029), Point(747, 5029),
+                           Point(735, 5029), Point(727, 5029), Point(712, 5029),
+                           Point(703, 5030), Point(695, 5030), Point(687, 5030),
+                           Point(681, 5030), Point(667, 5028)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['2_12','1_12']);
+              P := SPS_GetMyPos;
+              if Debug then
+                WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+              if not(SPS_WalkPath(RedPath)) then
+                SPS_BlindWalk(Point(667, 5028));
+              WaitUntilNotMoving;
+              Result := True;
+            end;
+    'Blue': begin
+              BluePath := [Point(490, 5072), Point(490, 5066), Point(490, 5059),
+                           Point(490, 5053), Point(493, 5048), Point(499, 5043),
+                           Point(506, 5038), Point(513, 5033), Point(520, 5029),
+                           Point(527, 5024), Point(536, 5022), Point(544, 5020),
+                           Point(556, 5022), Point(565, 5022), Point(579, 5022),
+                           Point(592, 5021), Point(602, 5021), Point(614, 5023),
+                           Point(626, 5025), Point(640, 5025), Point(649, 5027),
+                           Point(659, 5028), Point(665, 5028)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['1_12','0_12']);
+              P := SPS_GetMyPos;
+              if Debug then
+                WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+              if not(SPS_WalkPath(BluePath)) then
+                SPS_BlindWalk(Point(655, 5028));
+              WaitUntilNotMoving;
+              Result := True;
+            end;
+  end;
+end;
+
+function WalkToBandagesFromGrave: Boolean;
+var
+  BluePath, RedPath: TPointArray;
+  P: TPoint;
+
+begin
+  case JoinedTeam of
+    'Red':  begin
+              RedPath :=  [Point(852, 4984), Point(852, 4990), Point(852, 4999),
+                           Point(854, 5008), Point(855, 5016), Point(858, 5025),
+                           Point(862, 5034), Point(868, 5045), Point(872, 5053),
+                           Point(878, 5061), Point(887, 5069), Point(900, 5075),
+                           Point(907, 5079), Point(915, 5084), Point(921, 5089),
+                           Point(929, 5093), Point(939, 5099), Point(948, 5101),
+                           Point(960, 5103), Point(968, 5102), Point(976, 5099),
+                           Point(987, 5099), Point(995, 5099), Point(1000, 5103),
+                           Point(1001, 5111), Point(995, 5116), Point(986, 5120)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['2_12','1_12']);
+              P := SPS_GetMyPos;
+              if Debug then
+                WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+              if not(SPS_WalkPath(RedPath)) then
+                SPS_BlindWalk(Point(986, 5120));
+              WaitUntilNotMoving;
+              Result := True;
+            end;
+    'Blue': begin
+              BluePath := [Point(489, 5073), Point(489, 5068), Point(489, 5062),
+                           Point(489, 5055), Point(487, 5047), Point(484, 5040),
+                           Point(481, 5033), Point(474, 5029), Point(469, 5025),
+                           Point(459, 5018), Point(454, 5012), Point(448, 5005),
+                           Point(442, 4996), Point(435, 4989), Point(428, 4983),
+                           Point(419, 4977), Point(411, 4971), Point(404, 4966),
+                           Point(398, 4961), Point(391, 4957), Point(382, 4957),
+                           Point(372, 4957), Point(363, 4957), Point(354, 4957),
+                           Point(347, 4957), Point(339, 4956), Point(330, 4955),
+                           Point(328, 4946), Point(334, 4941), Point(343, 4938)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['1_12', '0_12']);
+              P := SPS_GetMyPos;
+              if Debug then
+                WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+              if not(SPS_WalkPath(BluePath)) then
+                SPS_BlindWalk(Point(343, 4938));
+              WaitUntilNotMoving;
+              Result := True;
+            end;
+  end;
+end;
+
+function WalkToJelliesFromGrave: Boolean;
+var
+  BluePath1, BluePath2, RedPath1, RedPath2: TPointArray;
+  P: TPoint;
+
+begin
+  case JoinedTeam of
+    'Blue': begin
+              case Random(3) of
+                0:    begin
+                        BluePath1 := [Point(488, 5071), Point(488, 5064), Point(489, 5057),
+                                      Point(493, 5049), Point(500, 5039), Point(507, 5033),
+                                      Point(513, 5028), Point(522, 5022), Point(530, 5017),
+                                      Point(535, 5012), Point(541, 5009), Point(550, 5003),
+                                      Point(557, 4998), Point(569, 4994), Point(577, 4991),
+                                      Point(584, 4987), Point(593, 4982), Point(603, 4976),
+                                      Point(612, 4968), Point(621, 4962), Point(630, 4954),
+                                      Point(638, 4951), Point(649, 4946), Point(655, 4941),
+                                      Point(660, 4937)];
+                        SPS_Setup(RUNESCAPE_SURFACE, ['1_12','0_12']);
+                        P := SPS_GetMyPos;
+                        if Debug then
+                          WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+                        if not(SPS_WalkPath(BluePath1)) then
+                          SPS_BlindWalk(Point(660, 4937));
+                        WaitUntilNotMoving;
+                        Result := True;
+                      end;
+                1..2: begin
+                        BluePath2 := [Point(490, 5071), Point(495, 5069), Point(501, 5072),
+                                      Point(506, 5078), Point(514, 5081), Point(522, 5085),
+                                      Point(535, 5089), Point(546, 5095), Point(557, 5099),
+                                      Point(568, 5104), Point(577, 5109), Point(590, 5115),
+                                      Point(604, 5118), Point(616, 5120), Point(628, 5122),
+                                      Point(639, 5122), Point(649, 5123)];
+                        SPS_Setup(RUNESCAPE_SURFACE, ['1_12']);
+                        P := SPS_GetMyPos;
+                        if Debug then
+                          WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+                        if not(SPS_WalkPath(BluePath2)) then
+                          SPS_BlindWalk(Point(649, 5123));
+                        WaitUntilNotMoving;
+                        Result := True;
+                      end;
+              end;
+            end;
+    'Red':  begin
+              case Random(3) of
+                0..1: begin
+                        RedPath1 := [Point(853, 4983), Point(845, 4984), Point(837, 4982),
+                                     Point(830, 4975), Point(815, 4972), Point(804, 4971),
+                                     Point(793, 4968), Point(781, 4964), Point(765, 4960),
+                                     Point(757, 4957), Point(743, 4953), Point(735, 4951),
+                                     Point(719, 4949), Point(706, 4948), Point(691, 4947),
+                                     Point(679, 4945), Point(663, 4944)];
+                        SPS_Setup(RUNESCAPE_SURFACE, ['2_12','1_12']);
+                        P := SPS_GetMyPos;
+                        if Debug then
+                          WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+                        if not(SPS_WalkPath(RedPath1)) then
+                          SPS_BlindWalk(Point(663, 4944));
+                        WaitUntilNotMoving;
+                        Result := True;
+                      end;
+                2:   begin
+                       RedPath2 := [Point(852, 4985), Point(852, 4993), Point(852, 5000),
+                                    Point(848, 5008), Point(842, 5015), Point(832, 5024),
+                                    Point(821, 5033), Point(813, 5039), Point(802, 5047),
+                                    Point(794, 5054), Point(781, 5062), Point(773, 5068),
+                                    Point(762, 5077), Point(751, 5083), Point(738, 5092),
+                                    Point(727, 5098), Point(714, 5103), Point(701, 5109),
+                                    Point(685, 5114), Point(673, 5118), Point(654, 5120)];
+                       SPS_Setup(RUNESCAPE_SURFACE, ['2_12','1_12']);
+                       P := SPS_GetMyPos;
+                        if Debug then
+                          WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+                       if not(SPS_WalkPath(RedPath2)) then
+                         SPS_BlindWalk(Point(654, 5120));
+                       WaitUntilNotMoving;
+                       Result := True;
+                     end;
+              end;
+            end;
+  end;
+end;
+
+function WalkToPyrefiendsFromGrave: Boolean;
+var
+  BluePath, RedPath: TPointArray;
+  P: TPoint;
+
+begin
+  case JoinedTeam of
+    'Blue': begin
+              BluePath := [Point(488, 5070), Point(488, 5065), Point(488, 5057),
+                           Point(488, 5049), Point(488, 5042), Point(488, 5035),
+                           Point(488, 5027), Point(489, 5019), Point(489, 5013),
+                           Point(488, 5005), Point(489, 4999), Point(490, 4991),
+                           Point(491, 4983), Point(492, 4975), Point(496, 4969),
+                           Point(496, 4961)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['1_12']);
+              P := SPS_GetMyPos;
+              if Debug then
+                WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+              if not(SPS_WalkPath(BluePath)) then
+                SPS_BlindWalk(Point(496, 4961));
+              WaitUntilNotMoving;
+              Result := True;
+            end;
+    'Red':  begin
+              RedPath :=  [Point(852, 4983), Point(851, 4994), Point(850, 5004),
+                           Point(849, 5013), Point(848, 5020), Point(847, 5028),
+                           Point(846, 5037), Point(844, 5045), Point(843, 5056),
+                           Point(841, 5066), Point(838, 5076), Point(835, 5089),
+                           Point(833, 5098)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['2_12','1_12']);
+              P := SPS_GetMyPos;
+              if Debug then
+                WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+              if not(SPS_WalkPath(RedPath)) then
+                SPS_BlindWalk(Point(833, 5098));
+              WaitUntilNotMoving;
+              Result := True;
+            end;
+  end;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+// Monster killing /////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+function KillJelly: Boolean;
+begin
+  if ObjFinderInside(0.95, 1.06, 8172918, 20, MSX1, MSY1, MSX2, MSY2, 3, 3, True, ['elly', 'Jelly'], RandomRange(-2, 2), RandomRange(-2, 2), 500) then
+    begin
+      case Random(7) of
+        0..4: ClickMouse2(1);
+        5..6: begin
+                ClickMouse2(0);
+                WaitOptionMulti(['tack', 'Attack'], 500);
+              end;
+      end;
+      // Checking if fighting etc.
+    end;
+end;
+
+function KillPyrefiend: Boolean;
+var
+  P: TPoint;
+
+begin
+  if CountColorTolerance(4101346, MSX1, MSY1, MSX2, MSY2, 9) > 300 then
+    begin
+      if ObjFinderInside(0.63, 2.61, 4101346, 9, MSX1, MSY1, MSX2, MSY2, 4, 4, True, ['yref', 'iend', 'Pyre', 'fien'], RandomRange(-2, 2), RandomRange(-2, 2), 500) then
+        begin
+          case Random(7) of
+            0..4: ClickMouse2(1);
+            5..6: begin
+                    ClickMouse2(0);
+                    WaitOptionMulti(['tack', 'Attack'], 500);
+                  end;
+          end;
+          // Checking if fighting etc.
+        end;
+    end else
+    begin
+      case JoinedTeam of
+        'Blue': begin
+                  SPS_Setup(RUNESCAPE_SURFACE, ['1_12']);
+                  P := SPS_GetMyPos;
+                  if Debug then
+                    WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+                  SPS_BlindWalk(Point(RandomRange(481, 517), RandomRange(4943, 4988)));
+                  WaitUntilNotMoving;
+                end;
+        'Red':  begin
+                  SPS_Setup(RUNESCAPE_SURFACE, ['1_12','2_12']);
+                  P := SPS_GetMyPos;
+                  if Debug then
+                    WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+                  SPS_BlindWalk(Point(RandomRange(817, 849), RandomRange(5091, 5121)));
+                  WaitUntilNotMoving;
+                end;
+      end;
+    end;
+end;
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Mainloop ////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+procedure Mainloop;
+begin
+{========================= Procedures / Function list ==========================
+* General *
+    JoinFailsafe;
+    ObjDetectorInside;
+    ObjDetectorOutside;
+    WaitingLobby;
+    CheckIfInCombat;
+
+* Outside *
+    EnterGreenPortal;
+    EnterRedPortal;
+    EnterBluePortal;
+    WalkToGreenPortal;
+    WalkToRedPortal;
+    WalkToBluePortal;
+
+* Inside*
+    WalkToMiddleFromBase;
+    WalkToBandagesFromBase;
+    WalkToJelliesFromBase;
+    WalkToPyrefiendsFromBase;
+    WalkToMiddleFromGrave;
+    WalkToBandagesFromGrave;
+    WalkToJelliesFromGrave;
+    WalkToPyrefiendsFromGrave;
+
+===============================================================================}
+
+  { Joining a team }
+  {case DesiredTeam of
+    'Red': begin
+             if WalkToRedPortal then
+               if not(EnterRedPortal) then
+                 JoinFailsafe;
+           end;
+    'Blue': begin
+              if WalkToBluePortal then
+                if not(EnterBluePortal) then
+                  JoinFailsafe;
+            end;
+    'Green': begin
+               if WalkToGreenPortal then
+                if not(EnterGreenPortal) then
+                  JoinFailsafe;
+             end;
+  end;
+  case DefineTeam of
+    'Red': JoinedTeam := 'Red';
+    'Blue': JoinedTeam := 'Blue';
+  end;}
+
+  { Walking }
+  //JoinedTeam := 'Red';
+  //WalkToMiddleFromBase;
+  //WalkToBandagesFromBase;
+  //WalkToJelliesFromBase;
+  //WalkToPyrefiendsFromBase;
+  //WalkToMiddleFromGrave;
+  //WalkToBandagesFromGrave;
+  //WalkToJelliesFromGrave;
+  //WalkToPyrefiendsFromGrave;
+
+  //KillJelly;
+  //KillPyrefiend;
+  if CheckIfInCombat(1, 5000) then
+    WriteLn('In combat!');
+end;
+
+begin
+  SetUpLogin;
+  SetupPreferences;
+  Mainloop;
+end.

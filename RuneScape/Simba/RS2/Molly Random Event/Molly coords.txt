@@ -1,0 +1,5 @@
+Short hair: Up, Left, Left, Left, Left, Left
+Ponytail: Left, Up, Up, Up, Up
+Long hair: Right, Up, Up, Up, Up, Up, Up
+Two Tails: Up, Up, Up, Up, Up, Left, Left, Left, Left
+Knot: Right, Right, Right, Right, Right, Right, Up, Up, Up

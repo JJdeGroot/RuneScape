@@ -1,0 +1,427 @@
+program JJsSilkBuyer;
+{$DEFINE SMART8}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+{$i P07Include.simba}
+
+
+var
+  ClickContinueSilkBox, ClickContinuePlayerBox, HowMuchBox, SoundsGoodBox: TBox;
+  SilkBought: Integer;
+
+procedure Proggy;
+begin
+  writeln('-----------------------');
+  writeln('Running for: ' + MsToTime(GetTimeRunning(), TIME_BARE));
+  writeln('Silk bought: ' + IntToStr(SilkBought));
+  writeln('-----------------------');
+end;
+
+function BankBanker: boolean;
+var
+  r, T: Integer;
+  TPA: TPointArray;
+  ATPA: T2DPointArray;
+  P: TPoint;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.07, 2.91);
+
+  if FindColorsSpiralTolerance(P07_MSCX, P07_MSCY, TPA, 342865, P07_MSX1, P07_MSY1, P07_MSX2, P07_MSY2, 5) then
+  begin
+    SplitTPAWrap(TPA, 10, ATPA);
+    SortATPASize(ATPA, True);
+
+    MarkTime(T);
+    while TimeFromMark(T) < 6000 do
+    begin
+      r := RandomRange(0, Length(ATPA[0])-1);
+      P := ATPA[0][r];
+      MMouse(P.x, P.y, 0, 0);
+      if P07_WaitUptextMultiCustom(['ooth', 'boot'], 500) then
+      begin
+        ClickMouse2(0);
+        if P07_WaitOptionMulti(['qui', 'kly', 'uik'], 500) then
+        begin
+          Result := P07_WaitBankScreen(5000);
+          if Result then
+            break;
+        end;
+      end;
+    end;
+  end;
+end;
+
+function BankAllSilk: boolean;
+var
+  SilkDTM, X, Y: Integer;
+
+begin
+  if P07_BankScreen then
+  begin
+    SilkDTM := DTMFromString('mggAAAHicY2NgYHBmYmCwB2IbIHYFYm8gtgViTkYGhn9AeWFGCGYAYnYgXjK7GcJBwyJAkhULxlQJwRAAAMPdBNE=');
+
+    if FindDTM(SilkDTM, X, Y, P07_MIX1, P07_MIY1, P07_MIX2, P07_MIY2) then
+    begin
+      MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+      Wait(RandomRange(400, 800));
+      ClickMouse2(0);
+      if P07_WaitOptionMulti(['All', 'Store All'], 500) then
+      begin
+        IncEx(SilkBought, 27);
+        Result := True;
+      end;
+      //Wait(RandomRange(500, 1000));
+      //MMouse(X, Y+72, RandomRange(-5, 5), RandomRange(-5, 5));
+      //ClickMouse2(1);
+      //Wait(RandomRange(1000, 2000));
+
+
+      Proggy;
+
+    end;
+
+    FreeDTM(SilkDTM);
+  end;
+end;
+
+// Checks for red header text
+function TalkingWithTrader: boolean;
+begin
+  //writeln('Colors: ' + IntToStr(CountColorTolerance(128, 272, 366, 340, 375, 5)));
+  Result := CountColorTolerance(128, 272, 365, 340, 375, 5) > 150;
+end;
+
+// Do you want to buy any fine silks?  -> Using black color of D
+function BuyFineSilksChat: boolean;
+begin
+  Result := GetColor(188, 412) = 0;
+end;
+
+// How much are they as option?  -> Using black color of ?
+function HowMuchAreTheyOption: boolean;
+begin
+  Result := GetColor(326, 396) = 0;
+end;
+
+// How much are they in chat?  -> Using black color of ?
+function HowMuchAreTheyChat: boolean;
+begin
+  Result := GetColor(281, 405) = 0;
+end;
+
+// 3 gp. -> Using black color of p
+function PriceChat: boolean;
+begin
+  Result := GetColor(313, 420) = 0;
+end;
+
+// Okay, that sounds good. -> Using black color of g
+function OkaySoundsGoodOption: boolean;
+begin
+  Result := GetColor(311, 444) = 0;
+end;
+
+// Okay, that sounds good in chat -> Using black color of y
+function OkaySoundsGoodChat: boolean;
+begin
+  Result := GetColor(164, 420) = 0;
+end;
+
+// You buy some silk for 3gp. -> Using black color of 3
+function BoughtSilkChat: boolean;
+begin
+  Result := GetColor(372, 398) = 0;
+end;
+
+procedure WaitScript;
+begin
+  Wait(RandomRange(50, 100));
+end;
+
+function ClickContinueSilk: boolean;
+var
+  X, Y: Integer;
+
+begin
+  GetMousePos(X, Y);
+  if PointInBox(Point(X, Y), ClickContinueSilkBox) then
+    ClickMouse2(1)
+  else
+    MouseBox(ClickContinueSilkBox.X1, ClickContinueSilkBox.Y1, ClickContinueSilkBox.X2, ClickContinueSilkBox.Y2, 1);
+  WaitScript;
+end;
+
+function ClickContinuePlayer: boolean;
+var
+  X, Y: Integer;
+
+begin
+  GetMousePos(X, Y);
+  if PointInBox(Point(X, Y), ClickContinuePlayerBox) then
+    ClickMouse2(1)
+  else
+    MouseBox(ClickContinuePlayerBox.X1, ClickContinuePlayerBox.Y1, ClickContinuePlayerBox.X2, ClickContinuePlayerBox.Y2, 1);
+  WaitScript;
+end;
+
+procedure DebugChats;
+begin
+  writeln('BuyFineSilks: ' + BoolToStr(BuyFineSilksChat));
+  writeln('HowMuchAreTheyOption: ' + BoolToStr(HowMuchAreTheyOption));
+  writeln('HowMuchAreTheyChat: ' + BoolToStr(HowMuchAreTheyChat));
+  writeln('PriceChat: ' + BoolToStr(PriceChat));
+  writeln('OkaySoundsGoodOption: ' + BoolToStr(OkaySoundsGoodOption));
+  writeln('OkaySoundsGoodChat: ' + BoolToStr(OkaySoundsGoodChat));
+  writeln('BoughtSilkChat: ' + BoolToStr(BoughtSilkChat));
+end;
+
+procedure SelectHowMuch;
+var
+  X, Y: Integer;
+
+begin
+  ColorToleranceSpeed(1);
+  //writeln('Black colors: ' + IntToStr(CountColorTolerance(0, HowMuchBox.X1, HowMuchBox.Y1, HowMuchBox.X2, HowMuchBox.Y2, 5)));
+  if CountColorTolerance(0, HowMuchBox.X1, HowMuchBox.Y1, HowMuchBox.X2, HowMuchBox.Y2, 5) > 250 then
+  begin
+    GetMousePos(X, Y);
+    if PointInBox(Point(X, Y), HowMuchBox) then
+      ClickMouse2(1)
+    else
+      MouseBox(HowMuchBox.X1, HowMuchBox.Y1, HowMuchBox.X2, HowMuchBox.Y2, 1);
+    WaitScript;
+  end;
+end;
+
+procedure SelectSoundsGood;
+var
+  X, Y: Integer;
+
+begin
+  //writeln('Black colors: ' + IntToStr(CountColorTolerance(0, SoundsGoodBox.X1, SoundsGoodBox.Y1, SoundsGoodBox.X2, SoundsGoodBox.Y2, 5)));
+  if CountColorTolerance(0, SoundsGoodBox.X1, SoundsGoodBox.Y1, SoundsGoodBox.X2, SoundsGoodBox.Y2, 5) > 250 then
+  begin
+    GetMousePos(X, Y);
+    if PointInBox(Point(X, Y), SoundsGoodBox) then
+      ClickMouse2(1)
+    else
+      MouseBox(SoundsGoodBox.X1, SoundsGoodBox.Y1, SoundsGoodBox.X2, SoundsGoodBox.Y2, 1);
+    WaitScript;
+  end;
+end;
+
+procedure HandleChats;
+begin
+  if BuyFineSilksChat then
+    ClickContinueSilk;
+
+  if HowMuchAreTheyOption then
+    SelectHowMuch;
+
+  if HowMuchAreTheyChat then
+    ClickContinuePlayer;
+
+  if PriceChat then
+    ClickContinueSilk;
+
+  if OkaySoundsGoodOption then
+    SelectSoundsGood;
+
+  if OkaySoundsGoodChat then
+    ClickContinuePlayer;
+
+  if BoughtSilkChat then
+    ClickContinueSilk;
+end;
+
+function Chatting: boolean;
+begin
+  Result := BuyFineSilksChat or
+            HowMuchAreTheyOption or
+            HowMuchAreTheyChat or
+            PriceChat or
+            OkaySoundsGoodOption or
+            OkaySoundsGoodChat or
+            BoughtSilkChat;
+end;
+
+function IsPlayerMoving: boolean;
+begin
+  Result := PixelShift(IntToBox(P07_MMX1, P07_MMY1, P07_MMX2, P07_MMY2), RandomRange(400, 600)) > 200;
+end;
+
+function ClickSilkTrader: boolean;
+var
+  i: Integer;
+  P: TPoint;
+  TPA: TPointArray;
+  ATPA: T2DPointArray;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.03, 0.42);
+
+  if FindColorsSpiralTolerance(P07_MSCX, P07_MSCY, TPA, 9192334, P07_MSX1, P07_MSY1, P07_MSX2, P07_MSY2, 22) then
+  begin
+    SplitTPAWrap(TPA, 8, ATPA);
+    SortATPASize(ATPA, True);
+
+    for i:=0 to high(ATPA) do
+      if Length(ATPA[i]) > 50 then
+      begin
+        P := MiddleTPA(ATPA[i]);
+        MMouse(P.x, P.y, RandomRange(-3, 3), RandomRange(-3, 3));
+        if P07_WaitUptextMultiCustom(['ilk', 'rad', 'der'], 500) then
+        begin
+          ClickMouse2(0);
+          if P07_WaitOptionMulti(['alk', 'Talk'], 500) then
+          begin
+            while IsPlayerMoving do
+              Wait(RandomRange(100, 200));
+            WaitScript;
+            Result := True;
+            break;
+          end;
+        end;
+      end;
+  end;
+end;
+
+function VisibleSilkTrader: boolean;
+var
+  TPA: TPointArray;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.03, 0.42);
+
+  if FindColorsSpiralTolerance(P07_MSCX, P07_MSCY, TPA, 9192334, P07_MSX1, P07_MSY1, P07_MSX2, P07_MSY2, 22) then
+    Result := Length(TPA) > 50;
+
+  //writeln('Silk trader TPA length: ' + IntToStr(Length(TPA)));
+end;
+
+function AtSilkTrader: boolean;
+var
+  MyPos, SilkPos: TPoint;
+
+
+begin
+  MyPos := SPS_GetRS07Pos;
+  SilkPos := Point(287, 167);
+  Result := Distance(MyPos.x, MyPos.y, SilkPos.x, SilkPos.y) < 25;
+end;
+
+function WalkToSilkTrader: boolean;
+var
+  Path: TPointArray;
+
+begin
+  KeyDown(17);
+  Path := [Point(183, 323), Point(191, 319), Point(195, 307), Point(203, 295),
+           Point(199, 279), Point(207, 267), Point(215, 267), Point(235, 259),
+           Point(243, 255), Point(255, 247), Point(267, 227), Point(275, 211),
+           Point(283, 203), Point(291, 195), Point(291, 179), Point(287, 167)];
+  Result := SPS_Walk07Path(Path);
+  KeyUp(17);
+  while IsPlayerMoving do
+    Wait(RandomRange(100, 200));
+
+end;
+
+function AtBank: boolean;
+var
+  MyPos, BankPos: TPoint;
+
+begin
+  MyPos := SPS_GetRS07Pos;
+  BankPos := Point(167, 319);
+  Result := Distance(MyPos.x, MyPos.y, BankPos.x, BankPos.y) < 10;
+end;
+
+function WalkToBank: boolean;
+var
+  Path: TPointArray;
+
+begin
+  Path := [Point(287, 171), Point(291, 179), Point(291, 195), Point(283, 203),
+           Point(275, 211), Point(267, 227), Point(255, 247), Point(243, 255),
+           Point(235, 259), Point(215, 267), Point(207, 267), Point(199, 279),
+           Point(203, 295), Point(195, 307), Point(191, 319), Point(183, 323),
+           Point(167, 319)];
+  Result := SPS_Walk07Path(Path);
+  while IsPlayerMoving do
+    Wait(RandomRange(100, 200));
+end;
+
+procedure SearchForTrader;
+var
+  P: TPoint;
+
+begin
+  MMouse(P07_MSCX, P07_MSCY, RandomRange(-10, 10), RandomRange(-10, 10));
+  if P07_WaitUptextMultiCustom(['ilk', 'rad', 'der'], 500) then
+  begin
+    ClickMouse2(0);
+    if P07_WaitOptionMulti(['alk', 'Talk'], 500) then
+    begin
+      while IsPlayerMoving do
+        Wait(RandomRange(100, 200));
+      WaitScript;
+    end;
+  end;
+end;
+
+begin
+  SetupSRL;
+  SPS_Setup(RUNESCAPE_SURFACE, ['0_0']);
+  SetupP07Include;
+  //SRL_EnableNavBar;
+
+  ClickContinueSilkBox := IntToBox(234, 446, 377, 455);
+  ClickContinuePlayerBox := IntToBox(143, 445, 287, 456);
+  HowMuchBox := IntToBox(192, 396, 329, 409);
+  SoundsGoodBox := IntToBox(180, 428, 339, 440);
+
+  SPS_Tolerance := 800.0;   //800
+  SPS_MatchesPercent := 0.40; //0.35
+  MouseSpeed := 500;
+  WriteLn('Script started!');
+
+  repeat
+    writelN('My Position: ' + ToSTR(SPS_GetRS07Pos));
+    P07_TabInventoryTab(4);
+    if not(P07_InvFull) then
+    begin
+      writeln('Not inv full');
+      if VisibleSilkTrader or AtSilkTrader then
+      begin
+        if not Chatting then
+          if VisibleSilkTrader then
+            ClickSilkTrader
+          else
+            SearchForTrader;
+        HandleChats;
+      end else
+      begin
+        writeln('Walking to silk trader!');
+        WalkToSilkTrader;
+      end;
+    end else
+    begin
+      writeln('Inv full');
+      if not(AtBank) then
+        WalkToBank;
+
+      if AtBank then
+        if BankBanker then
+          BankAllSilk;
+    end;
+
+    Wait(RandomRange(20, 60));
+  until(false);
+
+  WriteLn('Script ended!');
+end.

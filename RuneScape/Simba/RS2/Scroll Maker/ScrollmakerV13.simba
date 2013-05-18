@@ -1,0 +1,502 @@
+program ScrollMaker;
+{$DEFINE SMART}
+{$i srl/srl.simba}{$i SRL/SRL/misc/paintsmart.simba}
+
+var
+  X, Y, n, Converted, StartTime: Integer;
+  ChargesLeft: String;
+  GetDuelRing, Debug: Boolean;
+
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  MarkTime(n);
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+  Debug:=True;
+end;
+
+procedure WaitUntilWalking;
+begin
+  Wait(300 + Random(300));
+  if (IsMoving=True) then
+    begin
+      repeat
+        Wait(50 + Random(100));
+      until(IsMoving=False);
+    end;
+  Wait(300 + Random(300));
+end;
+
+function OpenTrapdoor: Boolean;
+var
+  TrapdoorColors: TPointArray;
+  TrapSplit: T2DPointArray;
+  X, Y, i: Integer;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.06, 0.41);
+  if FindColorsSpiralTolerance(MSCX, MSCY, TrapdoorColors, 3030347, MSCX-125, MSCY-100, MSCX+125, MSCY+100, 14) then
+    begin
+      SplitTPAExWrap(TrapdoorColors, 1, 1, TrapSplit);
+      SortATPASize(TrapSplit, True);
+      if Debug then
+        begin
+          WriteLn(''+IntToStr(CountColorTolerance(3030347, MSCX-125, MSCY-100, MSCX+125, MSCY+100, 14))+'');
+          SMART_DrawBox(GetTPABounds(TrapSplit[0]));
+          SMART_DrawDots(TPAFromBox(GetTPABounds(TrapSplit[0])));
+        end;
+      for i:=0 to high(TrapSplit) do
+        begin
+          MiddleTPAEx(TrapSplit[i], X, Y);
+          MMouse(X, Y, RandomRange(-1, 1), RandomRange(-1, 1));
+          if WaitUpTextMulti(['apdo', 'Trapdoor', 'Open'], 500) then
+            begin
+              case Random(7) of
+                0..4: begin; ClickMouse2(1); Wait(3000 + Random(2000)); Result:=True; Exit; end;
+                5..6: begin
+                        ClickMouse2(0);
+                        if WaitOptionMulti(['pen', 'Open'], 500) then
+                          begin
+                            Wait(4000 + Random(1000));
+                            Result:=True;
+                            Exit;
+                          end;
+                      end;
+              end;
+            end;
+        end;
+    end;
+end;
+
+function WalkToLadder: Boolean;
+var
+  X, Y: Integer;
+
+begin
+  if RadialWalkTolerance(602204, 0, 45, 70, 5, 5, 20) then
+    begin
+      Wait(500 + Random(500));
+      WaitUntilWalking;
+      Wait(500 + Random(500));
+      SetColorSpeed2Modifiers(0.06, 0.41);
+      if CountColorTolerance(3030347, MSCX-125, MSCY-100, MSCX+125, MSCY+100, 14)<600 then
+        begin
+          OpenTrapdoor;
+          Result:=True;
+          Exit;
+        end else
+        begin
+          Result:=True;
+          Exit;
+        end;
+    end else
+    begin
+      if RadialWalkTolerance(5856865, 10, 25, 60, 5, 5, 40) then
+        begin
+          Wait(500 + Random(500));
+          WaitUntilWalking;
+          Wait(500 + Random(500));
+          SetColorSpeed2Modifiers(0.06, 0.41);
+          if CountColorTolerance(3030347, MSCX-125, MSCY-100, MSCX+125, MSCY+100, 14)<600 then
+            begin
+              OpenTrapdoor;
+              Result:=True;
+              Exit;
+            end else
+            begin
+              Result:=True;
+              Exit;
+            end;
+        end;
+    end;
+  ColorToleranceSpeed(1);
+  if FindSymbol(X, Y, 'summoning obelisk') then
+    begin
+      Mouse(X, Y, 5, 5, 1);
+      Wait(500 + Random(500));
+      WaitUntilWalking;
+      Result:=True;
+      Exit;
+    end else
+    begin
+      Result:=False;
+    end;
+  Result:=False;
+end;
+
+function ClimbLadder: Boolean;
+var
+  LadderColors: TPointArray;
+  LadderSplit: T2DPointArray;
+  t: Integer;
+  P: TPoint;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.10, 1.04);
+  if FindColorsSpiralTolerance(MSCX, MSCY, LadderColors, 1395296, MSCX-125, MSCY-100, MSCX+125, MSCY+100, 12) then
+    begin
+      SplitTPAExWrap(LadderColors, 2, 2, LadderSplit);
+      SortATPASize(LadderSplit, True);
+      if Debug then
+        begin
+          WriteLn(''+IntToStr(CountColorTolerance(1395296, MSCX-125, MSCY-100, MSCX+125, MSCY+100, 12))+'');
+          SMART_DrawBox(GetTPABounds(LadderSplit[0]));
+          SMART_DrawDots(TPAFromBox(GetTPABounds(LadderSplit[0])));
+        end;
+      MiddleTPAEx(LadderSplit[0], X, Y);
+      P := MiddleTPA(LadderSplit[0]);
+      MMouse(P.X, P.Y, RandomRange(-1, 1), RandomRange(-1, 1));
+      if WaitUpTextMulti(['limb', 'Climb'], 500) then
+        begin
+          case Random(7) of
+            0..4: begin; ClickMouse2(1); Result:=True; end;
+            5..6: begin
+                    ClickMouse2(0);
+                    WaitOptionMulti(['lim', 'Climb'], 500);
+                    Result:=True;
+                  end;
+          end;
+        end;
+    end;
+  Wait(4000 + Random(2000));
+  MouseBox(620, 100, 630, 106, 1);
+  Wait(3000 + Random(1000));
+end;
+
+function OpenObelisk: Boolean;
+var
+  ObeliskColors: TPointArray;
+  ObeliskSplit: T2DPointArray;
+  X, Y: Integer;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.09, 0.83);
+  if FindColorsSpiralTolerance(MSCX, MSCY, ObeliskColors, 5672113, MSX1, MSY1, MSX2, MSY2, 12) then
+    begin
+      SplitTPAExWrap(ObeliskColors, 1, 1, ObeliskSplit);
+      SortATPASize(ObeliskSplit, True);
+      if Debug then
+        begin
+          WriteLn(''+IntToStr(CountColorTolerance(5672113, MSX1, MSY1, MSX2, MSY2, 12))+'');
+          SMART_DrawBox(GetTPABounds(ObeliskSplit[0]));
+          SMART_DrawDots(TPAFromBox(GetTPABounds(ObeliskSplit[0])));
+          SMART_DrawLine(False, Point(GetTPABounds(ObeliskSplit[0]).X1-10, GetTPABounds(ObeliskSplit[0]).Y1+20), Point(GetTPABounds(ObeliskSplit[0]).X1+5 , GetTPABounds(ObeliskSplit[0]).Y1+5), clPurple);
+        end;
+      MiddleTPAEx(ObeliskSplit[0], X, Y);
+      MMouse(X-15, Y+10, RandomRange(-3, 3), RandomRange(-3, 3));
+      if WaitUpTextMulti(['nfus', 'ouch', 'lisk'], 500) then
+        begin
+          case Random(7) of
+            0..4: begin; ClickMouse2(1); Result:=True; end;
+            5..6: begin
+                    ClickMouse2(0);
+                    WaitOptionMulti(['nfus', 'ouch', 'lisk'], 500);
+                    Result:=True;
+                  end;
+          end;
+        end;
+    end;
+  Wait(2000 + Random(1500));
+end;
+
+procedure MakeScrolls;
+begin
+  //SMART_DrawBox(IntToBox(110, 35, 155, 50));
+  MouseBox(110, 35, 155, 50, 1);
+  Wait(1250 + Random(500));
+  //SMART_DrawBox(IntToBox(44, 65, 88, 98));
+  Mousebox(44, 65, 88, 98, 0);
+  WaitOptionMulti(['All', 'm-A', 'Transform-All'], 500);
+  Wait(1250 + Random(500));
+  IncEx(Converted, 28);
+end;
+
+function TeleToCw: Boolean;
+begin
+  if not(GetCurrentTab = tab_Equip) then
+    FTab(tab_Equip);
+  WriteLn(''+IntToStr(GetCurrentTab)+'');
+  Wait(650 + Random(650));
+  //SMART_DrawBox(IntToBox(682, 369, 713, 400));
+  Mousebox(682, 369, 713, 400, 2);
+  Wait(200 + Random(200));
+  ChargesLeft := Copy(GetNumbers(GetUpText), 0, 1);
+  Wait(50 + Random(50));
+  ClickMouse2(0);
+  if WaitOptionMulti(['ast', 'tle', 'ars', 'Wars', 'Castle', 'Castle Wars'], 1000) then
+    begin
+      if ChargesLeft = '1' then
+        GetDuelRing := True;
+      Wait(5000 + Random(1000));
+      Result:=True;
+    end else
+    begin
+      Result:=False;
+    end;
+end;
+
+procedure WalkToCwBank;
+var
+  X, Y: Integer;
+
+begin
+  SymbolAccuracy := 0.5
+  if FindSymbol(X, Y, 'bank') then
+    begin
+      Mouse(X, Y, RandomRange(-1, 1), RandomRange(-1, 1), 1);
+      Wait(1000 + Random(1000));
+      WaitUntilWalking;
+    end else
+    begin
+      RadialWalkTolerance(6053215, 145, 190, 75, 0, 0, 40);
+      Wait(1000 + Random(1000));
+      WaitUntilWalking;
+    end;
+end;
+
+function CwBanking: Boolean;
+begin
+  if OpenBankChest(SRL_BANK_CW) then
+    Result:=True;
+  Wait(1250 + Random(500));
+end;
+
+function WithdrawStuff: Boolean;
+begin
+  if PinScreen then
+    InPin(Players[0].Pin);
+  if BankScreen then
+    begin
+      if GetDuelRing then
+        begin
+          GetDuelRing := False;
+          Withdraw(1, 0, 1); // Duel ring
+          Wait(750 + Random(750));
+          Withdraw(0, 0, 28); // Pouches
+          Wait(750 + Random(750));
+          CloseBank;
+          Wait(2000 + Random(750));
+          Result:=True;
+          if not(GetCurrentTab = tab_Inv) then
+            FTab(tab_Inv);
+          //SMART_DrawBox(IntToBox(500, 400, 550, 450));
+            case Random(7) of
+              0..4: Mousebox(570, 217, 589, 237, 1);
+              5..6: begin;
+                      Mousebox(570, 217, 589, 237, 0);
+                      WaitOptionMulti(['ear', 'Wear'], 500);
+                      Wait(250 + Random(250));
+                    end;
+            end;
+         end else
+         begin
+           Result:=True;
+           Withdraw(0, 0, 28); // Pouches
+           WriteLn('Withdrawed new pouches');
+           Wait(750 + Random(750));
+         end;
+    end else
+    begin
+      TeleToCw;
+      WalkToCwBank;
+      WithdrawStuff;
+    end;
+end;
+
+procedure ResetTime;
+begin;
+  n:=0
+  MarkTime(n);
+end;
+
+function ClickOnObelisk: Boolean;
+var
+  SmallObColors: TPointArray;
+  ObSplit: T2DPointArray;
+  X, Y: Integer;
+
+begin
+  SetAngle(SRL_ANGLE_LOW);
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.09, 0.73);
+  if FindColorsSpiralTolerance(MSCX, MSCY, SmallObColors, 5280132, MSX1, MSY1, MSX2, MSY2, 16) then
+    begin
+      SplitTPAExWrap(SmallObColors, 20, 40, ObSplit);
+      SortATPASize(ObSplit, True);
+      MiddleTPAEx(ObSplit[0], X, Y);
+      MMouse(X, Y, RandomRange(-3, 3), RandomRange(-3, 3));
+      ClickMouse2(0);
+      if WaitOptionMulti(['enew', 'oints', 'Renew'], 500) then
+        Result:=True;
+    end;
+  Wait(2500 + Random(1000));
+  ClickNorth(0);
+  Wait(2500 + Random(1000));
+end;
+
+function KyattRenew: Boolean;
+var
+  X, Y, u, KyattPouch: Integer;
+
+begin
+  if TimeFromMark(n)>300000 then
+    begin;
+      ResetTime;
+      CwBanking;
+      if GetDuelRing then
+        begin
+          Withdraw(1, 0, 1); // Duel ring
+          Wait(500 + Random(500));
+          Withdraw(2, 0, 1); // Kyatt
+          Wait(500 + Random(500));
+          Withdraw(0, 0, 28); // Pouches
+          Wait(500 + Random(500));
+          CloseBank;
+          Wait(2000 + Random(500));
+          if not(GetCurrentTab = tab_Inv) then
+            FTab(tab_Inv);
+          //SMART_DrawBox(IntToBox(500, 400, 550, 450));
+            case Random(7) of
+              0..4: Mousebox(1, 2, 3, 4, 1);
+              5..6: begin;
+                      Mousebox(1, 2, 3, 4, 0);
+                      WaitOptionMulti(['ear', 'Wear'], 500);
+                      Wait(250 + Random(250));
+                    end;
+            end;
+          Wait(500 + Random(500));
+        end else
+        begin
+          Withdraw(2, 0, 1); // Kyatt
+          Wait(500 + Random(500));
+          Withdraw(0, 0, 28); // Pouches
+        end;
+      if FindSymbol(X, Y, 'summoning obelisk') then
+        begin
+          MMouse(X, Y, RandomRange(-2, 2), RandomRange(-2, 2));
+        end else
+        begin
+          Mousebox(690, 70, 695, 80, 1);
+        end;
+          Wait(1000 + Random(1000));
+          WaitUntilWalking;
+          ClickOnObelisk;
+          if not(GetCurrentTab = tab_Inv) then
+            FTab(tab_Inv);
+          Wait(1000 + Random(500));
+          KyattPouch := DTMFromString('mlwAAAHicY2dgYPjHBiTYGRg+A2kuIP0XSL8HYh4g+xQTA8NuIN4LxPuA+DoQn4fipsoUoEYmrPg/A27AiAdDAQBAQwwc');
+          if FindDTM(KyattPouch, X, Y, MIX1, MIY1, MIX2, MIY2) then
+            begin
+              MMouse(X, Y, RandomRange(-3, 3), RandomRange(-3, 3));
+              Wait(25 + Random(75));
+              ClickMouse2(0);
+              WaitOptionMulti(['umm', 'mon', 'ummon'], 500);
+              Wait(1000 + Random(1000));
+              if FindChatBoxText('already', 7, clBlack) or FindChatBoxText('already', 6, clBlack) then
+                begin
+                  Marktime(u);
+                  repeat
+                    Wait(2000 + Random(5000));
+                  until(TimeFromMark(u)>RandomRange(25000, 40000));
+                  if FindDTM(KyattPouch, X, Y, MIX1, MIY1, MIX2, MIY2) then
+                    begin
+                      MMouse(X, Y, RandomRange(-3, 3), RandomRange(-3, 3));
+                      Wait(25 + Random(75));
+                      ClickMouse2(0);
+                      if WaitOptionMulti(['umm', 'mon', 'ummon'], 500) then
+                        Result:=True;
+                    end;
+                end else
+                begin
+                  WriteLn('Renewed kyatt');
+                  Result:=True;
+                end;
+            end;
+    end;
+end;
+
+function KyattTele: Boolean;
+begin
+  Mousebox(690, 127, 746, 160, 0);
+  if WaitOptionMulti(['nter', 'eract', 'Interact'], 500) then
+    begin
+      Wait(1500 + Random(750));
+      TypeSendEx('2', False);
+      Wait(4000 + Random(1000));
+      Result:=True;
+    end;
+end;
+
+procedure Proggy;
+var
+  Sec, ConvertedH: Integer;
+
+begin
+  Sec := (1+((GetSystemTime-StartTime)/1000));
+  ConvertedH :=((3600*(Converted))/(Sec));
+  SMART_ClearCanvas;
+  SMART_DrawText(418, 5, UpCharsEx, 'JJ''s scripting', clGreen);
+  SMART_DrawText(5, 269, UpCharsEx, 'Pouch Transformer made for Austin', clRed);
+  SMART_DrawText(5, 286, UpCharsEx, 'Running for: '+TimeRunning+'', clWhite);
+  SMART_DrawText(5, 303, UpCharsEx, 'Charges left on ring: '+ChargesLeft+'', clWhite);
+  SMART_DrawText(5, 320, UpCharsEx, 'Pouches converted: '+IntToStr(Converted)+' at '+IntToStr(ConvertedH)+' per hour', clWhite);
+end;
+
+begin
+  SetUpLogin;
+  StartTime:=GetSystemTime;
+  SMART_ClearCanvas;
+  Proggy;
+  repeat
+    if CwBanking then
+      begin
+        Mousebox(354, 298, 384, 318, 1);
+        if FindColor(X, Y, 127, 0, 338, 518, 479) then
+          begin
+            if not(KyattRenew) then
+              Exit;
+          end else
+          begin
+            Wait(500 + Random(250));
+            WithdrawStuff;
+          end;
+      end else
+      begin
+        Wait(500 + Random(250));
+        WithdrawStuff;
+      end;
+    KyattTele;
+    WalkToLadder;
+    OpenObelisk;
+    MakeScrolls;
+    TeleToCw;
+    WalkToCwBank;
+  until(false);
+end.

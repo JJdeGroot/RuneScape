@@ -1,0 +1,75 @@
+program JJsThiever;
+{$DEFINE SMART8}
+{$i srl/srl.simba}
+{$i P07Include.simba}
+
+function GenStoreScreen: boolean;
+begin
+  Result := CountColorTolerance(3358536, P07_MSX1, P07_MSY1, P07_MSX2, P07_MSY2, 10) > 500;
+end;
+
+procedure SelectTen(X: Integer; Y: Integer);
+var
+  i: Integer;
+
+begin
+  for i:=0 to 2 do
+  begin
+    // Right click
+    MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+    ClickMouse2(0);
+    Wait(RandomRange(500, 1000));
+
+    // Sell or buy 10
+    MMouse(X, Y+70, RandomRange(-10, 10), RandomRange(-2, 2));
+    ClickMouse2(1);
+    Wait(RandomRange(500, 1000));
+  end;
+end;
+
+function SellTrout: boolean;
+var
+  TroutDTM, X, Y: Integer;
+  P: TPoint;
+
+begin
+  if P07_TabInventoryTab(3) then
+  begin
+    TroutDTM := DTMFromString('mbQAAAHicY2VgYMhlYmBIAeI4IK4C4kogfgoU/wDEz4D4HhC/A+KKpHggyYiCRYAkKxpmxILBAACG8wgj');
+    if FindDTM(TroutDTM, X, Y, P07_MIX1, P07_MIY1, P07_MIX2, P07_MIY2) then
+    begin
+      writeln('Found DTM');
+      SelectTen(X, Y);
+    end;
+    FreeDTM(TroutDTM);
+  end;
+end;
+
+function BuyTrout: boolean;
+var
+  TroutDTM, X, Y: Integer;
+
+begin
+  if GenStoreScreen then
+  begin
+    TroutDTM := DTMFromString('mbQAAAHicY2VgYPjPysDwFYgZ2CCYC4iTmBgYcoA4CogzgDgSiJtzMoAKGFGwCJBkRcOMWDAYAADNdAWb');
+    if FindDTM(TroutDTM, X, Y, P07_MSX1, P07_MSY1, P07_MSX2, P07_MSY2) then
+    begin
+      writeln('Found DTM');
+      SelectTen(X, Y);
+    end;
+    FreeDTM(TroutDTM);
+  end;
+end;
+
+begin
+  SetupSRL;
+  SetupP07Include;
+  WriteLn('Script started!');
+
+  SRL_ResetNavBar;
+  //SellTrout;
+  BuyTrout;
+
+  WriteLn('Script ended!');
+end.

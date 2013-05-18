@@ -1,0 +1,3286 @@
+program JJsGOP;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+{$i SRL/SRL/misc/paintsmart.simba}
+
+var
+  JoinedTeam, DesiredWizard: String;
+  PaintColor: TColor;
+  ActionBox: TBox;
+  GamesPlayed, Tokens, TokensGained, WaitTime, t: Integer;
+  ActionboxTPA: TPointArray;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+{
+  Team choice, fill this in behind DesiredWizard
+  Green team: 'Wizard Acantha'
+  Yellow team: 'Wizard Vief'
+  Blue team: 'Wizards'
+  Randomized team: 'Random'
+}
+  DesiredWizard := 'Random';
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 61;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayerToLob;
+  OpenWorldScreen;
+  SelectWorld(61);
+  LoginPlayer;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+  ActionBox := IntToBox(289, 428, 512, 442);
+  TPAFromBoxWrap(ActionBox, ActionBoxTPA);
+end;
+
+procedure Running;
+begin
+  if not(RunEnergy(50)) then
+    begin
+      RestUntil(RandomRange(75, 100));
+      MouseBox(MMCX - 20, MMCY - 20, MMCX + 20, MMCY + 20, 1);
+      Wait(500 + Random(500));
+    end;
+end;
+
+function Antiban: Boolean;
+begin
+  case Random(10000) of
+    0..9:       begin
+                  WriteLn('Antiban active');
+                  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+                  SMART_DrawText(290, 429, UpChars, 'antiban = check rc xp', clWhite);
+                  HoverSkill('runecrafting', False);
+                  Wait(100 + Random(300));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                  Result:=True;
+                end;
+    1000..1004: begin
+                  WriteLn('Antiban active');
+                  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+                  SMART_DrawText(290, 429, UpChars, 'antiban = check random skill', clWhite);
+                  HoverSkill('random', False);
+                  Wait(100 + Random(300));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                  Result:=True;
+                end;
+    2000..2006: begin
+                  WriteLn('Antiban active');
+                  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+                  SMART_DrawText(290, 429, UpChars, 'antiban = random click', clWhite);
+                  RandomRClick;
+                  Wait(200 + Random(600));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                  Result:=True;
+                end;
+    3000..3009: begin
+                  WriteLn('Antiban active');
+                  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+                  SMART_DrawText(290, 429, UpChars, 'antiban = pick up mouse', clWhite);
+                  PickUpMouse;
+                  Wait(150 + Random(450));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                  Result:=True;
+                end;
+    4000..4009: begin
+                  WriteLn('Antiban active');
+                  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+                  SMART_DrawText(290, 429, UpChars, 'antiban = random movement', clWhite);
+                  RandomMovement;
+                  Wait(200 + Random(400));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                  Result:=True;
+                end;
+    5000..5014: begin
+                  WriteLn('Antiban active');
+                  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+                  SMART_DrawText(290, 429, UpChars, 'antiban = bored human', clWhite);
+                  BoredHuman;
+                  Wait(500 + Random(1000));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                  Result:=True;
+                end;
+    6000..6004: begin
+                  WriteLn('Antiban active');
+                  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+                  SMART_DrawText(290, 429, UpChars, 'antiban = examine item', clWhite);
+                  ExamineInv;
+                  Wait(250 + Random(400));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                  Result:=True;
+                 end;
+    7000..7014: begin
+                  WriteLn('Antiban active');
+                  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+                  SMART_DrawText(290, 429, UpChars, 'antiban = sleep & mmouse', clWhite);
+                  SleepAndMoveMouse(1000 + Random(5000));
+                  Wait(100 + Random(300));
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                  Result:=True;
+                 end;
+    8000..8019: begin
+                  WriteLn('Antiban active');
+                  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+                  SMART_DrawText(290, 429, UpChars, 'antiban = afk for a while', clWhite);
+                  case Random(7) of
+                    0: Wait(1000 + Random(10000));
+                    1: Wait(2000 + Random(4000));
+                    2: Wait(3000 + Random(1500));
+                    3: Wait(7500 + Random(2500));
+                    4: Wait(5000 + Random(5000));
+                    5: Wait(5000 + Random(20000));
+                    6: Wait(20000 + Random(5000));
+                  end;
+                  Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                  WriteLn('Antiban done');
+                  Result:=True;
+                end;
+    9000..9009: Running;
+  end;
+end;
+
+procedure TimeUpdate;
+var
+  TimeBox: TBox;
+  TimeBoxTPA: TPointArray;
+
+begin
+  TimeBox := IntToBox(289, 414, 512, 428);
+  TPAFromBoxWrap(Timebox, TimeboxTPA);
+  SMART_DrawDotsEx(False, TimeboxTPA, RGBtoColor(194, 178, 146));
+  SMART_DrawText(290, 415, UpChars, ''+TimeRunning+'', clWhite);
+end;
+
+procedure GamesUpdate;
+var
+  GamesBox: TBox;
+  GamesBoxTPA: TPointArray;
+
+begin
+  GamesBox := IntToBox(289, 443, 350, 455);
+  TPAFromBoxWrap(GamesBox, GamesBoxTPA);
+  SMART_DrawDotsEx(False, GamesBoxTPA, RGBtoColor(194, 178, 146));
+  SMART_DrawText(290, 443, UpChars, ''+IntToStr(GamesPlayed)+'', clWhite);
+end;
+
+procedure TokensUpdate;
+var
+  i: Integer;
+  TokensBox: TBox;
+  TokensBoxTPA: TPointArray;
+  TokensGainedString: String;
+  NumbersCheck: Array of String;
+
+begin
+  TokensGainedString := GetChatBoxText(8, clBlack);
+  NumbersCheck := ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+
+  for i:=0 to 10 do
+    begin
+      if Pos(NumbersCheck[i], TokensGainedString) > 0 then
+        begin
+          TokensGained := StrToInt(GetNumbers(TokensGainedString));
+          Tokens := (Tokens + TokensGained);
+          TokensBox := IntToBox(289, 456, 350, 470);
+          TPAFromBoxWrap(TokensBox, TokensBoxTPA);
+          SMART_DrawDotsEx(False, TokensBoxTPA, RGBtoColor(194, 178, 146));
+          SMART_DrawText(290, 457, UpChars, ''+IntToStr(Tokens)+'', clWhite);
+          Exit;
+        end;
+    end;
+end;
+
+procedure ProggyUpdate;
+begin
+  TimeUpdate;
+  GamesUpdate;
+  TokensUpdate;
+end;
+
+function CheckGOPLobby: Boolean;
+var
+  MyPos: TPoint;
+  GopLobbyBox: TBox;
+
+begin
+  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+  SMART_DrawText(290, 429, UpChars, 'check if at gop lobby', clWhite);
+  GopLobbyBox := IntToBox(39803, 3015, 39863, 3079);
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_7']);
+  MyPos := SPS_GetMyPos;
+  WriteLn('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  if MyPos = Point(-1, -1) then
+  begin
+    Exit;
+  end;
+  if PointInBox(MyPos, GopLobbyBox) then
+    begin
+      ColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(0.23, 0.88);
+      WriteLn('Blue colors: '+IntToStr(CountColorTolerance(7301651, MMX1, MMY1, MMX2, MMY2, 10))+'');
+      if CountColorTolerance(7301651, MMX1, MMY1, MMX2, MMY2, 10) > 2000 then
+      begin
+        WriteLn('We are at the Gop lobby');
+        Result:=True;
+      end else
+      begin
+        WriteLn('We are NOT at the Gop lobby');
+        Exit;
+      end;
+    end else
+    begin
+      Exit;
+    end;
+end;
+
+function CheckIfJoined: String;
+var
+   Pts: TPointArray;
+   Bound: TBox;
+   X, Y, i: Integer;
+   JoinedTexts, FullTexts, KickedTexts: Array of String;
+
+begin
+  ColorToleranceSpeed(1);
+  JoinedTexts := ['put', 'part', 'joined'];
+  FullTexts := ['afraid', 'enough', 'glad'];
+  KickedTexts := ['left', 'new game', 'minutes'];
+  FindColorsTolerance(Pts, 0, 140, 380, 500, 450, 0);
+  Bound := GetTPABounds(Pts);
+  //SMART_DrawBox(Bound);
+  for i:=0 to 2 do
+    begin
+      if FindTextEx(X, Y, [JoinedTexts[i]], [UpChars, NPCChars], Bound.x1 - 5, Bound.y1 - 5, Bound.x2 + 5, Bound.y2 + 5) then
+        begin
+          WriteLn('We have joined a team');
+          Result:='joined';
+          Wait(500 + Random(1000));
+          Exit;
+        end;
+      if FindTextEx(X, Y, [FullTexts[i]], [UpChars, NPCChars], Bound.x1 - 5, Bound.y1 - 5, Bound.x2 + 5, Bound.y2 + 5) then
+        begin
+          WriteLn('The teams are full');
+          Result:='full';
+          Wait(500 + Random(1000));
+          Exit;
+        end;
+      if FindTextEx(X, Y, [KickedTexts[i]], [UpChars, NPCChars], Bound.x1 - 5, Bound.y1 - 5, Bound.x2 + 5, Bound.y2 + 5) then
+        begin
+          WriteLn('We have been kicked');
+          Result:='kicked';
+          Wait(500 + Random(1000));
+          Exit;
+        end;
+    end;
+end;
+
+function JoinWizards: Boolean;
+var
+  X, Y, i: integer;
+  WizCol: TPointArray;
+  WizColSplit: T2DPointArray;
+  P: TPoint;
+
+begin
+  // This will detect a wizard and join a game \\
+  FindNormalRandoms;
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.08, 0.15);
+    if FindColorsSpiralTolerance(X, Y, WizCol, 6837308, MSX1, MSY1, MSX2, MSY2, 18) then
+      begin
+        SortTPAFrom(WizCol, Point(MSCX, MSCY));
+        WizColSplit := SplitTPAEx(WizCol, 5, 15);
+        SortATPASize(WizColSplit, True);
+        for i:=0 to High(WizColSplit) do
+          begin
+            P := MiddleTPA(WizColSplit[i]);
+            MMouse(P.X, P.Y, 2, 2);
+              if not(WaitUpTextMulti(['ief', 'orvak', 'cantha', 'lriss'], 250)) then
+                if WaitUpTextMulti(['izard', 'Wizard'], 250) then
+                  begin
+                    ClickMouse2(0);
+                    if WaitOptionMulti(['oin', 'in-ga'], 250) then
+                      begin
+                        if (IsMoving=False) then
+                        begin
+                          Result:=True;
+                          Exit;
+                        end else
+                        begin
+                          repeat
+                            Wait(100 + Random(100));
+                          until(IsMoving=False);
+                          Wait(1000 + Random(1000));
+                          Result:=True;
+                          Exit;
+                        end;
+                      end;
+                  end;
+
+          end;
+      end;
+end;
+
+function JoinAcantha: Boolean;
+var
+  X, Y, i: integer;
+  AcanCol: TPointArray;
+  AcanColSplit: T2DPointArray;
+  P: TPoint;
+
+begin
+  // This will detect Wizard Acantha and join a game \\
+  FindNormalRandoms;
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.34, 0.41);
+    if FindColorsSpiralTolerance(X, Y, AcanCol, 4680593, MSX1, MSY1, MSX2, MSY2, 17) then
+      begin
+        SortTPAFrom(AcanCol, Point(MSCX, MSCY));
+        AcanColSplit := SplitTPAEx(AcanCol, 10, 10);
+        SortATPASize(AcanColSplit, True);
+        for i:=0 to 2 do
+          begin
+            P := MiddleTPA(AcanColSplit[i]);
+            MMouse(P.X, P.Y, 2, 2);
+              if not(WaitUpTextMulti(['ief', 'orvak', 'lriss'], 250)) then
+                if WaitUpTextMulti(['cant', 'Acantha'], 250) then
+                  begin
+                    ClickMouse2(0);
+                    if WaitOptionMulti(['oin', 'Join'], 250) then
+                      begin
+                        Wait(100 + Random(200));
+                        if IsMoving=False then
+                          begin
+                            Wait(500 + Random(1000));
+                            case Random(5) of
+                              0..2: TypeSendEx('1', False);
+                              3..4: Mousebox(207, 398, 311, 415, 1);
+                            end;
+                          end else
+                          begin
+                            repeat
+                              Wait(100 + Random(100));
+                            until(IsMoving=False);
+                            Wait(250 + Random(500));
+                            case Random(5) of
+                              0..2: TypeSendEx('1', False);
+                              3..4: Mousebox(207, 398, 311, 415, 1);
+                            end;
+                          end;
+                        Result:=True;
+                        Exit;
+                      end;
+                  end;
+
+          end;
+      end;
+end;
+
+function JoinVief: Boolean;
+var
+  X, Y: integer;
+
+begin
+  // This will detect Wizard Vief and join a game \\
+  FindNormalRandoms;
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.18, 1.34);
+    if FindColoredAreaTolerance(X, Y, 3650769, MSX1, MSY1, MSX2, MSY2, 1000, 26) then
+      begin
+        MMouse(X, Y, 2, 2);
+        if not(WaitUpTextMulti(['cantha', 'orvak', 'lriss'], 250)) then
+          begin
+            if WaitUpTextMulti(['ief', 'Vief'], 250) then
+              begin
+                ClickMouse2(0);
+                if WaitOptionMulti(['oin', 'Join'], 250) then
+                  begin
+                    Wait(100 + Random(200));
+                    if IsMoving=False then
+                      begin
+                        Wait(500 + Random(1000));
+                        case Random(5) of
+                          0..2: TypeSendEx('1', False);
+                          3..4: Mousebox(207, 398, 311, 415, 1);
+                        end;
+                      end else
+                      begin
+                        repeat
+                          Wait(100 + Random(100));
+                        until(IsMoving=False);
+                        Wait(250 + Random(500));
+                        case Random(5) of
+                          0..2: TypeSendEx('1', False);
+                          3..4: Mousebox(207, 398, 311, 415, 1);
+                        end;
+                        Result:=True;
+                        Exit;
+                      end;
+                  end;
+              end;
+          end;
+      end;
+end;
+
+procedure GetWaitTime;
+var
+  i: Integer;
+  Bound: TBox;
+  Pts: TPointArray;
+  WaitTimeString: String;
+  NumbersCheck: Array of String;
+
+begin
+  ColorToleranceSpeed(1);
+  FindColorsTolerance(Pts, 0, 140, 380, 500, 450, 0);
+  Bound := GetTPABounds(Pts);
+  //SMART_DrawBox(Bound);
+  WaitTimeString := GetTextAtExWrap(Bound.x1 - 5, Bound.y1 - 5, Bound.x2 + 5, Bound.y2 + 5, 0, 0, 2, 0, 0, UpChars);
+  WriteLn(WaitTimeString);
+
+  NumbersCheck := ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+  for i:=0 to 9 do
+    begin
+      if Pos(NumbersCheck[i], WaitTimeString) > 0 then
+        begin
+          WaitTime := StrToInt(GetNumbers(WaitTimeString));
+          SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+          SMART_DrawText(290, 429, UpChars, 'kicked, waiting '+IntToStr(WaitTime)+' minutes', clWhite);
+          Exit;
+        end;
+    end;
+end;
+
+procedure KickedFailsafe;
+var
+  Options: Array of String;
+  i, u: Integer;
+
+begin
+  Options := ['joined', 'full', 'kicked'];
+  for i:=0 to 2 do
+    if (CheckIfJoined = Options[i]) then
+      begin
+        case i of
+          0: begin
+               WriteLn('We haven`t been kicked! Succesful mainloop.');
+               Wait(500 + Random(1000));
+               Exit;
+             end;
+          1: begin
+               WriteLn('We haven`t been kicked! Succesful mainloop.');
+               Wait(500 + Random(1000));
+               Exit;
+             end;
+          2: begin
+               WriteLn('We have been kicked, waiting until we can start again.');
+               Wait(500 + Random(1000));
+               SPS_Setup(RUNESCAPE_SURFACE, ['99_7']);
+               GetWaitTime;
+               U := 0;
+               MarkTime(U);
+                 repeat
+                   //SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+                   //SMART_DrawText(290, 429, UpChars, 'got kicked, waiting', clWhite);
+                   Wait(250 + Random(500));
+                   Antiban;
+                   case Random(50) of
+                     0: FindNormalRandoms;
+                     1: SPS_BlindWalk(Point(RandomRange(39819, 39851), RandomRange(3015, 3035)));
+                     2: case Random(10) of
+                          0: ClickNorth(0);
+                        end;
+                   end;
+                   Antiban;
+                   Wait(250 + Random(500));
+                 until(TimeFromMark(U) >= (WaitTime*60000));
+                 WriteLn('Waiting time over');
+                 JoinWizards;
+                 Exit;
+             end;
+        end;
+      end;
+end;
+
+procedure JoinGame;
+var
+  i, a: Integer;
+  MyPos: TPoint;
+  WizardChoice: Array of String;
+
+begin
+  A := 0;
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_7']);
+  MyPos := SPS_GetMyPos;
+  FindNormalRandoms;
+  WriteLn('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+
+  WizardChoice := ['Wizards', 'Wizard Acantha', 'Wizard Vief', 'Random']
+  for i:=0 to 3 do
+  begin
+    if DesiredWizard = WizardChoice[i] then
+      begin
+        SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+        SMART_DrawText(290, 429, UpChars, 'joining team', clWhite);
+        case i of
+          0: begin;
+               case Random(3) of
+                 0: begin;
+                      WriteLn('We are walking to the '+WizardChoice[i]+' at the west side');
+                      SPS_BlindWalk(Point(RandomRange(39811, 39823), RandomRange(3051, 3059))); //Wizards west
+                      Wait(1000 + Random(1000));
+                      repeat
+                        Inc(A);
+                        JoinWizards;
+                        Wait(5000 + Random(5000));
+                      until(CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 250) or (A > 9) or (CheckIfJoined = 'joined') or (CheckIfJoined = 'kicked');
+                      if CheckIfJoined = 'kicked' then
+                        begin
+                          WriteLn('We have been kicked..');
+                          KickedFailsafe;
+                          Exit;
+                        end;
+                      end;
+                 1..2: begin;
+                         WriteLn('We are walking to the '+WizardChoice[i]+' at the east side');
+                         SPS_BlindWalk(Point(RandomRange(39847, 39863), RandomRange(3043, 3055))); // Wizards east
+                         Wait(1000 + Random(1000));
+                         repeat
+                           Inc(A);
+                           JoinWizards;
+                           Wait(5000 + Random(5000));
+                         until(CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 250) or (A > 9) or (CheckIfJoined = 'joined') or (CheckIfJoined = 'kicked');
+                         if CheckIfJoined = 'kicked' then
+                           begin
+                             WriteLn('We have been kicked..');
+                             KickedFailsafe;
+                             Exit;
+                           end;
+                       end;
+               end;
+             end;
+          1: begin;
+               WriteLn('We are walking to '+WizardChoice[i]+'');
+               SPS_BlindWalk(Point(RandomRange(39807, 39823), RandomRange(3027, 3043)));
+               Wait(1000 + Random(1000));
+               repeat
+                 Inc(A);
+                 JoinAcantha;
+                 Wait(5000 + Random(5000));
+               until(CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 250) or (A > 9) or (CheckIfJoined = 'joined') or (CheckIfJoined = 'kicked');
+               if CheckIfJoined = 'kicked' then
+                 begin
+                   WriteLn('We have been kicked..');
+                   KickedFailsafe;
+                   Exit;
+                 end;
+             end;
+          2: begin;
+               WriteLn('We are walking to '+WizardChoice[i]+'');
+               SPS_BlindWalk(Point(RandomRange(39843, 39855), RandomRange(3027, 3035)));
+               Wait(1000 + Random(1000));
+               repeat
+                 Inc(A);
+                 JoinVief;
+                 Wait(500 + Random(500));
+               until(CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 250) or (A > 9) or (CheckIfJoined = 'joined') or (CheckIfJoined = 'kicked');
+               if CheckIfJoined = 'kicked' then
+                 begin
+                   WriteLn('We have been kicked..');
+                   KickedFailsafe;
+                   Exit;
+                 end;
+             end;
+          3: begin;
+               WriteLn('We are walking to a random generated wizard location')
+               case Random(3) of
+                 0: begin;
+                      case random(3) of
+                        0: begin;
+                             WriteLn('We are walking to the Wizards at the west side');
+                             SPS_BlindWalk(Point(RandomRange(39811, 39823), RandomRange(3051, 3059))); //Wizards west
+                             Wait(1000 + Random(1000));
+                             repeat
+                               Inc(A);
+                               JoinWizards;
+                               Wait(5000 + Random(5000));
+                             until(CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 250) or (A > 9) or (CheckIfJoined = 'joined') or (CheckIfJoined = 'kicked');
+                             if CheckIfJoined = 'kicked' then
+                               begin
+                                 WriteLn('We have been kicked..');
+                                 KickedFailsafe;
+                                 Exit;
+                               end;
+                            end;
+                          1..2: begin;
+                                  WriteLn('We are walking to the Wizards at the east side');
+                                  SPS_BlindWalk(Point(RandomRange(39847, 39863), RandomRange(3043, 3055))); // Wizards east
+                                  Wait(1000 + Random(1000));
+                                  repeat
+                                    Inc(A);
+                                    JoinWizards;
+                                    Wait(5000 + Random(5000));
+                                  until(CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 250) or (A > 9) or (CheckIfJoined = 'joined') or (CheckIfJoined = 'kicked');
+                                  if CheckIfJoined = 'kicked' then
+                                    begin
+                                      WriteLn('We have been kicked..');
+                                      KickedFailsafe;
+                                      Exit;
+                                    end;
+                                 end;
+                      end;
+                    end;
+                 1: begin;
+                      WriteLn('We are walking to Wizard Acantha');
+                      SPS_BlindWalk(Point(RandomRange(39807, 39823), RandomRange(3027, 3043)));
+                      Wait(1000 + Random(1000));
+                      repeat
+                         Inc(A)
+                         JoinAcantha;
+                         Wait(5000 + Random(5000));
+                      until(CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 250) or (A > 9) or (CheckIfJoined = 'joined') or (CheckIfJoined = 'kicked');
+                      if CheckIfJoined = 'kicked' then
+                        begin
+                          WriteLn('We have been kicked..');
+                          KickedFailsafe;
+                          Exit;
+                        end;
+                    end;
+                 2: begin;
+                      WriteLn('We are walking to Wizard Vief');
+                      SPS_BlindWalk(Point(RandomRange(39843, 39855), RandomRange(3027, 3035)));
+                      Wait(1000 + Random(1000));
+                      repeat
+                        Inc(A);
+                        JoinVief;
+                        Wait(5000 + Random(5000));
+                      until(CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 250) or (A > 9) or (CheckIfJoined = 'joined') or (CheckIfJoined = 'kicked');
+                      if CheckIfJoined = 'kicked' then
+                        begin
+                          WriteLn('We have been kicked..');
+                          KickedFailsafe;
+                          Exit;
+                         end;
+                    end;
+               end;
+             end;
+      end;
+    end;
+  end;
+end;
+
+function EnterPortalOutside: Boolean;
+var
+  X, Y, i: integer;
+  PortOutCol: TPointArray;
+  PortOutSplit: T2DPointArray;
+  P: TPoint;
+
+begin
+  // This will click on the portal outside \\
+  FindNormalRandoms;
+  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+  SMART_DrawText(290, 429, UpChars, 'going through portal', clWhite);
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.45, 1.20);
+    if FindColorsSpiralTolerance(X, Y, PortOutCol, 12080783, MSX1, MSY1, MSX2, MSY2, 26) then
+      begin
+        SortTPAFrom(PortOutCol, Point(MSCX, MSCY));
+        PortOutSplit := SplitTPAEx(PortOutCol, 50, 50);
+        SortATPASize(PortOutSplit, True);
+        for i:=0 to High(PortOutSplit) do
+          begin
+            P := MiddleTPA(PortOutSplit[i]);
+            MMouse(P.X, P.Y, 5, 5);
+              if WaitUpTextMulti(['ortal', 'Portal'], 250) then
+                begin
+                  ClickMouse2(1);
+                  Wait(2000 + Random(2000));
+                  Result:=True;
+                  Exit;
+               end;
+          end;
+      end;
+end;
+
+function DefineTeam:String;
+var
+  HatCol, HatTol, ColorCount: Array of Integer;
+  HatHue, HatSat: Array of Extended;
+  PossibleHats, HatUptexts: Array of String;
+  i: Integer;
+  HatAreaBox, Teambox: TBox;
+  TeamboxTPA: TPointArray;
+
+begin;
+  HatAreaBox := IntToBox(245, 142, 270, 152);
+  //SMART_DrawBox(HatAreaBox);
+  Teambox := IntToBox(180, 401, 280, 415);
+  HatCol := [3975861, 3555132];
+  HatTol := [15, 13];
+  HatHue := [0.02, 1.07];
+  HatSat := [0.84, 0.51];
+  PossibleHats := ['Yellow', 'Green'];
+  ColorCount := [110, 110];
+
+  for i := 0 to 1 do
+  begin
+    ColorToleranceSpeed(2);
+    SetColorspeed2Modifiers(HatHue[i], HatSat[i]);
+    WriteLn('Counted colors: '+IntToStr(CountColorTolerance(HatCol[i], 245, 142, 270, 152, HatTol[i]))+'');
+    if CountColorTolerance(HatCol[i], 245, 142, 270, 152, HatTol[i]) > ColorCount[i] then
+      begin
+        Result:=PossibleHats[i];
+        WriteLn('We are part of the '+PossibleHats[i]+' team');
+        case PossibleHats[i] of
+          PossibleHats[0]: begin;
+                             JoinedTeam := 'Yellow';
+                             PaintColor := clYellow;
+                             TPAFromBoxWrap(Teambox, TeamboxTPA);
+                             SMART_DrawDotsEx(False, TeamboxTPA, RGBtoColor(194, 178, 146));
+                             SMART_DrawText(181, 400, UpCharsEx, 'Yellow team', PaintColor);
+                             Exit;
+                           end;
+          PossibleHats[1]: begin;
+                             JoinedTeam := 'Green';
+                             PaintColor := clGreen;
+                             TPAFromBoxWrap(Teambox, TeamboxTPA);
+                             SMART_DrawDotsEx(False, TeamboxTPA, RGBtoColor(194, 178, 146));
+                             SMART_DrawText(181, 400, UpCharsEx, 'Green team', PaintColor);
+                             Exit;
+                           end;
+        end;
+      end;
+  end;
+
+  HatUptexts := ['Yellow', 'Green'];
+  if not(GameTab(Tab_Equip)) then
+    begin
+      FTab(Tab_Equip);
+      Wait(250 + Random(250));
+    end;
+  MouseBox(570, 290, 600, 320, 2);
+
+  for i := 0 to 1 do
+    begin;
+      if WaitUpTextMulti([HatUptexts[i]], 500) then
+        begin
+          Result:=HatUptexts[i];
+          WriteLn('We are part of the '+HatUptexts[i]+' team');
+          case i of
+            0: begin;
+                 JoinedTeam := 'Yellow';
+                 PaintColor := clYellow;
+                 SMART_DrawDotsEx(False, TeamboxTPA, RGBtoColor(194, 178, 146));
+                 SMART_DrawText(181, 400, UpCharsEx, 'Yellow team', PaintColor);
+                 Exit;
+               end;
+            1: begin;
+                 JoinedTeam := 'Green';
+                 PaintColor := clGreen;
+                 SMART_DrawText(181, 400, UpCharsEx, 'Green team', PaintColor);
+                 Exit;
+               end;
+          end;
+        end;
+    end;
+end;
+
+procedure WaitForPortal;
+var
+  t: Integer;
+  MyPos: TPoint;
+
+begin
+  t:=0;
+  Marktime(t);
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_7']);
+  MyPos := SPS_GetMyPos;
+  FindNormalRandoms;
+  WriteLn('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+
+  if (CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 400) then
+    begin
+      SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+      SMART_DrawText(290, 429, UpChars, 'defining team', clWhite);
+      WriteLn('We have joined a game. Time to wait until the portal opens');
+      WriteLn('It`s time to define which team we joined...');
+      DefineTeam;
+      SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+      SMART_DrawText(290, 429, UpChars, 'walking to portal', clWhite);
+      SPS_BlindWalk(Point(RandomRange(39834, 39842), RandomRange(3010, 3020))); // Portal to enter
+      ProggyUpdate;
+      SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+      SMART_DrawText(290, 429, UpChars, 'waiting for portal', clWhite);
+        repeat
+          Wait(250 + Random(500));
+          Antiban;
+          case Random(250) of
+            0: FindNormalRandoms;
+            1: SPS_BlindWalk(Point(RandomRange(39819, 39851), RandomRange(3015, 3035)));
+            2: ClickNorth(0);
+            3: Running;
+          end;
+          Antiban;
+          Wait(250 + Random(500));
+        until(CountColorTolerance(10798276, 173, 279, 352, 292, 1) < 100) or (CountColorTolerance(204, 208, 208, 324, 220, 1) > 250) or (TimeFromMark(t) > 300000);
+      if (TimeFromMark(t) > 300000) then
+      begin
+        WriteLn('We have been waiting for over 5 minutes and the portal hasn`t opened yet...');
+        Exit;
+      end else
+      begin
+        EnterPortalOutside;
+      end;
+    end else
+    begin
+      WriteLn('Something has gone wrong. Not able to detect the "Waiting" text');
+    end;
+end;
+
+
+procedure FindTheAirAltar;
+var
+  MyPos: TPoint;
+  AroundAirAltar: TBox;
+  AirAltarDTM, X, Y: Integer;
+  aFound: Extended;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_1']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundAirAltar := IntToBox(39843, 623, 39855, 635);
+  if PointInBox(MyPos, AroundAirAltar) then
+    begin
+      WriteLn('Our location is near the air altar');
+    end else
+    {We aren't near the altar, so we are going to walk near it using SPS}
+    begin
+      if MyPos = Point(-1, -1) then
+        begin
+          ColorToleranceSpeed(2);
+          SetColorSpeed2Modifiers(0.48, 0.06);
+          if not(FindColoredAreaTolerance(X, Y, 7433327, MSCX - 100, MSCY - 100, MSCX + 100, MSCY + 100, 500, 7)) then
+            begin
+              AirAltarDTM := DTMFromString('maQEAAHicE2RgYGhjYmBIZILQq4C4FYjzgHghEOcD8RwgTofiCiCeBMTLgHg5EM8E4hqQeqA5hUDsDqWnAHETEEcCcSgQdwFxIhDXQuUmQeVTgdgPiH2BuDhDmaGnzpfB0UaZISrIEMwG4dxkG4a2Si8wLs6wh4uDcFKkGVitvZUig6ezOgMX0BxKMdA7DIwUYgwAAPGsI6M=');
+              if not(FindDTMRotated(AirAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound)) then
+                begin
+                  ColorToleranceSpeed(1);
+                  RadialWalkTolerance(2319220, 0, 359, 75, 5, 5, 5);
+                  Wait(1000 + Random(1000));
+                  ColorToleranceSpeed(2);
+                  SetColorSpeed2Modifiers(0.48, 0.06);
+                  if FindColoredAreaTolerance(X, Y, 7433327, MSX1, MSY1, MSX2, MSY2, 500, 7) then
+                      begin
+                        WriteLn('We can see the altar on our mainscreen');
+                        FreeDTM(AirAltarDTM);
+                        Exit;
+                      end;
+                  ColorToleranceSpeed(1);
+                  if FindDTMRotated(AirAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                    begin
+                      WriteLn('We have found the AirAltarDTM on the minimap this time');
+                      MMouse(X + 5, Y + 5, 2, 2);
+                      Wait(25 + Random(125));
+                      ClickMouse2(1);
+                    end else
+                    begin
+                      ColorToleranceSpeed(1);
+                      RadialWalkTolerance(2319220, 0, 359, 25, 5, 5, 5);
+                      Wait(1000 + Random(1000));
+                      ColorToleranceSpeed(2);
+                      SetColorSpeed2Modifiers(0.48, 0.06);
+                      if FindColoredAreaTolerance(X, Y, 7433327, MSX1, MSY1, MSX2, MSY2, 500, 7) then
+                      begin
+                        WriteLn('We can see the altar on our mainscreen');
+                        FreeDTM(AirAltarDTM);
+                        Exit;
+                      end;
+                      ColorToleranceSpeed(1);
+                      if FindDTMRotated(AirAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                        begin
+                          WriteLn('We have found the AirAltarDTM on the minimap this time');
+                          MMouse(X, Y, 2, 2);
+                          Wait(25 + Random(125));
+                          ClickMouse2(1);
+                        end else
+                        begin
+                          WriteLn('Something has went wrong, not able to navigate to the Air Altar');
+                        end;
+                    end;
+                end else
+                begin
+                  WriteLn('We have found the AirAltarDTM on the minimap');
+                  MMouse(X, Y, 2, 2);
+                  Wait(25 + Random(125));
+                  ClickMouse2(1);
+                end;
+              FreeDTM(AirAltarDTM);
+            end else
+            begin
+              WriteLn('We can see the air altar on our main screen!');
+            end;
+          Wait(100 + Random(100));
+            repeat
+              Wait(50 + Random(50));
+            until (IsMoving=False);
+        end else
+        begin
+          WriteLn('Walking near the air altar');
+          SPS_BlindWalk(Point(RandomRange(39843, 39855), RandomRange(623, 635)));
+        end;
+    end;
+end;
+
+procedure FindTheMindAltar;
+var
+  MyPos: TPoint;
+  AroundMindAltar: TBox;
+  MindAltarDTM, X, Y: Integer;
+  aFound: Extended;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_2']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundMindAltar := IntToBox(39847, 1023, 39871, 1043);
+  if PointInBox(MyPos, AroundMindAltar) then
+    begin
+      WriteLn('Our location is near the mind altar');
+    end else
+    {We aren't near the altar, so we are going to walk near it using SPS}
+    begin
+      if MyPos = Point(-1, -1) then
+        begin
+          ColorToleranceSpeed(2);
+          SetColorSpeed2Modifiers(0.60, 0.17);
+          if not(FindColoredAreaTolerance(X, Y, 9998742, MSCX - 100, MSCY - 100, MSCX + 100, MSCY + 100, 500, 4)) then
+            begin
+              MindAltarDTM := DTMFromString('mPwEAAHic42dgYNjNxsCwDYhXA/E6IN4BxIeA+DQQn4XiE0C8D4jXAPE9IN4DVSfBxMDAxQShlYFYA4pBbCkgFgRibiDmBGI+qLrfjAwMJkC6raGZobK4HAPXV9aA6Y6mVhSx6qpKOGYFuptczEQBRgMAIdEj4w==');
+              if not(FindDTMRotated(MindAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound)) then
+                begin
+                  ColorToleranceSpeed(1);
+                  RadialWalkTolerance(10329254, 0, 359, 60, 5, 5, 10);
+                  Wait(1000 + Random(1000));
+                  ColorToleranceSpeed(2);
+                  SetColorSpeed2Modifiers(0.60, 0.17);
+                  if FindColoredAreaTolerance(X, Y, 9998742, MSX1, MSY1, MSX2, MSY2, 500, 4) then
+                  begin
+                    FreeDTM(MindAltarDTM);
+                    WriteLn('We can see the Mind Altar on the mainscreen');
+                    Exit;
+                  end;
+                  ColorToleranceSpeed(1);
+                  if FindDTMRotated(MindAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                    begin
+                      WriteLn('We have found the MindAltarDTM on the minimap this time');
+                      MMouse(X, Y, 3, 3);
+                      Wait(25 + Random(125));
+                      ClickMouse2(1);
+                    end else
+                    begin
+                      ColorToleranceSpeed(1);
+                      RadialWalkTolerance(9473944, 0, 359, 30, 5, 5, 10);
+                      Wait(1000 + Random(1000));
+                      ColorToleranceSpeed(2);
+                      SetColorSpeed2Modifiers(0.60, 0.17);
+                      if FindColoredAreaTolerance(X, Y, 9998742, MSX1, MSY1, MSX2, MSY2, 500, 4) then
+                      begin
+                        FreeDTM(MindAltarDTM);
+                        WriteLn('We can see the Mind Altar on the mainscreen');
+                        Exit;
+                      end;
+                      ColorToleranceSpeed(1);
+                      if FindDTMRotated(MindAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                        begin
+                          WriteLn('We have found the MindAltarDTM on the minimap this time');
+                          MMouse(X, Y, 3, 3);
+                          Wait(25 + Random(125));
+                          ClickMouse2(1);
+                        end else
+                        begin
+                          WriteLn('Something has went wrong, not able to navigate to the Mind Altar');
+                        end;
+                    end;
+                end else
+                begin
+                  WriteLn('We have found the MindAltarDTM on the minimap');
+                  MMouse(X, Y, 3, 3);
+                  Wait(25 + Random(125));
+                  ClickMouse2(1);
+                end;
+              FreeDTM(MindAltarDTM);
+            end else
+            begin
+              WriteLn('We can see the mind altar on our main screen!');
+            end;
+          Wait(100 + Random(100));
+            repeat
+              Wait(50 + Random(50));
+            until (IsMoving=False);
+        end else
+        begin
+          WriteLn('Walking near the mind altar');
+          SPS_BlindWalk(Point(RandomRange(39847, 39871), RandomRange(1023, 1043)));
+        end;
+    end;
+end;
+
+procedure FindTheWaterAltar;
+var
+  MyPos: TPoint;
+  AroundWaterAltar: TBox;
+  WaterAltarDTM, X, Y: Integer;
+  aFound: Extended;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_3']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundWaterAltar := IntToBox(39823, 1439, 39839, 1451);
+  if PointInBox(MyPos, AroundWaterAltar) then
+    begin
+      WriteLn('Our location is near the water altar');
+    end else
+    {We aren't near the altar, so we are going to walk near it using SPS}
+    begin
+      if MyPos = Point(-1, -1) then
+      begin
+        WriteLn('SPS hasn`t been able to recognize our location..');
+        WriteLn('Walking to the altar by using alternative methods!');
+        WriteLn('Counted colors: '+IntToStr(CountColorTolerance(6775397, MSX1, MSY1, MSX2, MSY2, 6))+'');
+        if not(FindColoredAreaTolerance(X, Y, 6775397, MSCX - 100, MSCY - 100, MSCX + 100, MSCY + 100, 250, 6)) then
+          begin
+            WaterAltarDTM := DTMFromString('mFQEAAHic42VgYChiYmBIAuIsIC4E4logbgbiRiCuBuISqBxITSwQVwGxH1BfABBHA3EcEEcBsS8QuwKxPRDbQGk3IDYG4gIgrqvRZSjK0mQoKtBkyC3UZMjM1QDTBXkaYLG8NA2wfFmeFkNz12yGtr75DFxAfaRiJjIwCgAALhwZKg==');
+            if not(FindDTMRotated(WaterAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound)) then
+              begin
+                RadialWalkTolerance(2720893, 0, 359, 75, 5, 5, 5);
+                Wait(1000 + Random(1000));
+                if FindColoredAreaTolerance(X, Y, 6775397, MSX1, MSY1, MSX2, MSY2, 250, 6) then
+                begin
+                  FreeDTM(WaterAltarDTM);
+                  WriteLn('We can see the water altar on our mainscreen now');
+                  Exit;
+                end;
+                if FindDTMRotated(WaterAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                  begin
+                    WriteLn('We have found the WaterAltarDTM on the minimap this time');
+                    MMouse(X, Y, 2, 2);
+                    Wait(25 + Random(125));
+                    ClickMouse2(1);
+                  end else
+                  begin
+                    RadialWalkTolerance(2720893, 0, 359, 25, 5, 5, 5);
+                    Wait(1000 + Random(1000));
+                    if FindColoredAreaTolerance(X, Y, 6775397, MSX1, MSY1, MSX2, MSY2, 250, 6) then
+                      begin
+                        FreeDTM(WaterAltarDTM);
+                        WriteLn('We can see the water altar on our mainscreen now');
+                        Exit;
+                      end;
+                    if FindDTMRotated(WaterAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                      begin
+                        WriteLn('We have found the WaterAltarDTM on the minimap this time');
+                        MMouse(X, Y, 2, 2);
+                        Wait(25 + Random(125));
+                        ClickMouse2(1);
+                      end else
+                      begin
+                        WriteLn('Something has went wrong, not able to navigate to the Water Altar');
+                      end;
+                  end;
+              end else
+              begin
+                WriteLn('We have found the WaterAltarDTM on the minimap');
+                MMouse(X, Y, 2, 2);
+                Wait(25 + Random(125));
+                ClickMouse2(1);
+              end;
+            FreeDTM(WaterAltarDTM);
+          end else
+          begin
+            WriteLn('We can see the water altar on our main screen!');
+          end;
+        Wait(100 + Random(100));
+          repeat
+            Wait(50 + Random(50));
+          until (IsMoving=False);
+      end else
+      begin
+        WriteLn('Walking near the water altar');
+        SPS_BlindWalk(Point(RandomRange(39823, 39839), RandomRange(1439, 1451)));
+      end;
+    end;
+end;
+
+procedure FindTheEarthAltar;
+var
+  MyPos: TPoint;
+  AroundEarthAltar: TBox;
+  EarthAltarDTM, X, Y: Integer;
+  aFound: Extended;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_4']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundEarthAltar := IntToBox(39827, 1819, 39843, 1835);
+  if PointInBox(MyPos, AroundEarthAltar) then
+    begin
+      WriteLn('Our location is near the water altar');
+    end else
+    begin
+      if MyPos = Point(-1, -1) then
+      begin
+        ColorToleranceSpeed(2);
+        SetColorSpeed2Modifiers(0.93, 0.27);
+        if not(FindColoredAreaTolerance(X, Y, 5657429, MSCX - 100, MSCY - 100, MSCX + 100, MSCY + 100, 500, 3)) then
+          begin
+            EarthAltarDTM := DTMFromString('mFQEAAHic42VgYDjPxsBwAYj3AvFZIH4ExIeA+A4QHwbi20B8DoiPQOlrQGzBxMCgDsSmQOwFxDZA7ALEBkCsBcRuQOwExGZQMUsgLklzZEgJ0WXIijRgSAgxY0gL0wOzQWJ5sYZgfk2OG0NTjhVDWbozQ0WqGQMX0H0cJGImNMxIBEYBAFHAG1s=');
+            if not(FindDTMRotated(EarthAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound)) then
+              begin
+                WriteLn('We haven`t been able to find the EarthAltarDTM');
+                ColorToleranceSpeed(1);
+                RadialWalkTolerance(3631228, 0, 359, 75, 5, 5, 5);
+                Wait(1000 + Random(1000));
+                ColorToleranceSpeed(2);
+                SetColorSpeed2Modifiers(0.93, 0.27);
+                if FindColoredAreaTolerance(X, Y, 5657429, MSX1, MSY1, MSX2, MSY2, 500, 3) then
+                  begin
+                    FreeDTM(EarthAltarDTM);
+                    WriteLn('We can see the Earth Altar on the mainscreen');
+                    Exit;
+                  end;
+                  ColorToleranceSpeed(1);
+                  if FindDTMRotated(EarthAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                    begin
+                      WriteLn('We have found the BodyAltarDTM on the minimap this time');
+                      MMouse(X, Y, 2, 2);
+                      Wait(25 + Random(125));
+                      ClickMouse2(1);
+                      Wait(100 + Random(100));
+                        repeat
+                          Wait(50 + Random(50));
+                        until (IsMoving=False);
+                      FreeDTM(EarthAltarDTM);
+                    end else
+                    begin
+                      ColorToleranceSpeed(1);
+                      RadialWalkTolerance(3631228, 0, 359, 35, 5, 5, 5);
+                      Wait(1000 + Random(1000));
+                      ColorToleranceSpeed(2);
+                      SetColorSpeed2Modifiers(0.93, 0.27);
+                      if FindColoredAreaTolerance(X, Y, 5657429, MSX1, MSY1, MSX2, MSY2, 500, 3) then
+                        begin
+                          FreeDTM(EarthAltarDTM);
+                          WriteLn('We can see the Earth Altar on the mainscreen');
+                          Exit;
+                        end;
+                        ColorToleranceSpeed(1);
+                        if FindDTMRotated(EarthAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                          begin
+                            WriteLn('We have found the BodyAltarDTM on the minimap this time');
+                            MMouse(X, Y, 2, 2);
+                            Wait(25 + Random(125));
+                            ClickMouse2(1);
+                          end else
+                          begin
+                            WriteLn('Something has went wrong, not able to navigate to the Body Altar');
+                          end;
+                    end;
+              end else
+              begin
+                WriteLn('We have found the EarthAltarDTM on the minimap');
+                MMouse(X, Y, 2, 2);
+                Wait(25 + Random(125));
+                ClickMouse2(1);
+                Wait(100 + Random(100));
+                repeat
+                  Wait(50 + Random(50));
+                until (IsMoving=False);
+                FreeDTM(EarthAltarDTM);
+              end;
+          end else
+          begin
+            WriteLn('We can see the earth altar on our main screen!');
+          end;
+      end else
+      begin
+        {We aren't near the altar, so we are going to walk near it using SPS}
+        WriteLn('Walking near the earth altar');
+        SPS_BlindWalk(Point(RandomRange(39827, 39843), RandomRange(1819, 1835)));
+      end;
+    end;
+end;
+
+procedure FindTheFireAltar;
+var
+  MyPos: TPoint;
+  AroundFireAltar: TBox;
+  FireAltarDTM, X, Y: Integer;
+  aFound: Extended;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_5']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundFireAltar := IntToBox(39835, 2239, 39851, 2255);
+  if PointInBox(MyPos, AroundFireAltar) then
+    begin
+      WriteLn('Our location is near the fire altar');
+    end else
+    {We aren't near the altar, so we are going to walk near it using SPS}
+    begin
+      if MyPos = Point(-1, -1) then
+      begin
+        ColorToleranceSpeed(1);
+        if not(FindColoredAreaTolerance(X, Y, 6512225, MSCX - 100, MSCY - 100, MSCX + 100, MSCY + 100, 500, 6)) then
+          begin
+            FireAltarDTM := DTMFromString('mwQAAAHic42RgYJjGxsAwHYhbgXgpEE8F4n4gngvE5UDcDcRSTAwMPEAsA8XaQKwExCJALADElkAc7mXJEOSsyxDubsDg66DNEOKqz5ASZA7GWpJcYMwPtI+LAGYEYiYCGA4A2jUNQg==');
+            if not(FindDTMRotated(FireAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound)) then
+              begin
+                WriteLn('We haven`t found the DTM, radial walking near the altar');
+                RadialWalkTolerance(3823718, 0, 359, 60, 5, 5, 5);
+                Wait(1000 + Random(1000));
+                if FindColoredAreaTolerance(X, Y, 6512225, MSX1, MSY1, MSX2, MSY2, 500, 6) then
+                  begin;
+                    FreeDTM(FireAltarDTM);
+                    WriteLn('We are near the altar');
+                    Exit;
+                  end;
+                ColorToleranceSpeed(1);
+                if FindDTMRotated(FireAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                  begin
+                    WriteLn('We have found the FireAltarDTM on the minimap this time');
+                    MMouse(X, Y, 2, 2);
+                    Wait(25 + Random(125));
+                    ClickMouse2(1);
+                  end else
+                  begin
+                    ColorToleranceSpeed(1);
+                    RadialWalkTolerance(3823718, 0, 359, 25, 5, 5, 5);
+                    Wait(1000 + Random(1000));
+                    if FindDTMRotated(FireAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                      begin
+                        WriteLn('We have found the FireAltarDTM on the minimap this time');
+                        MMouse(X, Y, 2, 2);
+                        Wait(25 + Random(125));
+                        ClickMouse2(1);
+                      end else
+                      begin
+                        WriteLn('Something has went wrong, not able to navigate to the Fire Altar');
+                      end;
+                  end;
+              end else
+              begin
+                WriteLn('We have found the FireAltarDTM on the minimap');
+                MMouse(X, Y, 2, 2);
+                Wait(25 + Random(125));
+                ClickMouse2(1);
+              end;
+            FreeDTM(FireAltarDTM);
+          end else
+          begin
+            WriteLn('We can see the fire altar on our main screen!');
+          end;
+        Wait(100 + Random(100));
+          repeat
+            Wait(50 + Random(50));
+          until (IsMoving=False);
+      end else
+      begin
+        WriteLn('Walking near the fire altar');
+        SPS_BlindWalk(Point(RandomRange(39835, 39851), RandomRange(2239, 2255)));
+      end;
+    end;
+end;
+
+procedure FindTheBodyAltar;
+var
+  MyPos: TPoint;
+  AroundBodyAltar: TBox;
+  BodyAltarDTM, X, Y: Integer;
+  aFound: Extended;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_6']);
+  MyPos := SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+  AroundBodyAltar := IntToBox(39835, 2651, 39851, 2667);
+  if PointInBox(MyPos, AroundBodyAltar) then
+    begin
+      WriteLn('Our location is near the body altar');
+    end else
+    {We aren't near the altar, so we are going to walk near it using SPS}
+    begin
+      if MyPos = Point(-1, -1) then
+      begin
+        ColorToleranceSpeed(2);
+        SetColorSpeed2Modifiers(0.48, 0.20);
+        if not(FindColoredAreaTolerance(X, Y, 9275018, MSCX - 100, MSCY - 100, MSCX + 100, MSCY + 100, 300, 5)) then
+          begin
+            BodyAltarDTM := DTMFromString('mfgEAAHicE2JgYLjOxsBwCYgvAvF9KD4PpU8C8TMgPg6lXwDxYSC+ygbRdwOItwHxByCWZ2JgkARiVSBWB2JxIJYDYkUg5gdiXSDWAmIBqLgcVFwPiC2BWBSIuYG4Na+MoTm3hKG9oIKhMiWLoau4EoirgfwyhsK4ZIb8mCSG2ox8hvLkDDAfxM6OiGMojk8Fq2/NKwGK5TGwAv1GDcxIJYwJABFDKfo=');
+            if not(FindDTMRotated(BodyAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound)) then
+              begin
+                ColorToleranceSpeed(1);
+                RadialWalkTolerance(8223117, 0, 359, 75, 5, 5, 5);
+                Wait(1000 + Random(1000));
+                ColorToleranceSpeed(2);
+                SetColorSpeed2Modifiers(0.48, 0.20);
+                if FindColoredAreaTolerance(X, Y, 9275018, MSX1, MSY1, MSX2, MSY2, 300, 5) then
+                  begin
+                    FreeDTM(BodyAltarDTM);
+                    WriteLn('We can see the Body Altar on the mainscreen');
+                    Exit;
+                  end;
+                ColorToleranceSpeed(1);
+                if FindDTMRotated(BodyAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                  begin
+                    WriteLn('We have found the BodyAltarDTM on the minimap this time');
+                    MMouse(X, Y, 2, 2);
+                    Wait(25 + Random(125));
+                    ClickMouse2(1);
+                  end else
+                  begin
+                    ColorToleranceSpeed(1);
+                    RadialWalkTolerance(8223117, 0, 359, 25, 5, 5, 5);
+                    Wait(1000 + Random(1000));
+                    ColorToleranceSpeed(2);
+                    SetColorSpeed2Modifiers(0.48, 0.20);
+                    if FindColoredAreaTolerance(X, Y, 9275018, MSX1, MSY1, MSX2, MSY2, 300, 5) then
+                      begin
+                        FreeDTM(BodyAltarDTM);
+                        WriteLn('We can see the Body Altar on the mainscreen');
+                        Exit;
+                      end;
+                    ColorToleranceSpeed(1);
+                    if FindDTMRotated(BodyAltarDTM, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+                      begin
+                        WriteLn('We have found the BodyAltarDTM on the minimap this time');
+                        MMouse(X, Y, 2, 2);
+                        Wait(25 + Random(125));
+                        ClickMouse2(1);
+                      end else
+                      begin
+                        WriteLn('Something has went wrong, not able to navigate to the Body Altar');
+                      end;
+                  end;
+              end else
+              begin
+                WriteLn('We have found the BodyAltarDTM on the minimap');
+                MMouse(X, Y, 2, 2);
+                Wait(25 + Random(125));
+                ClickMouse2(1);
+              end;
+            FreeDTM(BodyAltarDTM);
+          end else
+          begin
+            WriteLn('We can see the body altar on our main screen!');
+          end;
+        Wait(100 + Random(100));
+          repeat
+            Wait(50 + Random(50));
+          until (IsMoving=False);
+      end else
+      begin
+        WriteLn('Walking near the body altar');
+        SPS_BlindWalk(Point(RandomRange(39835, 39851), RandomRange(2651, 2667)));
+      end;
+    end;
+end;
+
+function DefineArea:String;
+var
+  AltarMMCol, AltarMMTol, ColorCount: Array of Integer;
+  AltarMMHue, AltarMMSat: Array of Extended;
+  PossibleAltars: Array of String;
+  i: Integer;
+
+begin;
+  AltarMMCol := [6274014, 1922629, 3036009, 10194822, 6776920];
+  AltarMMTol := [15, 12, 15, 5, 18];
+  AltarMMHue := [0.07, 0.71, 0.17, 2.70, 2.79];
+  AltarMMSat := [2.64, 1.53, 1.25, 2.72, 0.17];
+  PossibleAltars := ['fire', 'air', 'earth', 'water', 'body'];
+  ColorCount := [2000, 5000, 10000, 5000, 5000];
+
+  for i := 0 to 4 do
+    begin
+      ColorToleranceSpeed(2);
+      SetColorspeed2Modifiers(AltarMMHue[i], AltarMMSat[i]);
+      if CountColorTolerance(AltarMMCol[i], MMX1, MMY1, MMX2, MMY2, AltarMMTol[i]) > ColorCount[i] then
+        begin
+          WriteLn('Define area is '+PossibleAltars[i]+'');
+          Result:=PossibleAltars[i];
+          Exit;
+        end;
+    end;
+  WriteLn('Define area is mind altar');
+  Result:='mind';
+end;
+
+procedure WalkToAltar;
+var
+  PossibleAltar: Array of String;
+  i: Integer;
+
+begin
+  PossibleAltar := ['fire', 'earth', 'air', 'water', 'body', 'mind'];
+
+  for i:= 0 to 5 do
+  begin
+    if DefineArea = PossibleAltar[i] then
+        begin
+          SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+          SMART_DrawText(290, 429, UpChars, 'walking to '+PossibleAltar[i]+' altar', clWhite);
+          case i of
+            0: begin; WriteLn('We are at the '+PossibleAltar[i]+' altar'); FindTheFireAltar; Exit; end;
+            1: begin; WriteLn('We are at the '+PossibleAltar[i]+' altar'); FindTheEarthAltar; Exit; end;
+            2: begin; WriteLn('We are at the '+PossibleAltar[i]+' altar'); FindTheAirAltar; Exit; end;
+            3: begin; WriteLn('We are at the '+PossibleAltar[i]+' altar'); FindTheWaterAltar; Exit; end;
+            4: begin; WriteLn('We are at the '+PossibleAltar[i]+' altar'); FindTheBodyAltar; Exit; end;
+            5: begin; WriteLn('We are at the '+PossibleAltar[i]+' altar'); FindTheMindAltar; Exit; end;
+          end;
+        end;
+    end;
+end;
+
+function RadialWalking: Boolean;
+var
+  StartAngles, EndAngles, Radiuses, LargeRadius: Array of Integer;
+  i, q, r: Integer;
+
+begin
+  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+  SMART_DrawText(290, 429, UpChars, 'radialwalking to orbs', clWhite);
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.03, 1.01);
+  StartAngles := [0, 90, 180, 270];
+  EndAngles := [90, 180, 270, 359];
+  Radiuses := [35, 65, 20, 50, 15, 40, 75];
+
+  i := RandomRange(0, 3);
+  for q:=0 to 6 do
+    if RadialWalkTolerance(653044, StartAngles[i], EndAngles[i], Radiuses[q], RandomRange(-10, 10), RandomRange(-10, 10), 10) then
+      begin
+        WriteLn('We have found the radial walk color and have walked there');
+        WriteLn('Start angle: '+IntToStr(StartAngles[i])+', End angle: '+IntToStr(EndAngles[i])+', Radius: '+IntToStr(Radiuses[q])+'');
+        Result:=True;
+        Wait(250 + Random(500));
+        if (IsMoving=True) then
+          begin
+            repeat
+              Wait(50 + Random(50));
+            until(IsMoving=False);
+            Wait(150 + Random(300));
+            Exit;
+          end else
+          begin
+            Wait(150 + Random(300));
+            Exit;
+          end;
+      end else
+      begin
+        //WriteLn('We haven`t been able to find the radial walk color with these angles and radiuses');
+        //WriteLn('Start angle: '+IntToStr(StartAngles[i])+', End angle: '+IntToStr(EndAngles[i])+', Radius: '+IntToStr(Radiuses[q])+'');
+      end;
+
+    LargeRadius := [50, 60, 75];
+    for r:=0 to 2 do
+    if RadialWalkTolerance(653044, 0, 359, LargeRadius[r], RandomRange(-10, 10), RandomRange(-10, 10), 10) then
+      begin
+        Wait(250 + Random(500));
+        if (IsMoving=True) then
+          begin
+            repeat
+              Wait(50 + Random(50));
+            until(IsMoving=False);
+            Exit;
+          end else
+            begin
+              Exit;
+            end;
+      end else
+      begin
+        WriteLn('We haven`t been able to find any yellow dots.');
+        Antiban;
+        WalkToAltar;
+      end;
+end;
+
+procedure WalkFivePixels(P: TPoint);
+var
+  i, r, ExtraX, ExtraY: Integer;
+  M: TPoint;
+  PointsToAltar: TPointArray;
+  PossibleAltars: array of string;
+
+begin
+  PossibleAltars := ['air', 'mind', 'water', 'earth', 'fire', 'body'];
+  for i:=0 to 5 do
+    begin
+      if DefineArea = PossibleAltars[i] then
+        begin
+        WriteLn('case time');
+          case i of
+            0: begin;
+                 WriteLn('Air altar');
+                 SPS_Setup(RUNESCAPE_SURFACE, ['99_1']);
+                 Break;
+               end;
+            1: begin;
+                 WriteLn('Mind altar');
+                 SPS_Setup(RUNESCAPE_SURFACE, ['99_2']);
+                 Break;
+               end;
+            2: begin;
+                 WriteLn('Water altar');
+                 SPS_Setup(RUNESCAPE_SURFACE, ['99_3']);
+                 Break;
+               end;
+            3: begin;
+                 WriteLn('Earth altar');
+                 SPS_Setup(RUNESCAPE_SURFACE, ['99_4']);
+                 Break;
+               end;
+            4: begin;
+                 WriteLn('Fire altar');
+                 SPS_Setup(RUNESCAPE_SURFACE, ['99_5']);
+                 Break;
+               end;
+            5: begin;
+                 WriteLn('Body altar');
+                 SPS_Setup(RUNESCAPE_SURFACE, ['99_6']);
+                 Break;
+               end;
+          end;
+        end;
+    end;
+
+  M := SPS_GetMyPos;
+  PointsToAltar := TPABetweenPoints(Point(M.X, M.Y), Point(P.X, P.Y), 5, 5);
+  Writeln('My position is  x: '+IntToStr(M.x)+' y: '+IntToStr(M.y));
+  WriteLn('Array length is '+IntToStr(Length(PointsToAltar))+'');
+  if Length(PointsToAltar) > 5 then
+    begin
+      case Length(PointsToAltar) of
+        0..8: begin
+                 r := (Length(PointsToAltar));
+                 SPS_WalkPath([PointsToAltar[(r-4)]]);
+               end;
+        9..16: begin
+                 r := (Length(PointsToAltar)/2);
+                 SPS_WalkPath([PointsToAltar[r-2]]);
+               end;
+        17..24: begin
+                  r := (Length(PointsToAltar)/4);
+                  SPS_WalkPath([PointsToAltar[r]]);
+                end;
+        25..32: begin
+                  r := (Length(PointsToAltar)/6);
+                  SPS_WalkPath([PointsToAltar[r]]);
+                end;
+        33..40: begin
+                  r := (Length(PointsToAltar)/7);
+                  SPS_WalkPath([PointsToAltar[r]]);
+                end;
+        41..48: begin
+                  r := (Length(PointsToAltar)/8);
+                  SPS_WalkPath([PointsToAltar[r]]);
+                end;
+        49..56: begin
+                  r := (Length(PointsToAltar)/9);
+                  SPS_WalkPath([PointsToAltar[r]]);
+                end;
+        57..64: begin
+                  r := (Length(PointsToAltar)/10);
+                  SPS_WalkPath([PointsToAltar[r]]);
+                end;
+        65..72: begin
+                  r := (Length(PointsToAltar)/11);
+                  SPS_WalkPath([PointsToAltar[r]]);
+                end;
+        73..80: begin
+                  r := (Length(PointsToAltar)/12);
+                  SPS_WalkPath([PointsToAltar[r]]);
+                end;
+        81..88: begin
+                  r := (Length(PointsToAltar)/13);
+                  SPS_WalkPath([PointsToAltar[r]]);
+                end;
+        89..96: begin
+                  r := (Length(PointsToAltar)/14);
+                  SPS_WalkPath([PointsToAltar[r]]);
+                end;
+        97..10000: WalkToAltar;
+      end;
+    end else
+    begin
+      WriteLn('Walking to a random spot near the altar');
+      case Random(6) of
+        0..4: begin;
+                case Random(2) of
+                  0: ExtraX := RandomRange(-10, -5);
+                  1: ExtraX := RandomRange(5, 10);
+                end;
+                case Random(2) of
+                  0: ExtraY := RandomRange(-10, -5);
+                  1: ExtraY := RandomRange(5, 10);
+                end;
+                SPS_WalkPath([Point(P.X + ExtraX, P.Y + ExtraY)]);
+              end;
+        5: WalkToAltar;
+      end;
+    end;
+end;
+
+function GreenOrbs: Boolean;
+var
+  i, CountedGreenOrbColors: integer;
+  GreenOrbCol, GameboxTPA: TPointArray;
+  GreenOrbSplit: T2DPointArray;
+  P: TPoint;
+  Gamebox: TBox;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.42, 1.72);
+  CountedGreenOrbColors := CountColorTolerance(4115289, 0, 76, 515, 308, 20) + CountColorTolerance(4115289, 421, 311, 515, 337, 20) + CountColorTolerance(4115289, 0, 0, 515, 11, 20) + CountColorTolerance(4115289, 370, 11, 515, 191, 20);
+  WriteLn('Counted green colors: '+IntToStr(CountedGreenOrbColors)+'');
+  if CountedGreenOrbColors < 100 then
+    begin
+      WriteLn('We haven`t been able to find any green orbs on our screen. Moving');
+      RadialWalking;
+    end else
+      begin
+        SetColorSpeed2Modifiers(0.42, 1.72);
+        if FindColorsSpiralTolerance(MSCX, MSCY, GreenOrbCol, 4115289, MSX1, MSY1, MSX2, MSY2, 10) then
+          begin
+            Gamebox := IntToBox(421, 193, 515, 311);
+            GameBoxTPA := TPAFromBox(Gamebox);
+            GreenOrbCol := ClearTPAFromTPA(GreenOrbCol, GameBoxTPA);
+            SortTPAFrom(GreenOrbCol, Point(MSCX, MSCY));
+            GreenOrbSplit := SplitTPAEx(GreenOrbCol, 25, 25);
+            SortATPASize(GreenOrbSplit, True);
+            if Length(GreenOrbSplit) < 1 then
+              begin
+                Exit;
+              end;
+            if Length(GreenOrbSplit) < 3 then
+              begin
+                i := Low(GreenOrbSplit);
+                P := MiddleTPA(GreenOrbSplit[i]);
+                MMouse(P.X, P.Y, RandomRange(-3, 3), RandomRange(-3, 3));
+                if WaitUpTextMulti(['en or', 'Green Orb'], 250) then
+                  begin
+                    ClickMouse2(1);
+                    Wait(500 + Random(1500));
+                    Result:=True;
+                    Exit;
+                  end;
+              end else
+              begin
+                for i:=0 to 2 do
+                  begin
+                    P := MiddleTPA(GreenOrbSplit[i]);
+                    MMouse(P.X, P.Y, RandomRange(-3, 3), RandomRange(-3, 3));
+                    if WaitUpTextMulti(['en or', 'Green Orb'], 250) then
+                      begin
+                        ClickMouse2(1);
+                        Wait(500 + Random(1500));
+                        Result:=True;
+                        Exit;
+                      end;
+                  end;
+              end;
+          end else
+            begin
+              WriteLn('We haven`t been able to detect any green orbs, moving');
+              RadialWalking;
+              Antiban;
+            end;
+      end;
+end;
+
+function YellowOrbs: Boolean;
+var
+  i, CountedYellowOrbColors: integer;
+  YellowOrbCol, GameboxTPA: TPointArray;
+  YellowOrbSplit: T2DPointArray;
+  P: TPoint;
+  Gamebox: TBox;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.16, 2.03);
+  CountedYellowOrbColors := CountColorTolerance(5236454, 0, 76, 515, 308, 10) + CountColorTolerance(5236454, 421, 311, 515, 337, 10) + CountColorTolerance(5236454, 0, 0, 515, 11, 10) + CountColorTolerance(5236454, 370, 11, 515, 191, 10);
+  WriteLn('Counted yellow colors: '+IntToStr(CountedYellowOrbColors)+'');
+  if CountedYellowOrbColors < 150 then
+    begin
+      WriteLn('We haven`t been able to find any yellow orbs on our screen. Moving');
+      RadialWalking;
+      Antiban;
+    end else
+      begin
+        SetColorSpeed2Modifiers(0.16, 2.03);
+        if FindColorsSpiralTolerance(MSCX, MSCY, YellowOrbCol, 5236454, MSX1, MSY1, MSX2, MSY2, 10) then
+          begin
+            Gamebox := IntToBox(421, 193, 515, 311);
+            GameBoxTPA := TPAFromBox(Gamebox);
+            YellowOrbCol := ClearTPAFromTPA(YellowOrbCol, GameBoxTPA);
+            SortTPAFrom(YellowOrbCol, Point(MSCX, MSCY));
+            YellowOrbSplit := SplitTPAEx(YellowOrbCol, 35, 35);
+            SortATPASize(YellowOrbSplit, True);
+            if Length(YellowOrbSplit) < 1 then
+              begin
+                Exit;
+              end;
+            if Length(YellowOrbSplit) < 3 then
+              begin
+                i := Low(YellowOrbSplit);
+                P := MiddleTPA(YellowOrbSplit[i]);
+                MMouse(P.X, P.Y, RandomRange(-3, 3), RandomRange(-3, 3));
+                if WaitUpTextMulti(['ow or', 'Yellow Orb'], 250) then
+                  begin
+                    ClickMouse2(1);
+                    Wait(500 + Random(1500));
+                    Result:=True;
+                    Exit;
+                  end;
+              end else
+              begin
+                for i:=0 to 2 do
+                  begin
+                    P := MiddleTPA(YellowOrbSplit[i]);
+                    MMouse(P.X, P.Y, 2, 2);
+                    if WaitUpTextMulti(['ow or', 'Yellow Orb'], 250) then
+                      begin
+                        ClickMouse2(1);
+                        Wait(500 + Random(1500));
+                        Result:=True;
+                        Exit;
+                      end;
+                  end;
+              end;
+          end else
+            begin
+              WriteLn('We haven`t been able to detect any yellow orbs, moving');
+              RadialWalking;
+              Antiban;
+            end;
+      end;
+end;
+
+function Orbs: Boolean;
+var
+  i: integer;
+  PossibleTeam: Array of String;
+
+begin
+  PossibleTeam := ['Yellow', 'Green'];
+  for i:=0 to 1 do
+  begin
+    if (JoinedTeam = PossibleTeam[i]) then
+      begin
+        case PossibleTeam[i] of
+          PossibleTeam[0]: begin
+                             // YELLOW TEAM
+                             if (YellowOrbs = True) then
+                             begin
+                               Result := True;
+                               Exit;
+                             end else
+                             begin
+                               Result := False;
+                               Exit;
+                             end;
+                           end;
+          PossibleTeam[1]: begin
+                             // GREEN TEAM
+                             if (GreenOrbs = True) then
+                             begin
+                               Result := True;
+                               Exit;
+                             end else
+                             begin
+                               Result := False;
+                               Exit;
+                             end;
+                           end;
+        end;
+      end;
+  end;
+  //DefineTeam;
+  case Random(2) of
+    0: begin
+       // YELLOW TEAM
+       if (YellowOrbs = True) then
+         begin
+           Result := True;
+           Exit;
+         end else
+         begin
+           Result := False;
+           Exit;
+         end;
+       end;
+    0: begin
+       // GREEN TEAM
+       if (GreenOrbs = True) then
+         begin
+           Result := True;
+           Exit;
+         end else
+         begin
+           Result := False;
+           Exit;
+         end;
+       end;
+  end;
+end;
+
+procedure WaitOrbs;
+var
+  i: Integer;
+  PossibleTeam: Array of String;
+
+begin
+  PossibleTeam := ['Green', 'Yellow'];
+  for i:=0 to 1 do
+  begin
+    if (JoinedTeam = PossibleTeam[i]) then
+      begin
+        case PossibleTeam[i] of
+          PossibleTeam[0]: begin
+                             // GREEN TEAM
+                             SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+                             SMART_DrawText(290, 429, UpChars, 'attracting green orbs', clWhite);
+                             if (GreenOrbs = True) then
+                               begin
+                                 Antiban;
+                                 Wait(2000 + Random(1500));
+                                 Antiban;
+                               end;
+                             Exit;
+                           end;
+          PossibleTeam[1]: begin
+                             // YELLOW TEAM
+                             SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+                             SMART_DrawText(290, 429, UpChars, 'attracting yellow orbs', clWhite);
+                             if (YellowOrbs = True) then
+                               begin
+                                 Antiban;
+                                 Wait(2000 + Random(1500));
+                                 Antiban;
+                               end;
+                             Exit;
+                           end;
+        end;
+      end;
+  end;
+end;
+
+
+procedure CraftRunes;
+var
+  X, Y, i: integer;
+  AltarColors, GameboxTPA: TPointArray;
+  AltarColorsSplit: T2DPointArray;
+  AltarTypes: Array of String;
+  AltarTypeSatMod, AltarTypeHueMod: Array of Extended;
+  TheAltarColors, TheAltarTolerance: Array of Integer;
+  P: TPoint;
+  Gamebox: TBox;
+
+begin
+  SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+  SMART_DrawText(290, 429, UpChars, 'walking to the altar', clWhite);
+  WalkToAltar;
+  Wait(500 + Random(1000));
+
+  // This will click on the altar and craft runes \\
+  AltarTypes := ['Air', 'Mind', 'Water', 'Earth', 'Fire', 'Body'];
+  AltarTypeSatMod := [0.48, 0.60, 0.00, 0.93, 0.00, 0.48];
+  AltarTypeHueMod := [0.06, 0.17, 0.05, 0.27, 0.05, 0.20];
+  TheAltarColors := [7433327, 9998742, 6446432, 5657429, 6446432, 9275018];
+  TheAltarTolerance := [7, 4, 3, 3, 3, 5];
+
+  for i:= 0 to 5 do
+  begin
+    if DefineArea = AltarTypes[i] then
+      begin
+        SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+        SMART_DrawText(290, 429, UpChars, 'crafting runes', clWhite);
+        Antiban;
+        ColorToleranceSpeed(2);
+        SetColorSpeed2Modifiers(AltarTypeSatMod[i], AltarTypeHueMod[i]);
+        if FindColorsSpiralTolerance(X, Y, AltarColors, TheAltarColors[i], MSX1, MSY1, MSX2, MSY2, TheAltarTolerance[i]) then
+          begin
+            Gamebox := IntToBox(421, 193, 515, 311);
+            GameBoxTPA := TPAFromBox(Gamebox);
+            AltarColors := ClearTPAFromTPA(AltarColors, GameBoxTPA);
+            SortTPAFrom(AltarColors, Point(MSCX, MSCY));
+            AltarColorsSplit := SplitTPAEx(AltarColors, 15, 15);
+            SortATPASize(AltarColorsSplit, True);
+            P := MiddleTPA(AltarColorsSplit[0]);
+            MMouse(P.X, P.Y, RandomRange(-15, 15), RandomRange(-15, 15));
+            if WaitUpTextMulti(['raft', 'une', 'ltar'], 250) then
+             begin
+               ClickMouse2(1);
+               Wait(1000 + Random(2000));
+               case Random(5) of
+                 0..2: TypeSendEx('1', False);
+                 3..4: Mousebox(207, 398, 311, 415, 1);
+               end;
+               Wait(5000 + Random(2000));
+               Antiban;
+               Exit;
+             end;
+          end;
+      end else
+      begin
+        //WriteLn('We haven`t been able to detect at which altar we are..');
+      end;
+  end;
+end;
+
+procedure WalkToPortalInside;
+var
+  a, X, Y, i, ArrowSymbol: Integer;
+  InputAcc, OutputAcc: Extended;
+  AltarTypes, SPSMaps: Array of String;
+  MyPos: TPoint;
+  ArrowTPoints: Array of TPoint;
+
+begin
+  Antiban;
+  A:=0;
+  AltarTypes := ['air', 'water', 'earth', 'fire', 'body', 'mind'];
+  SPSMaps := ['99_1', '99_3', '99_4', '99_5', '99_6', '99_2'];
+  ArrowTPoints := [Point(RandomRange(39843, 39855), RandomRange(651, 659)),
+                   Point(RandomRange(39843, 39855), RandomRange(1463, 1467)),
+                   Point(RandomRange(39831, 39843), RandomRange(1863, 1867)),
+                   Point(RandomRange(39815, 39823), RandomRange(2243, 2251)),
+                   Point(RandomRange(39827, 39831), RandomRange(2683, 2691)),
+                   Point(RandomRange(39855, 39863), RandomRange(1087, 1091))];
+
+  for i:= 0 to 5 do
+  begin
+    if (DefineArea = AltarTypes[i]) then
+      begin
+        SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+        SMART_DrawText(290, 429, UpChars, 'walking to portal', clWhite);
+        SPS_Setup(RUNESCAPE_SURFACE, [SPSMaps[i]]);
+        MyPos := SPS_GetMyPos;
+        Writeln('My position is  x: '+IntToStr(MyPos.x)+' y: '+IntToStr(MyPos.y));
+        if (MyPos = Point(-1, -1)) then
+          begin
+            WriteLn('Not able to detect position, alternative methods');
+            repeat
+              begin
+                ArrowSymbol := BitmapFromString(7, 15, 'meJzT9AzXxEAaAWkCVz8gI5IFT31' +
+                                  'ARhBB/n3vkRHxgiCRpe+JRG7r7/HPfoeMgCJqPonI4hCRxnpRuDhc' +
+                                  'BIJUPOOAIkASLgIXh7MBQZeURw==');
+                InputAcc := 0.5;
+                FindDeformedBitmapToleranceIn(ArrowSymbol, X, Y, MMCX - 50, MMCY - 50, MMCX + 50, MMCY + 50, 50, 0, True, OutputAcc)
+                FreeBitmap(ArrowSymbol);
+                if (OutputAcc > InputAcc) then
+                  begin
+                    WriteLn('We found the flicker arrow symbol, walking there!');
+                    MMouse(X, Y, 0, 0);
+                    Wait(25 + Random(75));
+                    ClickMouse2(1);
+                    Wait(100 + Random(100));
+                      repeat
+                        Wait(50 + Random(50));
+                      until (IsMoving=False);
+                  end else
+                    begin;
+                    WriteLn('We haven`t been able to detect the flickering arrow symbol.');
+                    inc(A);
+                    Wait(250 + Random(500));
+                  end;
+              end;
+            until (OutputAcc > InputAcc) or (A>9);
+          end else
+          begin
+            WriteLn('Blind walk to portal inside');
+            SPS_WalkToPos(ArrowTPoints[i]);
+            Wait(300 + Random(300));
+            if (IsMoving=True) then
+              begin
+                repeat
+                  Wait(50 + Random(50))
+                until(IsMoving=False);
+                Wait(300 + Random(300));
+                Exit;
+              end else
+                begin
+                  Wait(300 + Random(300));
+                  Exit;
+                end;
+          end;
+      end;
+  end;
+end;
+
+function EnterPortalInside: Boolean;
+var
+  X, Y, i: integer;
+  PortInCol: TPointArray;
+  PortInSplit: T2DPointArray;
+  P: TPoint;
+
+begin
+  // This will click on the portal inside \\
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.31, 1.43);
+    if FindColorsSpiralTolerance(X, Y, PortInCol, 12605594, MSX1, MSY1, MSX2, MSY2, 24) then
+      begin
+        SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+        SMART_DrawText(290, 429, UpChars, 'going through portal', clWhite);
+
+        SortTPAFrom(PortInCol, Point(MSCX, MSCY));
+        PortInSplit := SplitTPAEx(PortInCol, 50, 50);
+        SortATPASize(PortInSplit, True);
+        for i:=0 to High(PortInSplit) do
+          begin
+            P := MiddleTPA(PortInSplit[i]);
+            MMouse(P.X, P.Y, 5, 5);
+              if WaitUpTextMulti(['ortal', 'Portal'], 250) then
+                begin
+                  ClickMouse2(1);
+                  Result:=True;
+                  Exit;
+               end else
+               begin
+                 WriteLn('We haven`t been able to detect the portal, inside GOP');
+                 Result:=False;
+               end;
+          end;
+      end;
+end;
+
+procedure AttractOrbsAir;
+var
+  MyPos: TPoint;
+
+begin
+  WaitOrbs;
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_1']);
+  MyPos:=SPS_GetMyPos;
+  Writeln('My position is  x: '+IntToStr(MyPos.x)+' y: '+IntToStr(MyPos.y));
+  repeat
+    begin
+      WalkFivePixels(Point(RandomRange(39839, 39855), RandomRange(623, 635)));
+      Antiban;
+      WaitOrbs;
+      Antiban;
+    end;
+  until (Orbs = False);
+end;
+
+procedure AttractOrbsMind;
+var
+  MyPos: TPoint;
+
+begin
+  WaitOrbs;
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_2']);
+  MyPos:=SPS_GetMyPos;
+  Writeln('My position is  x: '+IntToStr(MyPos.x)+' y: '+IntToStr(MyPos.y));
+  repeat
+    begin
+      WalkFivePixels(Point(RandomRange(39843, 39867), RandomRange(1027, 1047)));
+      Antiban;
+      WaitOrbs;
+      Antiban;
+    end;
+  until (Orbs = False);
+end;
+
+procedure AttractOrbsWater;
+var
+  MyPos: TPoint;
+
+begin
+  WaitOrbs;
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_3']);
+  MyPos:=SPS_GetMyPos;
+  Writeln('My position is  x: '+IntToStr(MyPos.x)+' y: '+IntToStr(MyPos.y));
+  repeat
+    begin
+      WalkFivePixels(Point(RandomRange(39823, 39839), RandomRange(1435, 1451)));
+      Antiban;
+      WaitOrbs;
+      Antiban;
+    end;
+  until (Orbs = False);
+end;
+
+procedure AttractOrbsEarth;
+var
+  MyPos: TPoint;
+
+begin
+  WaitOrbs;
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_4']);
+  MyPos:=SPS_GetMyPos;
+  Writeln('My position is  x: '+IntToStr(MyPos.x)+' y: '+IntToStr(MyPos.y));
+  repeat
+    begin
+      WalkFivePixels(Point(RandomRange(39827, 39843), RandomRange(1815, 1835)));
+      Antiban;
+      WaitOrbs;
+      Antiban;
+    end;
+  until (Orbs = False);
+end;
+
+procedure AttractOrbsFire;
+var
+  MyPos: TPoint;
+
+begin
+  WaitOrbs;
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_5']);
+  MyPos:=SPS_GetMyPos;
+  Writeln('My position is  x: '+IntToStr(MyPos.x)+' y: '+IntToStr(MyPos.y));
+  repeat
+    begin
+      WalkFivePixels(Point(RandomRange(39839, 39847), RandomRange(2235, 2251)));
+      Antiban;
+      WaitOrbs;
+      Antiban;
+    end;
+  until (Orbs = False);
+end;
+
+procedure AttractOrbsBody;
+var
+  MyPos: TPoint;
+
+begin
+  WaitOrbs;
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_6']);
+  MyPos:=SPS_GetMyPos;
+  Writeln('My position is  x: '+IntToStr(MyPos.x)+' y: '+IntToStr(MyPos.y));
+  repeat
+    begin
+      WalkFivePixels(Point(RandomRange(39839, 39855), RandomRange(2647, 2663)));
+      Antiban;
+      WaitOrbs;
+      Antiban;
+    end;
+  until (Orbs = False);
+end;
+
+procedure AttractOrbs;
+var
+  PossibleAltar: Array of String;
+  i: Integer;
+
+begin
+  Running;
+  PossibleAltar := ['air', 'mind', 'water', 'earth', 'fire', 'body'];
+
+  for i:= 0 to 5 do
+  begin
+    if DefineArea = PossibleAltar[i] then
+        begin
+          case PossibleAltar[i] of
+            PossibleAltar[0]: begin; WriteLn('We are going to attract orbs at the '+PossibleAltar[i]+' Altar'); AttractOrbsAir; Exit; end;
+            PossibleAltar[1]: begin; WriteLn('We are going to attract orbs at the '+PossibleAltar[i]+' Altar'); AttractOrbsMind; Exit; end;
+            PossibleAltar[2]: begin; WriteLn('We are going to attract orbs at the '+PossibleAltar[i]+' Altar'); AttractOrbsWater; Exit; end;
+            PossibleAltar[3]: begin; WriteLn('We are going to attract orbs at the '+PossibleAltar[i]+' Altar'); AttractOrbsEarth; Exit; end;
+            PossibleAltar[4]: begin; WriteLn('We are going to attract orbs at the '+PossibleAltar[i]+' Altar'); AttractOrbsFire; Exit; end;
+            PossibleAltar[5]: begin; WriteLn('We are going to attract orbs at the '+PossibleAltar[i]+' Altar'); AttractOrbsBody; Exit; end;
+          end;
+        end;
+    end;
+end;
+
+function MakeBarrier: Boolean;
+var
+  i, X, Y, BarrierGreen, BarrierYellow: Integer;
+  Barriers: Array of Integer;
+  BarrierBox: TBox;
+  PossibleTeam: Array of String;
+
+begin;
+  PossibleTeam := ['Green', 'Yellow'];
+  BarrierGreen := DTMFromString('mbQAAAHicY2VgYMhmYmAoAeIEIK4C4nwgfgIUvwbEH4D4LhDfBGItA00gyYSC/zNgAkYsGAwAeAkIJw==');
+  BarrierYellow := DTMFromString('mbQAAAHicY2VgYDjKxsCwC4h3A/FBIL4AYjMxMKwH4u1AvBmIjwFxYqI5UDUTCv7PgAkYsWAwAAACjgmY');
+  Barriers := [BarrierGreen, BarrierYellow];
+
+    for i:=0 to 1 do
+      begin
+        if (JoinedTeam = PossibleTeam[i]) then
+          begin
+            if FindDTM(Barriers[i], X, Y, MIX1, MIY1, MIX2, MIY2) then
+              begin
+                MMouse(X, Y, 2, 2);
+                if WaitUpTextMulti(['ake-', 'arri', 'gener'], 250) then
+                  begin
+                    ClickMouse2(1);
+                  end;
+              end;
+              BarrierBox := IntToBox(245, 134, 282, 195);
+              Wait(100 + Random(100));
+              if PixelShift(Barrierbox, RandomRange(2500, 3000)) > 1000 then
+                begin
+                  WriteLn('We have succesfully placed a barrier');
+                  FreeDTM(BarrierGreen);
+                  FreeDTM(BarrierYellow);
+                  Antiban;
+                  Result:=True;
+                  Exit;
+                end else
+                begin
+                  MouseCircle(MMCX, MMCY, 70, 1);
+                  Wait(100 + Random(200));
+                  repeat
+                    Wait(50 + Random(100));
+                  until(IsMoving=False);
+                  MMouse(X, Y, 2, 2);
+                  Wait(25 + Random(75));
+                  ClickMouse2(1);
+                  FreeDTM(BarrierGreen);
+                  FreeDTM(BarrierYellow);
+                  Antiban;
+                  Result:=True;
+                  Exit;
+                end;
+           end;
+      end;
+end;
+
+procedure BarrierEmergency;
+var
+  a, s: Integer;
+
+begin
+  if FindChatBoxText('low!', 8, clBlack) then
+    begin
+      SMART_DrawDotsEx(False, ActionBoxTPA, RGBtoColor(194, 178, 146));
+      SMART_DrawText(290, 429, UpChars, 'making emergency barriers', clWhite);
+      if (MakeBarrier=True) then
+        begin
+          a:=0;
+          MarkTime(s);
+          Wait(1500 + Random(1000));
+          Mousebox(246, 147, 266, 182, 0);
+          WaitOptionMulti(['estr', 'estroy', 'Destroy'], 250);
+          Wait(1500 + Random(1000));
+          repeat
+            if FindChatBoxText('cannot', 8, clBlack) then
+              begin
+                Exit;
+              end else
+              begin
+                inc(a);
+                Antiban;
+                if MakeBarrier then
+                  begin
+                    Wait(1500 + Random(1000));
+                    if FindChatBoxText('cannot', 8, clBlack) then
+                      begin
+                        Exit;
+                      end else
+                      begin
+                        Mousebox(246, 147, 266, 182, 0);
+                        WaitOptionMulti(['estr', 'estroy', 'Destroy'], 250);
+                        Wait(1500 + Random(1000));
+                      end;
+                  end;
+            end;
+          until(a > RandomRange(2, 5)) or (TimeFromMark(s) > 15000) or (FindChatBoxText('cannot', 8, clBlack));
+        end;
+    end;
+end;
+
+procedure MainLoopPart1;
+begin
+  WaitForPortal;
+  EnterPortalOutside;
+  Wait(4000 + Random(1500));
+  WalkToAltar;
+  Wait(2500 + Random(2500));
+    repeat
+      AttractOrbs;
+      BarrierEmergency;
+      Antiban;
+      TimeUpdate;
+    until (CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 400) or (CountColorTolerance(204, 208, 208, 324, 220, 1) > 250) or (CheckGopLobby = True);
+end;
+
+procedure MainLoopPart2;
+begin
+  CraftRunes;
+  WalkToPortalInside;
+  EnterPortalInside;
+  Wait(500 + Random(1000));
+end;
+
+procedure DrawProggy;
+var
+  OnScreenPaint: Integer;
+
+begin
+  OnScreenPaint := BitmapFromString(508, 132, 'meJzsvWlwG2ea59kfJqY+dNch' +
+        '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' +
+        'u7252Y946u+jMb4fr5QHZDrDIzmWy+QBKOp0//ePOJALZH303m36X' +
+        'blRMepyR+6NCEea5fVrH+6/4/2wpjt23alAbzt00N5j+2vnHG8yqU' +
+        'SJ9FxdaGJy3pOX2sDK2Arje19tYnD3hvefmQqzssJzyYq0ftDWn8A' +
+        '9rOkNY7ZLAVzZZZkwVc/ZSZZP4tY0/KMmGyAPmnjKZJqw3cuxcl5L' +
+        'g73QD5YKi7Jww2Hvy8x9fdHQz3hYZ6+gaA87CN29OJ2oVgqKsnjDL' +
+        '5XR67f8AWnXMlFnyja+74PIPFb2luYrG5HJ6QIBxrFz56Qj/R44qY' +
+        'DzWY/2RVv3R+K2PBGszf+uE1mP/dUXRir6oflUrAI0VjYsKaWQDyq' +
+        '/rGsL6x0ZnV+72rfuisTGtiK3CeyiTQWaUml9zi0bpiRivgneL8FG' +
+        'nyp26i3jxhNNcMlExVo6FmdE5anUGHw+Vw+QDyKMLT1UcNy3K6/G5' +
+        'vAPAOwAe3D/x3ke0C3AIA/0Gw4nR6rZ5eQ2/JOjjlzq6qA7E9L7/c' +
+        'TmcwmGwWh6fS4Pnl7ZjffFMdv/HVS7HWTa+6no3SE/m4Q9c/F5WML' +
+        'zzzz2xtLFiD+Vs/vIdl/vdC34eLbfu/S/hwvcH8x1Tt4Fl5dxINmA' +
+        '3n9LEqMB+svrp/DOsfC4xUTt34zV3bn/zk16OTSywJ1i5SdogUHUI' +
+        'lQ4pxlDqVIW401++M4dy09+YJivN6U8Vgquj1Fb25YuisGVPTRDRv' +
+        'cwccdrfXh7prgfNAe6oJ8PrB54d6egcR871dKJjvQpF8P9k0+AM9T' +
+        'qfH2TngSu4lYtP2wn57cZ8Qt7fRWoH5TCZbqTEEMlMnP73vINztEQ' +
+        'AfYL4VGhTOnXgin7iVf2uD+U9cW2T+9g8QprSVGVfvZD7AfItX0TZ' +
+        'jf/8H13bFNq9F3GD+g7X3wjVNcFjdj+okGOI1YL49t6wbymO9o4aB' +
+        '7PrlP6rDsPbWx13xjBC38dRmLmYEn89SaDhyXKGJkBmYE8jPE6RQG' +
+        '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' +
+        '/ry+aTOUKAPxCHZiPsF+Z1dt8PFtQG8qq+0aBn5pQBh8qglU2jc56' +
+        '0tMiJU4X3WI+R8CRG4H5lMkH5pPTpmTIXE1qHG4JUC/HouQyRgGf7' +
+        'MZNcETGVk4zH+MD3oHzIhx13SLhYoleIjPIyD5cBWZTqZ0alQPuLO' +
+        'itnFYkNhKNBWppZbV0yDVs3M3S2XlEp9QTlnoHFV0JOHJlcNhbP2L' +
+        'JLBiTk9bMgiU9R4zN27MLleNbmhLr1I2vE6U6l0VTCmhqMQ3IL+U0' +
+        'AfNVolaNpBWaAAC+WtQKdwG48OX+VLly/t+Vz/6b6rm/mnjzr2eu/' +
+        'MPS1f9p6eo/77v822Mfb3USloYaaqihRxCTwZLJMHLOFL1coVGpcB' +
+        'w3I8NvtrvcgUBXfzA4COrtHQIlhjMU6inlC5Ol8gxY/Q6lSdk9rO4' +
+        'dwXpGsOCIqncUVeCJVay5JYHR1SFW/AvzZUalOknFdkjmjwP2bzGf' +
+        '9PlY/E7m3/L5cZ7Y3s5vE2mFcpNcpBMJNAIRLhHrJVJUwV4ps2Jym' +
+        '0rp0GhcaHyuwa8X6kSt3DYgfzuvHdTGbQO1kp6fLlWwNAS4fTbu4h' +
+        'g8qPCyd1DWGVd0xeXeXuNwnSy/XCfTOKeI9PzogfOHPtrSQKr5M2+' +
+        'ZCFzO260UNMu4TQp+s0ZMA28PVl8lbIWlTtJqkLcnFy6Uzv5F6cw3' +
+        'ldf+ovbG7yfe/JupS38//94/Ln/8v67e+N+O/vSfTv/09zt+YTTUU' +
+        'EMvpBS4hc8TSmVKoUgKhl+t1pvNdsLiAsMf6Ozt7Rns7QHaRwD4sd' +
+        'jYeH4CRAIfxXbG85O58Qnw/DqLm2X0qntHld1JZTCJBZPq/jHdUIE' +
+        'Ym9NHiuQMWbI2rriVIySZP4yYjwI745T0qMDaJGAfVuRYggR+nBRl' +
+        '9YfkigRHaGCI2sHVi7VivgoBX2vDdDal1o7ZnEqfB/N6VT6faiigS' +
+        'vZqMgN4JKjmiBmtvPYOQQeQHwX2+fRb8Ke18+gdYh5DjjFVJpbGzt' +
+        'Q52Do7XSTg6wndUFk3lNdHy4bEBAV/Ij3nrx2ITa7UD5098tGDknl' +
+        'AJ2/8ZrQ+r5IyweorBS3I5EvbVSLw/y0osCPaY7fqx499kT/5VfH0' +
+        'b8pnf1d9/S9rb/zbyYv/fubd/zz3/j/XX/u6euC9hbM/nTv2dm3xQ' +
+        'HXpYGXxQHF2NTE+kSrNTK6d3PfaO0fe/9mJ61+eutG4I2iooYYeWr' +
+        '6xOlckp7fT+QKxQqnW6oy4nsBUOvD5XV39ga6+YDDc1RUaGkoC3rO' +
+        '5Gig3XgPyw0NQJlvN5aqDkVS7VCdxh8HtK7sTsMR6UtpwTh+tmEdn' +
+        'ORqilQuuW9zGF3NkJoU6odaltTeZnyOZXzFZ6iTzKwrVsEIVv818E' +
+        'vsRBZYE5jMldOTw1QK2gme0KdL9mrEedapbNd6vyYfUxbC2MoiXBn' +
+        'WVCFrCk2GPDLDfRnbjIuDz26kl5fzbea3t3FbUFoj4dLEQWgF4KLD' +
+        '4pL6IJpzRRYr4UBFVYE7UCFSNc8GaW7Zllzora4n9r44evJBcPj68' +
+        'eDQxsx6bWo3VV2L1/dHJfbHptdTCkdTiEbO/W8zYhfGbgPYg4L9ah' +
+        'Ay/ivuj7mguf+qb3LFfFkjsV177N7Vzv59446+qB66W545mMqVUYm' +
+        'SyWr/45qWPrn3ywdVrn332008+/ey996++9/6Hp06drVRnsuO1QnW' +
+        '+MLlcWzpQXjp48MpzVsq1oYYa2kH5M1PmnjiTxRUIRHK5WqnSkQk8' +
+        'CjPhsNk8NrvX4fS73AFgfio1PjpWTGcqJPmr6Ux5bKwEz6RG8mPpk' +
+        'tnR2aG2KgIxRWdM3hlToiD5mHYwb05NYV1xGotP44jaBGKh0oupU3' +
+        '/M/JzBXDNZpoxE3WCuKlRJhSohB+zDEouT/I8h5otMLGmHQCVgyzk' +
+        'SrXAMcV6TH9CVh/BqzFCLGcoRfSWiLwziGWgLetWjPapsn7rHJQWr' +
+        '305iHzGfR78F/JspPWQr0ErntbVzaXQRF02zZfIJbd1wt6IJ5zThL' +
+        'B4pIrefrCPDPzZDzrSIBp05iiuu8rqzsM+Z32dNTtiSE9Z40TKQsY' +
+        'RGLeER61BWTTgkXJqE9ZKC16wie3JVwma1qCUy9Wr22K+yR3+eP/F' +
+        'l8dTXpTPfVM//TWX/xXwmn00XisWpUnl2anrvxoHjZ8++ef7825cv' +
+        'v//FL78E7F+7/imQ/9MbN7744lfvvf/R+fNX9u47NFlfKlZmlo+fP' +
+        '9Yo49NQQw1tQe7hkjtV1Tq72mitbDYPzZzCFwP8CcJhsbqsgH2H1+' +
+        'n0DwwkIpERUDQ2lkhkhpO5kdECoB6AnxjOwsNYLM3GDAJ7j8wfkfm' +
+        'GgPxg9YGZVBoPQ6Le3cZs44tEyk5MldLgFPNzZEg/ayRqhG0WWX1z' +
+        'DVoEpRpV1wcB/BUk+WVYgiWUsmUMroLLknO6PYpsr2q4U5HuVeXD2' +
+        'jQQPqhKdmPJLuUwWdYs1qmI+uWwkupSmvX8VsA7mbGPIC+gU9n7DC' +
+        'GDLMJ5M/JDYza1CUVs3EXG+R08wif1DKBma2BchwadVQzxKhXqIUP' +
+        '9aCSvLbd0c4L10rq9uGLPo3XH+LJ9bBZaAWuiauyNyxUiOftHWnEL' +
+        'JmqVsHYZcHVq9ePMkV/kjv4if+JXhVO/Lp75beX8vyvMn86Pl/OFe' +
+        'jZbqVTnqtX5o0dOvfXWOxcvXT59+rVTp14Fh3/prSsbB479/Be/fO' +
+        'edD37357/7+7//91999eszr75RKE5DSzFe3zv/2ns7fjk11FBDz7g' +
+        '8qSrSSE2kMe3Z3cRiccUSBRnbsRGE02JxWq1uu8Pbf3P4LSqzMziI' +
+        'xuEC/4PBwcGh1HByPJ7IJJM5qzPQrjRJXGGpZ1DujyqDw+r+tDacQ' +
+        '+V3IkWWUt/C5gnkXqUKfP7Y7fx8tS5jJCYI25zZOm0kJjHNyC3gD9' +
+        '9SEmw/Q8DjyFl0MUuj5ae6UY1iQPpoD+J8rFM+5JPFOxUI8t2omk2' +
+        'mT01ZfXgy7pcbcR6N145QL+iggH9zHUX421pZzU303Xva97RLFAy1' +
+        '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' +
+        'nQHw+eFwGrCfSOQCwfiqRHlJgnNVFqk1AGTTJmsG8Pw5lPFoq8wdz' +
+        'X2EfZTTeOLpn/omVz3dM2typjM21JrqYg1XY2jq9JsekzLhlIGlr9' +
+        'JJ+FkfvhmlIjaZRsHS42wDztLJl8Z3PvfwH//k3g/+8t73//Kl7//' +
+        'lg3/0k/s/+r9rh6+JVj+sURO3v/XnL/7BX9z97v+50Avf/T+Qfg/p' +
+        'zu/9x3vf/3+OP/evJFa0IYtD6FlKjTm+/srXf/j3vqv33/nBrbe+c' +
+        'fj673RvvJLq7+GumAxQbw3StA9L6fPF5i+ZLSyn4Q/3B7BPRosgPF' +
+        'IA+FPBrD64ZvUn3KG0J7YeSW2sr5dLpSagfjTcno53Z9P9CZ3PX+n' +
+        'tprp73t7laGN274u/98S/VIwYMfrA6vj2Kyd3Hp688PDgxkuzk2vj' +
+        'g7Ot7f3ZbHsymuxNJqez8c356O58+OKsc71fOWsVjmqI+fNiYtqqj' +
+        'Gbz3f3DQqlKqfU6vclotAaDiWgUrP5aIp61OgM8XMNRqC6JMQ5pFJ' +
+        'u8Clecim3qMk3AvmVzYq/vOJp7dJwHdad1tY/QztbpdXft2OgbaHV' +
+        '1nR6Y39Ibsl6jMO6QlSIoRYfOyVHl/AQlW6Fkq2r5qkbBVome9gf8' +
+        'd3///7r9rX///Lf+3fO/++9u/e6f3/nO//7yD//f0Yvvjl969+4f/' +
+        'AVcuYWuLwTnf/78udCVl/7gL8pXP8ulzAB8FqaNN6e/qjt881NfMb' +
+        'pDUntYdq5z4KMokNGDFhFo8087fzryE1qnYkUqvqmKlvBgXuFbU/r' +
+        'SWDCnjhWNqYp5reHMdxKVQbo2zjRma/VJoD53tI6c3VPf+KazeTC5' +
+        'du+Jf6kYMWL0gdXhrZcPb90/vv1g/8ZLWyc3+nuXj/cO3zjZe21/e' +
+        'n97+Mr24JX54N6s98K0c31Qv9wtn7SKe9XsTjmzV1sfDWEesDOZbY' +
+        'PV12iNWp3RanUC8+OxbCqRM9q8XCUlILSrYsWyWMnGdCK9C3CH+9Z' +
+        '0mZa5eJ7QSNexOQShOH/70NM7DUyv+8fXHPkdg62t0bYMGo/PwMv4' +
+        '8VpCWwipcgEC3L6J4GDiS4RkGaSSrqikS2r5ys5Hf3j7O//x+tf+7' +
+        'Y2v/9lCcH77O//h9rf/A33x38JxoWvv/Jtr7/xv177yv179yp9e+f' +
+        'L/cvbFf331y//zzXf/jAptLEnQn1o/uvWrusMbneliBgFHqSUotSL' +
+        'mA/BFRg8d//fTa8f+xSyAVljuQA0cieA6Gd5ACq4TtEiUF7qpTlap' +
+        'dAMpVdestXRZNG+yV+ehredRLaDa7M7vvPvEv1eMGDH6YGr/xr39m' +
+        'wj7u9fuTk5u7h6cfPrK4VduHH7ieP5gZ/TS1uDFWe/2uPP8uH1r1L' +
+        'rer1/uVI6bhYPa+mF1fbdbn87m27uHhWKFovRqjVGrNfp80URiPZl' +
+        'cN9g8YPL5mJolVqwKZSwJxsa0HMoMrJO74up4mY7tb6EgzyPsu7rH' +
+        '3v5lup3utcD0hm9wxZbdsxmNcYe4EFZthFRrXmU9pQ1ZpZjoEkkDH' +
+        '0RKVyj5qpL7oWA8c/1rfwYwv/rlPwUBzK986U8uf+lPzr7wP5194X' +
+        '88/fz/cPz2vzr+7B8fvfUv9z/zL/Y/9d/sfeq/2v3N/3LnE/98++P' +
+        '/dP7xf3r9a/+mf/+7K3IVh9D9qrLcT+5/ArMHxZagxExTHQnFdgDy' +
+        'AHx6hdcjNHqEi5VfOuxPjwUeGCPkzqjCncS8a7g/S4byCy22A6gTZ' +
+        'VS8NF3XZ1C3AkOuCwMoXQLixNk+rOxef+LfK0aMGH0wBcDfv/Hy/s' +
+        '370yt3rx6dfPp05+2re5+5vPvJk+3725M708Hzow5N+8Y1UA+sfu2' +
+        'sXTlsFLc2s9NqcTyaTrd2Z1u7Hm9IrTGo1QaDwRqLZZLJnMHqBubz' +
+        'lBRLLF8WSFFjXMrAVerZhF6gcyDDH8hq03VTYWgtT+31bbR3qXMMP' +
+        'n8h7/AKvVn1LOhSxR2yjA9Pe7FiWLUeIIDzuPgSLl5eiEQ+fwXjfs' +
+        'gfTR5+5l8cvfXfHXzmv9371H+991uPkP7mP5t/7J9svfFH09d/PHn' +
+        'tH40f/nD04PvD+98bvPzd3kvf6b747c4L3xw9+MHJ5/7729/+97bc' +
+        'SKA2XP/0O7/8vX3pC9/2rZUktjAdug8smE+XcQP5OZRpSYKHCo3mz' +
+        'mVPZhN3RtEogLTI9nGjmj/0LmApWgIIy+wRtBc4kKXdfkkTL2uSVd' +
+        'SqINs25DqW4tjVOnDU9yyVLXOu/cS/V4wYMfpg6uDWg92bD8Dt3z4' +
+        '5+cTB1ieOQPOPHWyBHu5Obk8GN4ZtoP1Zp3rWrV7p1g/b1Xm1NNzI' +
+        'NgvrjXa30x9NpvPZ1k4slgafr9OZ9QZLMJhIJnJas4MtJwH1yOeLZ' +
+        'DyFSqw2YJqokkpxCRNPbQamyWwhIpjTZ9rWTcD+jrOJsL+I7SPL2j' +
+        '1zbdQDJlHcIc8FiI0QWY5SQHgZ/yIGzAfyP/L5hOg5TyQ1fu3H49f' +
+        '/aPjgB8MH3x/c/17/5e/1Xvy97guA9G+17/xu+/Y3G7e+Xrvxtcq1' +
+        'r2xe+WLp7O3i8VsbR5/ZOPx04coXu6/9eP7WH5+982cHv/0v7dnmr' +
+        '+Te1mfHUkcUcL2I56AIjzVAR3ICAq1jWUbKTc67n/vWq3Tm59Xf/O' +
+        'L0xv21zlwXWhPrXXydEyQwuGEION8mjCYCAelizdebxlHCZ0GTqGj' +
+        'TDf1aC6ZL4PB12bYjVdq989oT/14xYsTog6m95x/uXb/34sHum7vD' +
+        'Nw6mr+8hvbY7Ab2xP70z7V/pt07b1f16aVYpjDbz/WK+W8i3S8Vms' +
+        '9ts99qdfqPVcbl9iy7qYPIDgXg0mglH0hJSBz6fI8Np5svB8APzcW' +
+        '1CZ2jpjE2pOsBVmYU6J6BM5oigUM/m2F7fdTb3gF1Afmdjz1LdccZ' +
+        'TQSM/58cLIdVmlLJr+HLBEgAfE13CaKsPwCfFF7WUMt27mRm+kOxc' +
+        'BSVaV+LNs1jjNN65kuhd9xa6tkTGlsw70uvJdLqwkV7fWA9tNEudw' +
+        '0r/pNI9GJUHW53dnd7+4a23r3zuj+tHD2996isP3vn+L3NjT1/9lM' +
+        'qToJkfeuTwAwuJDO5VObUsJecvfuynf/HlL3/v+OGnKjtXfet1lSv' +
+        'C1zoWEtDmH/h/vjSA4v9hhTuOqhtFSzBuEp5Evj2589bXn/iXihEj' +
+        'Rh9YHZ/demln+srW4NWdMeiV7dGD+fDF6eD+fATnd6eD/Va1X8zVs' +
+        '8lyOlHNrjVLpVaj1W73m61+td7cKJbMFrtCQQDzdTqTxxsG5odCSb' +
+        'D6Ijpph00zny1W8HGNRG1W6QpaQ8NoQQ1TuLiJhal5GisKX9OFi8G' +
+        'momSexp69tmMqDI3FsdNpTDkkxQgK6QQtUoA8iuFLl2ngXyIkaBlX' +
+        'Lrgo5S9Jec+J2U+J2U+DhKtPCZZ/Q8R/TqGXKQxyhV6i0IulWqHNL' +
+        'Ey75I2sZ9Spzya7u9vHW7P96dbBK9nYl0z8t/Xco418k65aNhjtTX' +
+        'ZOD27cv/6xt++9/c2HvyD/gdu+bE3mPE/RXKAeVXKjxSH0S2IsP9z' +
+        '/+W/y8N0f3fz0O1t3Xl/rbpvCa1Kjm69ZbPh1LuCPdvvC28KsQWPV' +
+        'Ovzj6y8/8a8TI0aMPuB6fth+oV+/M2zfHLSv07raa512mme91lG7P' +
+        'imX2vlcOZMuZNLFQrFcbVRqzUar12h2S+VqNJ7S6YwyGQbMNxhsXm' +
+        '/E54t4vVG/PwbkFz9iPph8tkQpJHUSyqTSIuYbTG1gvkTtX1VSLKW' +
+        'WqzKhqjUmH1hiMpQ35nuG9a4+29FlWg6bOutBgZ24U07JV3HJJWTs' +
+        'H63eKkVLIs5zIvazEu5zMh6ShPusmPOsmP2saPVpBSUirARuwuBIW' +
+        'Emjx1TeLA37W5P56dbe9Z2DG3vHzx8c3Tg8uXX56ksn86P5YDaZ7G' +
+        '3vnIJ29i7P5ifb0/0XysU3Cmt3dw9OX/zond/68it/N/i39q/L3Sm' +
+        '5c2HyQ4j5Zh98QAA+T2O7JMHNkcz9X6ToMUw6zt74bPv4dmizQzjD' +
+        'HJWRr7EJFpWfSX14o87k6jBixOjvou39s93p1k6vt12vziubW+XSF' +
+        'hyrm6NyqbWRr20UKsXKZrm2WW0Vy7VSpV6tt8uVRn6jFIzElEpCJJ' +
+        'LJZEq6r1bQ4wmB3G44hgH+YkLLBeZLMeTzEfO1ErVFpd3QGup6U8t' +
+        'sHZKGPAvTsHE9iEOauJQZfCxATGzyAi3x0IY6lInYZGm3ImqXm0gu' +
+        'EH6BeoA/KV2W8S8KWM/wWM8I2c9JeBfgR4VwSca/IGJ9hH/pQ2L+B' +
+        'cqhUtkplV1FOSjChkfSydZg/6TWfDNoOYuH9jYK11vt0XBXpsBBsV' +
+        'TeH0xkc5uT6UGvP0+tFTfL7Rvrmdey0SvD2fbu2RzGiNPbBzdevv7' +
+        'xz/38W3rtzbfVgazclYBPIXNEZfbwolynxOyHoW1FTvFUxquf+MLf' +
+        '95H96PZnvzm4/mqkPgmWe7X9G1fe/E/8PYwYMWL0WMPLd8dX700v3' +
+        'x3uXe70J+1Gu7dZ6pZKwPdKpVmttDcrzXyhklsvFjdrtXq3Umnn1k' +
+        'v+QBhQz+OLxBK5Wq232TwOh8/h9LtcAacr6PaErA4fX6niKlUsCTB' +
+        'fzpHhIlInpkykNq/R1/SmptHSM1g6XNLEJvQcwgi6JFIuS3CWQs3G' +
+        'dRzCwKaslMmUcsmjdplTK0CRHCmdoiNbwSXLYO+F7GeROM8J2GDsn' +
+        '5Fynpaxn1IILmCEXOMOUg4z5VSprErSRhB2FWEj1rJr3e68250eDm' +
+        'ezZndabWw1OuPJXiic+gf/4B8abe5FwylQvTGQSOVms73dnx9cubt' +
+        '1cG3e6p8025e7/bPuYDKcH95782+7nw+++v3wZg9MvsIVkztjC+bT' +
+        'Vh+la7Jxw7KUbJ3ceeLPnREjRr+eau2ctfcu9w6ut3cv17eOq8OdV' +
+        'mtQq7YLpfpGsbq+Uc7lS9n14lp2I5srgVKpvNcbAuBzOHyBQKRS6U' +
+        'wmh9nsQO207KiLCsAfPL/e5ODICZ5CxRIrwefDuUj1fua3DJaexTa' +
+        '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' +
+        '5hQKVGo1RGjuWFxzCzObZtzV6kOLYmeviS6tCzhsxQEF9cuK3SruG' +
+        'GR5yk2I/jTfckLatR/qvzI/zd1uY47W0+nUM/ZZGp9ba2Qy21ubFT' +
+        'hmMkU44lsKJQMBOKp9AZcgYGgVuu222Pw86PR7mzrGHUYp5cABoPt' +
+        'RnNYLDXOHn7q/Xcg2d/DAlkytE6G8gj7ARTSx31rClcCPprU5Lr+W' +
+        '19+4s+aESNGjLL1Ua45AaWr/USxFc6WgqFYMpWdX7/3ytf+8O/+Pi' +
+        '996but3Stag0UkkkmkcqGCRMn5EiXakCXFBIRWhHw+MH8D7cmy9Ey' +
+        '2kcUxtTpmIKk+yKEMfMoq1Ls4hIGFaTmkkYVr5boocN5in5ntE4tt' +
+        'DEcBRi0JnlsSLS0JLyyLlsQYX6VTSdW6FaUeyA+TBWT7DW6ZI4paU' +
+        'AURgc8rkiWrmrWWI10B7Mej6Vg8m0rl19fLa2sb0Wg6AoqkztvOov' +
+        '6DjUqt22yNGo0BqNOdgrdfqNefA/PzhdrNT37x8Wef3HmDDG0QAHy' +
+        '63RVMN4hAjo7wpAQ6F4cy967df+IPmhEjRoxA6XIPaL9WGyZK7Ui+' +
+        '5ornKr2tv3fNltu//bVyb6YiNTwpDsxnSWnmSzD+ez7/bzB/6vIca' +
+        'G1VYD6Psgh1Tp7GumA+R2Xiq6x6SxumAyjyb5/CkS0VLQmfXRIunU' +
+        't0UUqwnTa51apRaAwswriMGWGOwFNbBDqHxBJQuOJ0ObIsGcwT4MA' +
+        'jBWs0Fwwnw+FEPJZOJnPxeCYUjAeDcWB+Kon8P9h+sPqlUqPe6APw' +
+        'y5VOvTEA1Hd7W63WuNubwcVqrfs4aefO73zDnKkTaHABLbCPulzBc' +
+        'AN/AHyoeHPyxJ8yI0aMGC0ULLQSpU5ysxvJ1x3JojGUufxL7+s8vv' +
+        '8JymRnywgWiucjnw/MFyHmGyltQWdsGi1dk3UIMAfmuz3HVs+Mq7Z' +
+        'wEaidYPXZuI4LzCeNbFKvMVdgIgAO34qYP+HIJBcFzywJLoIuiS6t' +
+        'SJaXpSvL8lVcJ1gLq7Jhg95iElJ6FmGAX+ci+MPcwS21hVFo3ZsCK' +
+        'XxpIpDR+dOOYCoYToWCMVAwgBSNpBLxTApZ/c1CoQ5gb9N5PnBEi7' +
+        'aNYas5aDeHpXK7Njq4/1VUhOHhuz8q9HcUvjVw9UQgi0RPLlTRIvy' +
+        'PAHxtIP3C5779xJ8yI0aMGC3k3uj4Cp1wsePMVPWhrCGSPXztt3/J' +
+        '93zhc98iLR4APkuiXBUruHJCgGtR3s77mW8bLny+03PoDpyKdD6ex' +
+        'iLUO0VGD09lRsRWmTgqg9KQAubTkf9tjbF0kab9RT7NfOHSsmSZpW' +
+        'BxMPYqxuaSXItDmo9rpFoTCzfAwAHzBSQ0gphQtN/oldkjGPA5uI6' +
+        'H8ngwR9Lwt/njbl/E548GI6lYPJtO5tYzxVKhVq22O+3xaLg9Hu0M' +
+        '+rN2o79ZG6bqU299Hp/fuv/OD+CTHr74UY03qaAzMwH7dEPzdfD5c' +
+        'CLQ2EDbL//mE3/EjBgxYvRY/vLQtzmAoyNbM4Qy+mB6/5VP/5Lvef' +
+        'WTX5JrzWya+XSiJrlgvgDXAfP15z5/AMy3ubac3sNA+KbKmudqzCK' +
+        'DW2L2oag+WHTKwqWMMn0YMd8xtbt2NYbCc9ynAfgX+UsL4K/KVtlK' +
+        'FgfncAkOV8VjkxweJeGSZi4Fo4aJg+tZmG5VqVlF9Rz03POYj1NiC' +
+        'SjdCQKYH0YBHxgCVMEcFc5TkQ19rGBPFF2Zqme9mSp2So1xrbfTGO' +
+        'xudnei9bmnfejsnaF9XrNblcsPwOQ3Z4cwa8AXPj+YW5h8MrguNLq' +
+        '5lMkUyz/8JRqpM2LEiNGvXKHaxFfqe4s9e6YKJl/tje28/Ilf8j2v' +
+        'fuILMo2RRe/AXSTnCwjEfB6mJjV5utjOe8x3eY8CoZsW95ivs4lMH' +
+        'tRD0BLkqy3AfBBfazfY+1bHlt21h2kiz7Gfok3+EgrsSJdZ8veYz1' +
+        'PxBGoujyK4KiuXsiDmE0Z6vmDmEIZlmWpFTqF6boSBQ5h4KotA75R' +
+        'aQ4DrRQSejBRBRHiDiBSpRFWz1tTnusaNgakwMpemjuaBo3Pi7qIG' +
+        'XsHprejePTiv7d/I9+ZYIHce0glv0MmiBZkjskhDKs4vP/Hny4gRI' +
+        '0bvV7A2DlbHwdrEs9E2xzbUntjs7s9o5PEL6crH3haRuvOKmlKMp6' +
+        'SEhE5AakSERa0t64wNA818MPB299zlO/IFr3kDZzJzWGz2SC0BmT0' +
+        's0jsR89UWrsZCWYp2147DfcBXqJ9lf2SJf/GS8NKyGEz+CkvBYmNs' +
+        'Dph8ksuneEKtgK/R8igrPUdAASKgPV3YwbQkUi4JlctSgvb8GhYGU' +
+        'wA6z0djk1j8ClcC92ep2KYmWVXHy6poUR3fREmemZZhvWtc79kqM2' +
+        'fr0Nk6APlH1wPTm77hVWt5qg2vo2blgcz5rAH5/HUYueBvEGjtJx9' +
+        '7+4k/X0aMGDF6vwD44fo02trxlwfW1KYumB7ffq+z3stf+u7k9Pna' +
+        'YN7buzw9uz2/fu/g7kfPXv309Y9//uds1Dp+9dM8jGJLcZZYec58U' +
+        'icg1FLSrdU3EPPNHZO1b7FP7a4F868Ew8+rnWWR2SOzhRTOGMp40S' +
+        'BswhEzr9lcO07vkVChf4b1G+Dz6fz85VX5Kkt5znweAj5fqBPxNWa' +
+        'e2obGC7pu28LnszH9RYH8khhblpBckpRaJCKDkq9WIfgr9WD7uWqb' +
+        'QOcQm3xKd5KKFhfkB+xr4hVNqq7Ptgy5jr26ba/vOup73v5l1Lexd' +
+        'WCv7cBcAOVk+tYw/xruB/jn4JyvtXFVFnM0/4CO+TNixIjRB0exzl' +
+        '60vQtH/+bAvlY1RnKjW6/C9ftf+d7W9XvBSJrSmCmtVa2zIWmtRoP' +
+        'FbnFaLS5/KNHdPr325ts/HbLeuvsGXTkfXxUrWBIlT4mK7QhItUzl' +
+        '1errOmPTYKZjO4j52zTzr4Yid/SuJvh8uSOKoZIFCaHOhVqB651io' +
+        '9/qnNmcW6tC8TN0bGdZfGlFuvI4sIOiOlqBQAtHOV9j56nPfT7NfB' +
+        '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');
+
+  SMART_DrawBitmap(True, OnScreenPaint, Point(5, 343));
+  FreeBitmap(OnScreenPaint);
+  SMART_DrawText(181, 414, UpCharsEx, 'Time running:', clWhite);
+  SMART_DrawText(181, 428, UpCharsEx, 'Current action:', clWhite);
+  SMART_DrawText(181, 442, UpCharsEx, 'Games played:', clWhite);
+  SMART_DrawText(181, 456, UpCharsEx, 'Tokens gained:', clWhite);
+  SMART_DrawText(290, 415, UpChars, ''+TimeRunning+'', clWhite);
+  SMART_DrawText(290, 429, UpChars, 'starting up', clWhite);
+  SMART_DrawText(290, 443, UpChars, '0', clWhite);
+  SMART_DrawText(290, 457, UpChars, '0', clWhite);
+end;
+
+begin
+  // MAINLOOP \\
+  SetUpLogin;
+  if not(LoggedIn) then
+    begin
+      LoginPlayerToLob;
+      OpenWorldScreen;
+      SelectWorld(61);
+      LoginPlayer;
+    end else
+    begin;
+      DrawProggy;
+      MarkTime(t);
+      JoinGame;
+      repeat
+        repeat
+          WaitForPortal;
+          Wait(500 + Random(1000));
+          EnterPortalOutside;
+          WalkToAltar;
+          Wait(2500 + Random(1000));
+          t:=0;
+          repeat
+            AttractOrbs;
+            BarrierEmergency;
+            Antiban;
+            TimeUpdate;
+          until (CountColorTolerance(10798276, 173, 279, 352, 292, 1) > 400) or (CountColorTolerance(204, 208, 208, 324, 220, 1) > 250) or (TimeFromMark(t)>300000)
+            if CheckGOPLobby then
+              begin
+                WriteLn('We are at the GOP lobby, something has gone wrong.. checking!');
+                repeat
+                  JoinGame;
+                  MainLoopPart1;
+                until(CheckGopLobby=False);
+                MainLoopPart2;
+                t:=0;
+              end else
+              begin
+                MainLoopPart2;
+                t:=0;
+              end;
+        until (DefineArea = 'Body') or (CheckGopLobby = True);
+        inc(GamesPlayed);
+        Wait(2000 + Random(2000));
+        if CheckGOPLobby then
+          begin
+            JoinGame;
+          end else
+          begin
+            WriteLn('Something has gone extremely wrong! Terminating script!');
+            TerminateScript;
+          end;
+      until not(LoggedIn);
+    end;
+end.

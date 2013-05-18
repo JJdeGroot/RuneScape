@@ -1,0 +1,1546 @@
+program JJsCookingGuildCompetitionScript;
+{$DEFINE SMART}
+{$i SRL/srl.simba}
+{$i sps/sps.simba}
+//{$i SRL/SRL/misc/SmartGraphics.simba}
+
+{* Introduction
+JJ's Cooking Guild Script | Made for the SRL Scripting Competition
+Start anywhere in RuneScape, use an account of 20+ combat to avoid the mugger
+from attacking you once we are in edgeville.
+
+For the scripting competition it collects a chef's hat from scratch, and walks
+to the Cooking Guild. Once it is near the Cooking Guild it will collect 20+
+wheat and walk to the entrance. It will enter the guild and there is where the
+interesting part starts.
+
+First it will fill the hopper with wheat until the
+flour bin is full. Once the bin is full it will start collecting the useful
+items in the guild. Those items are apples, jugs, empty pots and pie dishes.
+
+Once the inventory is full it will return to the ground floor and see what it
+can make. It will drop the unnecessary items. It will try to make apple pie's
+and jug of wines if it has the ingredients. If there are any apple pie's made
+it will go to the 1st floor and bake it.
+
+After that it will drop everything in the inventory and repeat the process. It
+will eventually run out of flour from the bin, that is why I capped it at
+30 minutes of time. Due to a lack of time I didn't make it re-collect wheat.
+
+Have fun judging this, please give it multiple tries before the final verdict
+is given.
+
+Greetz,
+
+J J.
+
+PS: I included account details of a level 3, it might get attacked by a mugger
+when lodestone teleporting to edgeville.. so I would advise using your own!
+*}
+
+const
+  GRAPE = 0;
+  POT = 1;
+  APPLE = 2;
+  JUG = 3;
+  DISH = 4;
+  DOUGH = 5;
+
+type Item = record
+  Hue: Extended;
+  Sat: Extended;
+  Color: Integer;
+  Tol: Integer;
+  Uptext: TStringArray;
+end;
+
+var
+  HatAttempt, Timer: Integer;
+  Items: Array[0..4] of Item;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+  with Players[0] do
+  begin
+    Name        := '';
+    Pass        := '';
+    Pin         := '1234';
+    BoxRewards  := ['XP','xp','lamp'];
+    LampSkill   := Skill_Cooking;
+    Active      := True;
+  end;
+end;
+
+{* DeclareItems
+ * Sets up the item record for each item
+ * Pretty nice stuff
+}
+procedure DeclareItems;
+var
+  i: Integer;
+  Hues, Sats: Array of Extended;
+  Colors, Tols: TIntegerArray;
+
+begin
+  Hues := [0.21, 0.97, 0.40, 0.31, 0.40];
+  Sats := [0.94, 2.09, 0.36, 0.09, 0.36];
+  Colors := [6953849, 1717832, 2924866, 7500663, 2924866];
+  Tols := [18, 4, 14, 11, 14];
+
+  for i:=0 to 4 do
+  begin
+    Items[i].Hue := Hues[i];
+    Items[i].Sat := Sats[i];
+    Items[i].Color := Colors[i];
+    Items[i].Tol := Tols[i];
+    case i of
+      0: Items[i].Uptext := ['rap', 'pes', 'Grapes'];
+      1: Items[i].Uptext := ['pty', 'pot', 'Empty'];
+      2: Items[i].Uptext := ['apple', 'ooking', 'ng ap'];
+      3: Items[i].Uptext := ['ug', 'Jug', 'e Ju'];
+      4: Items[i].Uptext := ['dish', 'Pie', 'Pie dish'];
+    end;
+  end;
+end;
+
+{* FindAccurateObj
+ * Finds an object with great accuracy
+ * Uses multiple colors, tolerances and modifiers to make multiple TPA's that
+   store the points
+ * Once the points are stored it checks for nearby points in each array to
+   another array with a certain 'Distance'
+ * All nearby points are stored in a TPA. This TPA gets splitted into an ATPA
+ * The result is received by splitting each TPA in the ATPA, and then
+   calculating the middle of each TPA in the ATPA
+}
+function FindAccurateObj(Colors, Tolerances: TIntegerArray; HueMods, SatMods: TExtendedArray; Distance, X1, Y1, X2, Y2: Integer): TPointArray;
+var
+  i, j, k: Integer;
+  AreaCenter: TPoint;
+  Coords, ATPA: T2DPointArray;
+  TPA: TPointArray;
+
+begin
+  AreaCenter := Point((X1 + X2) / 2, (Y1 + Y2) / 2);
+  SetLength(Coords, High(Colors)+1);
+  SetColorToleranceSpeed(2);
+
+  for i:=0 to high(Colors) do
+  begin
+    SetColorspeed2Modifiers(HueMods[i], SatMods[i]);
+    FindColorsSpiralTolerance(AreaCenter.x, AreaCenter.y, Coords[i], Colors[i], X1, Y1, X2, Y2, Tolerances[i]);
+  end;
+
+  for i:=0 to high(Coords) do
+    for j:=0 to high(Coords[i]) do
+      for k:=0 to high(Coords) do
+      if not(i = k) then
+        if NearbyPointInArray(Coords[i][j], Distance, Coords[k]) then
+        begin
+          SetLength(TPA, Length(TPA)+1);
+          TPA[Length(TPA)-1] := Coords[i][j];
+          //writeln('near coord in array: ' + ToStr(Coords[i][j]));
+        end;
+
+  if Length(TPA) > 0 then
+  begin
+    SplitTPAWrap(TPA, Distance, ATPA);
+    SortATPASize(ATPA, true);
+    SetLength(Result, high(ATPA)+1);
+    for i:=0 to high(ATPA) do
+      Result[i] := MiddleTPA(ATPA[i]);
+  end;
+end;
+
+{* FindObjByTPA
+ * Finds an object by using a single combination of colors/tolerances/modifiers
+ * Multiple handlings are used with the TPA result to get a nice result
+ * Returns a TPointArray with possible points
+}
+function FindObjByTPA(Color, Tolerance: Integer; HueMod, SatMod: Extended; SplitSize, X1, Y1, X2, Y2: Integer): TPointArray;
+var
+  X, Y, i: Integer;
+  TPA: TPointArray;
+  ATPA: T2DPointArray;
+
+begin
+  SetColorToleranceSpeed(2);
+  SetColorspeed2Modifiers(HueMod, SatMod);
+
+  if FindColorsSpiralTolerance(X, Y, TPA, Color, X1, Y1, X2, Y2, Tolerance) then
+  begin
+    ATPA := SplitTPA(TPA, SplitSize);
+    SortATPASize(ATPA, True);
+    SetLength(Result, Length(ATPA));
+    for i:=0 to high(ATPA) do
+    begin
+       //SMART_DrawBox(GetTPABounds(ATPA[i]));
+       Result[i] := MiddleTPA(ATPA[i]);
+    end;
+    //SMART_DrawDots(Result);
+  end;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////// FUNCTIONS TO GET A CHEF'S HAT ////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+{* WaitUntilNotMoving
+ * Waits until the player is not moving anymore
+}
+procedure WaitUntilNotMoving;
+begin
+  Wait(RandomRange(300, 600));
+  while (IsMoving) do
+    Wait(RandomRange(150, 300));
+  Wait(RandomRange(300, 600));
+end;
+
+{* SwitchTab(Tab: Integer);
+ * Checks if the current tab is right, if not it changes and waits a bit
+}
+procedure SwitchTab(Tab: Integer);
+begin
+  if not(GetCurrentTab = Tab) then
+  begin
+    GameTab(Tab);
+    Wait(RandomRange(500, 1000));
+  end;
+end;
+
+{* LodestoneTo(String location)
+ * Lodestone teleports to Lumbridge or Edgeville
+ * Once arrived in the desired location, it rests until more than 80% energy
+}
+function LodestoneTo(Location: String): boolean;
+var
+  X, Y, HomeTeleport, T: Integer;
+  S: String;
+
+begin
+  SwitchTab(tab_Magic);
+
+  HomeTeleport := DTMFromString('mbQAAAHicY2VgYFjIxsCwgA1CzwDiVUB8lomB4QgQXwPic1C878gnhrY5N1AwP1A/OmbEgsEAAMfVEgE=');
+  if FindDTM(HomeTeleport, X, Y, MIX1, MIY1, MIX2, MIY2) then
+  begin
+    MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+    ClickMouse2(1);
+    if WaitFunc(@LodestoneScreen, 500, 2500) then
+    begin
+      case location of
+        'lumbridge': MouseBox(320, 233, 334, 245, 1);
+        'edgeville': MouseBox(289, 148, 299, 162, 1);
+      end;
+      Wait(RandomRange(17500, 22500));
+      MarkTime(t);
+      SetRest;
+      while(TimeFromMark(T) < 20000) do
+      begin
+        Wait(RandomRange(1000, 2000));
+        if (GetMMLevels('run', S) >= RandomRange(80, 90)) then
+          break;
+      end;
+      Result := True;
+    end;
+  end;
+  FreeDTM(HomeTeleport);
+end;
+
+{* ToBeefyBills
+ * Walks from the Lumbridge Lodestone to Beefy Bills by using radial walking
+   and multiple SPS options.
+}
+function ToBeefyBills: boolean;
+var
+  X, Y, Attempts: Integer;
+  TPA, QuestToBill: TPointArray;
+  MyPos, P, T: TPoint;
+
+begin
+  SymbolAccuracy := 0.6;
+  SPS_Setup(RUNESCAPE_SURFACE, ['11_8', '11_9']);
+  QuestToBill := [Point(4701, 3569), Point(4701, 3563), Point(4699, 3555),
+                  Point(4697, 3550), Point(4692, 3547), Point(4683, 3545),
+                  Point(4675, 3544), Point(4668, 3545), Point(4655, 3544),
+                  Point(4647, 3544), Point(4637, 3543), Point(4625, 3541),
+                  Point(4615, 3540), Point(4609, 3535), Point(4602, 3530),
+                  Point(4598, 3525), Point(4597, 3517), Point(4595, 3511),
+                  Point(4596, 3505), Point(4596, 3497), Point(4594, 3488),
+                  Point(4595, 3481), Point(4596, 3469), Point(4593, 3460),
+                  Point(4592, 3454), Point(4589, 3437), Point(4584, 3433),
+                  Point(4578, 3429), Point(4572, 3426), Point(4566, 3423),
+                  Point(4559, 3418), Point(4554, 3413), Point(4548, 3409),
+                  Point(4544, 3402), Point(4543, 3389), Point(4547, 3385),
+                  Point(4551, 3387)];
+
+  {* Symbol Radial Walking
+   * Using multiple symbols to roughly know our position.
+   * While one of these symbols is found we can radial walk using the road
+  }
+  while FindSymbolsMulti(TPA, ['rest', 'dungeon', 'anvil', 'training dummy', 'furnace']) do
+  begin
+    Inc(Attempts);
+    if (Attempts > 15) then
+      break;
+    RadialWalkTolerance(5198671, 330, 359, 70, RandomRange(-2, 2), RandomRange(-2, 2), 25)
+  end;
+
+  {* SPS Walking
+   * Checking were we got with the radial walk with symbols
+   * If the quest symbol is found we can use our path, else we need to walk
+     to the spot where symbol radial walk would've gotten us. We can get there
+     by using blindwalk
+  }
+  if FindSymbol(X, Y, 'quest') then
+  begin
+    RadialWalkTolerance(5330003, 250, 350, 70, RandomRange(-2, 2), RandomRange(-2, 2), 25);
+
+    if SPS_WalkPath(QuestToBill) then
+      Result := True
+  end else
+  begin
+    MyPos := SPS_GetMyPos;
+    P := Point(RandomRange(4663, 4679), RandomRange(3535, 3551));
+    if SPS_BlindWalk(P) then
+    begin
+      if SPS_WalkPath(QuestToBill) then
+        Result := True;
+    end else
+    begin
+      T := Point(RandomRange(4543, 4555), RandomRange(3375, 3383));
+      if SPS_BlindWalk(T) then
+        Result := True;
+    end;
+  end;
+end;
+
+{* BeefyCheck
+ * If the shop symbol is found we are at Beefy Bill
+ * However, the shop symbol is in Lumbridge aswell so we check if we aren't
+   finding some symbols that are in lumbridge
+ * Also waits until we are done with walking because the function is called
+   after walking there
+}
+function BeefyCheck: Boolean;
+var
+  X, Y: Integer;
+
+begin
+  WaitUntilNotMoving;
+
+  if FindSymbol(X, Y, 'shop') then
+  begin
+    if not FindSymbol(X, Y, 'training dummy') then
+      Result := True;
+  end;
+end;
+
+{* TradeBeefyBill
+ * Uses FindAccurateObj to locate BeefyBill
+ * Beefy Bill's colors are similar to the cow & wagon, but by using multiple
+   colors Beefy Bill gets detected properly
+}
+function TradeBeefyBill: boolean;
+var
+  i: Integer;
+  TPA: TPointArray;
+
+begin
+  TPA := FindAccurateObj([6188652, 10537684], [13, 18], [0.67, 0.20], [0.07, 1.65], 5, MSX1, MSY1, MSX2, MSY2);
+  if Length(TPA) > 0 then
+  begin
+    for i:=0 to high(TPA) do
+    begin
+      MMouse(TPA[i].x, TPA[i].y, RandomRange(-3, 3), RandomRange(-3, 3));
+      if WaitUptextMulti(['eefy', 'ill'], 500) then
+      begin
+        ClickMouse2(0);
+        if WaitOptionMulti(['rade', 'Trade'], 500) then
+        begin
+          Result := True;
+          break;
+        end;
+      end;
+   end;
+  end;
+end;
+
+{* WaitShop
+ * Waits until the shop screen is up
+ * The one in the SRL repository does not work properly for Beefy Bill's shop
+}
+function WaitShop: boolean;
+begin
+  Result := CountColorTolerance(789516, MSX1, MSY1, MSX2, MSY2, 20) > 500;
+end;
+
+{* BuyChefsHat
+ * Buys a chef's hat in Beefy Bill's store.
+ * Uses the WaitShop function to determine when the shop is open
+}
+function BuyChefsHat: boolean;
+var
+  HatDTM, X, Y: Integer;
+
+begin
+  WaitUntilNotMoving;
+
+  if WaitFunc(@WaitShop, 500, 2500) then
+  begin
+    HatDTM := DTMFromString('mWAAAAHicY2FgYOhmYWDoAeImIJ4CxGVMDAwZTBC6DojnTJ0KVMUExyJAkh8JM6JhEAAAhgwGLQ==');
+    if FindDTM(HatDTM, X, Y, 16, 110, 484, 276) then
+    begin
+      MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+      ClickMouse2(0);
+      if WaitOptionMulti(['1', 'uy 1', 'Buy 1'], 500) then
+        Result := True;
+    end;
+    FreeDtm(HatDTM);
+  end;
+end;
+
+{* CloseShop
+ * Closes the shop and waits until the mage tab is visible.
+ * When the mage tab is visible we
+}
+procedure CloseShop;
+begin
+  MouseBox(498, 17, 503, 24, 1);
+  while not(TabExists(tab_Magic)) do
+    Wait(RandomRange(100, 200));
+  Wait(RandomRange(500, 1000));
+end;
+
+{* GetChefsHat
+ * Uses all of the functions above to get a chef's hat from any position
+   in RuneScape
+ * Has multiple failsafes to make sure we get the chef's hat as it's crucial
+   for the other steps in the script.
+ * There are also failsafes in the functions used in here.
+}
+function GetChefsHat: boolean;
+begin
+  if LodestoneTo('lumbridge') then
+    if ToBeefyBills then
+      if BeefyCheck then
+        if TradeBeefyBill then
+        begin
+          if BuyChefsHat then
+          begin
+            Wait(RandomRange(1500, 3000));
+            if not(PinScreen) then
+            begin
+              CloseShop;
+              Result := True;
+              Exit;
+            end else
+            begin
+              if InPin(Players[0].Pin) then
+              begin
+                if TradeBeefyBill then
+                  if BuyChefsHat then
+                  begin
+                    CloseShop;
+                    Result := True;
+                    Exit;
+                  end;
+              end;
+            end;
+          end;
+        end;
+
+  Inc(HatAttempt);
+  while HatAttempt < 5 do
+    GetChefsHat;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////////// FUNCTIONS TO GET WHEAT ///////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+{* ToEastEdge
+ * Walks from the edgeville lodestone to the eastern part of edgeville
+ * Relies on symbols and radial road walking
+}
+function ToEastEdge: boolean;
+var
+  Attempts, X, Y: Integer;
+  TPA: TPointArray;
+
+begin
+  SymbolAccuracy := 0.3;
+
+  while FindSymbolsMulti(TPA, ['water', 'shop', 'bank', 'lodestone', 'furnace']) do
+  begin
+    Inc(Attempts);
+    if (Attempts > 10) then
+      break;
+    RadialWalkTolerance(5197652, 80, 100, 70, RandomRange(-2, 2), RandomRange(-2, 2), 15)
+  end;
+
+  if FindSymbol(X, Y, 'furnace') then
+    Result := True;
+end;
+
+{* ToWheat
+ * Walks from eastern edgeville to the wheat spot north of the cooking guild
+ * Relies purely on SPS
+}
+function EdgeToWheat: boolean;
+var
+  PathToWheat: TPointArray;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['10_6', '10_7', '11_7', '11_6']);
+  PathToWheat := [Point(4288, 2618), Point(4296, 2615), Point(4303, 2610),
+                  Point(4310, 2607), Point(4316, 2604), Point(4324, 2599),
+                  Point(4334, 2596), Point(4342, 2591), Point(4348, 2583),
+                  Point(4351, 2576), Point(4360, 2576), Point(4371, 2577),
+                  Point(4375, 2581), Point(4377, 2589), Point(4378, 2597),
+                  Point(4378, 2607), Point(4378, 2615), Point(4378, 2622),
+                  Point(4378, 2631), Point(4377, 2639), Point(4377, 2646),
+                  Point(4378, 2656), Point(4376, 2666), Point(4377, 2676),
+                  Point(4378, 2684), Point(4379, 2692), Point(4379, 2701),
+                  Point(4379, 2713), Point(4379, 2728), Point(4380, 2737),
+                  Point(4380, 2745), Point(4381, 2755), Point(4381, 2766),
+                  Point(4384, 2772), Point(4388, 2774), Point(4389, 2783),
+                  Point(4380, 2789), Point(4379, 2797), Point(4378, 2808),
+                  Point(4380, 2815), Point(4384, 2821), Point(4390, 2825),
+                  Point(4396, 2825), Point(4402, 2823), Point(4405, 2819)];
+
+  if SPS_WalkPath(PathToWheat) then
+    Result := True;
+end;
+
+{* GetToWheat
+ * Uses all of the cooking guild functions to get to the guild
+ * Has multiple failsafes to make sure we get to the guild
+ * There are also failsafes in the functions used in here
+}
+function GetToWheat: boolean;
+begin
+  if LodestoneTo('edgeville') then
+    if ToEastEdge then
+      if EdgeToWheat then
+        Result := True;
+end;
+
+{* IsFenceClosed
+ * Checks if the fence is closed
+ * Uses a custom TPA function and uptext to define the result
+}
+function IsFenceClosed: boolean;
+var
+  i: Integer;
+  P: TPointArray;
+
+begin
+  P := FindObjByTPA(5077642, 9, 0.05, 0.06, 5, MSX1+50, MSY1+50, MSX2-50, MSY2-50);
+  for i:=0 to high(P) do
+  begin
+    MMouse(P[i].x, P[i].y, RandomRange(-2, 2), RandomRange(-2, 2));
+    if WaitUpTextMulti(['Open', 'pen'], 500) then
+    begin
+      Result := True;
+      break;
+    end;
+  end;
+end;
+
+{* PositionField
+ * Calculactes the wheat field entrance and walks there
+}
+procedure PositionField;
+var
+  P: TPointArray;
+
+begin
+  P := FindObjByTPA(2988238, 10, 0.28, 2.60, 5, MMX1+25, MMY1+25, MMX2-25, MMY2-25);
+  MMouse(P[0].x, P[0].y, RandomRange(-2, 2), RandomRange(-2, 2));
+  ClickMouse2(1);
+  WaitUntilNotMoving;
+end;
+
+{* HandleFence
+ * Checks if the fence is opened or closed and makes a decision based on this
+ * Opens the fence if it's closed
+}
+function HandleFence: boolean;
+begin
+  PositionField;
+  WaitUntilNotMoving;
+  case IsFenceClosed of
+    True:  if WaitUpTextMulti(['Open', 'pen'], 500) then
+           begin
+             case RandomRange(0, 3) of
+               0, 1: begin;
+                       ClickMouse2(1);
+                       Result := True;
+                     end;
+               2: begin
+                    ClickMouse2(0);
+                    if WaitOptionMulti(['Open', 'pen'], 500) then
+                      Result := True;
+                  end;
+             end;
+           end;
+    False: Result := True;
+  end;
+  WaitUntilNotMoving;
+end;
+
+{* FullInv
+ * Checks if your inventory is full
+ * Returns true if it's full, false if it isn't full.
+}
+function FullInv: Boolean;
+begin
+  SwitchTab(tab_Inv);
+
+  if InvFull then
+    Result := True
+end;
+
+{* PickWheat
+ * Picks wheat
+ * Using TPA to get the wheat points
+}
+procedure PickWheat;
+var
+  i: Integer;
+  P: TPointArray;
+
+begin
+  P := FindObjByTPA(5939611, 12, 0.15, 0.73, 3, MSX1+50, MSY1+50, MSX2-50, MSY2-50);
+  SortTPAFrom(P, Point(MSCX, MSCY));
+
+  for i:=0 to high(P) do
+  begin
+    MMouse(P[i].x, P[i].y, RandomRange(-1, 1), RandomRange(-1, 1));
+    if WaitUpTextMulti(['heat', 'ick', 'Wheat', 'Pick'], 500) then
+    begin
+      ClickMouse2(1);
+      WaitUntilNotMoving;
+      Wait(RandomRange(300, 600));
+      break;
+    end;
+  end;
+end;
+
+{* EquipHat
+ * Equips the chef's hat to free inventory space and to gain access to the
+   Cooking guild
+}
+procedure EquipHat;
+var
+  HatDTM, X, Y: Integer;
+
+begin
+  Switchtab(tab_Inv);
+  HatDTM := DTMFromString('mWAAAAHicY2FgYOhmYWDoAeImIJ4CxGVMDAwZTBC6DojnTJ0KVMUExyJAkh8JM6JhEAAAhgwGLQ==');
+  if FindDTM(HatDTM, X, Y, MIX1, MIY1, MIX2, MIY2) then
+    Mouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5), 1);
+  FreeDTM(HatDTM);
+end;
+
+{* GetWheat
+ * Handles everything to get a full inventory of wheat
+}
+function GetWheat: boolean;
+var
+  MaxTime: Integer;
+
+begin
+  MaxTime := GetTimeRunning + 90000;
+  if HandleFence then
+    while ((GetTimeRunning < MaxTime) and not(FullInv)) do
+      while not(FullInv) do
+        PickWheat;
+
+  if GetTimeRunning < MaxTime then
+    Result := True;
+end;
+
+{* HandleWheat
+ * Handles everything to get a 14 wheat from scratch
+ * Lodestones to Edgeville, walks to the wheat, handles the fence and picks
+   an inventory full of wheat. In the meantime it also equips the chef's hat
+}
+function HandleWheat: boolean;
+begin
+  if GetToWheat then
+  begin
+    EquipHat;
+    if GetWheat then
+      Result := True;
+  end;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////// FUNCTIONS FOR THE COOKING GUILD ////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+{* PositionGuild
+ * Calculactes the route from wheat field to cooking guild entrance
+}
+function PositionGuild: boolean;
+var
+  TPA: TPointArray;
+  P: TPoint;
+
+begin
+  TPA := FindObjByTPA(2987217, 20, 0.26, 2.60, 5, MMX1+20, MMY1+20, MMX2-20, MMY2-20);
+  if Length(TPA) > 0 then
+  begin
+    SortTPAFrom(TPA, Point(MMCX, MMCY));
+    P := Point(TPA[0].x+5, TPA[0].y+75);
+    if (P.y > 160) then
+      P.y := 160;
+    MMouse(P.x, P.y, RandomRange(-3, 3), RandomRange(-3, 3));
+    ClickMouse2(1);
+    WaitUntilNotMoving;
+    Result := True;
+  end;
+end;
+
+{* EnterGuild
+ * Clicks on the Cooking Guild door
+ * Uses a TPA to find the door, because everything matches it lowers the angle
+}
+function EnterGuild: boolean;
+var
+  i: Integer;
+  TPA: TPointArray;
+
+begin
+  SetAngle(SRL_ANGLE_LOW);
+  TPA := FindObjByTPA(3760754, 13, 0.04, 0.46, 5, MSX1, MSY1, MSX2, MSY2);
+  SortTPAFrom(TPA, Point(MSCX, MSCY));
+  for i:=0 to high(TPA) do
+  begin
+    MMouse(TPA[i].x, TPA[i].y, RandomRange(-5, 5), RandomRange(-5, 5));
+    if WaitUptextMulti(['pen', 'oor', 'Open', 'Door'], 500) then
+    begin
+      ClickMouse2(1);
+      Result := True;
+      break;
+    end;
+  end;
+  Wait(RandomRange(1000, 2000));
+  SetAngle(SRL_ANGLE_HIGH);
+  WaitUntilNotMoving;
+end;
+
+{* ClimbStairs(Direction: String)
+ * Climbs the stairs in the chosen direction
+ * Combines two TPA's to detect the stairs properly
+}
+function ClimbStairs(Direction: String): boolean;
+var
+  i: Integer;
+  TPA: TPointArray;
+
+begin
+  //FindAccurateObj(colors, tols, hues, sats, dist, x1, y1, x2, y2);
+  TPA := FindAccurateObj([8164510, 9216424], [7, 12], [0.06, 0.13], [0.62, 0.45], 10, MSX1, MSY1, MSX2, MSY2);
+  for i:=0 to high(TPA) do
+  begin
+    SortTPAFrom(TPA, Point(MSCX, MSCY));
+    MMouse(TPA[i].x, TPA[i].y, RandomRange(-3, 3), RandomRange(-3, 3));
+    if WaitUptextMulti(['tair', 'case', 'Staircase'], 500) then
+    begin
+      ClickMouse2(0);
+      case Direction of
+        'up': if WaitOptionMulti(['up', 'Climb-up'], 1000) then Result := True;
+        'down': if WaitOptionMulti(['down', 'Climb-down'], 1000) then Result := True;
+      end;
+      WaitUntilNotMoving;
+      break;
+    end;
+  end;
+end;
+
+{* FindSymbolsString
+ * Searches the screen for multiple symbols
+ * Returns a TStringArray which contains the detected symbols
+}
+function FindSymbolsString(Names: TStringArray; Accuracy: Extended): TStringArray;
+var
+  i, X, Y, L: Integer;
+
+begin
+  SymbolAccuracy := Accuracy;
+  for i:=0 to high(Names) do
+  if FindSymbol(X, Y, Names[i]) then
+  begin
+    L := Length(Result);
+    SetLength(Result, L+1);
+    Result[L] := Names[i];
+  end;
+end;
+
+{* GuildFloor
+ * Uses symbols to define the floor the player is at
+}
+function GuildFloor: Integer;
+var
+  i, j: Integer;
+  SymbolList, DetectedSymbols: TStringArray;
+  Define: TBooleanArray;
+
+begin
+  SymbolList := ['water source', 'bank', 'mill', 'churn'];
+  SetLength(Define, Length(SymbolList));
+  DetectedSymbols := FindSymbolsString(SymbolList, 0.7);
+  for i:=0 to high(DetectedSymbols) do
+    for j:=0 to high(SymbolList) do
+      if (DetectedSymbols[i] = SymbolList[j]) then
+        begin
+          if j > 2 then
+            Result := 1
+          else
+            Result := 0;
+          exit;
+        end;
+  Result := 2;
+end;
+
+{* ToFloor
+ * Gets to the floor of choice
+ * Uses other custom made functions
+}
+procedure ToFloor(Floor: Integer);
+var
+  CurrentFloor, Dif: Integer;
+
+begin
+  CurrentFloor := GuildFloor;
+  writeln('Cur floor: ' + IntToStr(CurrentFloor));
+  while not(Floor = CurrentFloor) do
+  begin
+    Dif := Floor - CurrentFloor;
+    writeln('Dif: ' + IntToStr(Dif));
+    if (Dif > 0) then
+    begin
+      ClimbStairs('up');
+      Inc(CurrentFloor);
+    end else
+    begin
+      ClimbStairs('down');
+      Dec(CurrentFloor);
+    end;
+  end;
+end;
+
+{* ToHopper
+ * Gets to the hopper on the 2nd floor
+ * Uses other custom made functions
+}
+procedure ToHopper;
+var
+  CurrentFloor: Integer;
+  P: TPoint;
+
+begin
+  CurrentFloor := GuildFloor;
+  if not(CurrentFloor = 2) then
+    ToFloor(2);
+
+  P := Point(MMCX - 10, MMCY - 20);
+  MMouse(P.x, P.y, RandomRange(-2, 2), RandomRange(-2, 2));
+  ClickMouse2(1);
+  WaitUntilNotMoving;
+end;
+
+{* FillHopper
+ * Fills the hopper
+ * Uses other custom made functions
+}
+procedure FillHopper;
+var
+  CurrentFloor, i: Integer;
+  TPA: TPointArray;
+
+begin
+  CurrentFloor := GuildFloor;
+  if not(CurrentFloor = 2) then
+  begin
+    ToFloor(2);
+    ToHopper;
+  end;
+
+  TPA := FindObjByTPA(5661540, 14, 0.12, 0.42, 5, MSX1, MSY1, MSX2, MSY2);
+  if Length(TPA) > 0 then
+  begin
+    for i:=0 to high(TPA) do
+    begin
+      MMouse(TPA[i].x, TPA[i].y, RandomRange(-5, 5), RandomRange(-3, 3));
+      if WaitUpTextMulti(['opp', 'per', 'Hopper'], 500) then
+      begin
+        ClickMouse2(1);
+        Wait(RandomRange(1500, 2000));
+        break;
+      end;
+    end;
+  end;
+end;
+
+{* OperateControls
+ * Operates the controls
+ * Uses other custom made functions
+}
+procedure OperateControls;
+var
+  CurrentFloor, i: Integer;
+  TPA: TPointArray;
+
+begin
+  CurrentFloor := GuildFloor;
+  if not(CurrentFloor = 2) then
+  begin
+    ToFloor(2);
+    ToHopper;
+  end;
+
+  TPA := FindObjByTPA(1125686, 4, 0.12, 0.52, 5, MSX1, MSY1, MSX2, MSY2);
+  if Length(TPA) > 0 then
+  begin
+    for i:=0 to high(TPA) do
+    begin
+      MMouse(TPA[i].x, TPA[i].y, RandomRange(-3, 3), RandomRange(-3, 3));
+      if WaitUpTextMulti(['rate', 'control', 'Operate'], 500) then
+      begin
+        ClickMouse2(1);
+        Wait(RandomRange(1500, 2000));
+        break;
+      end;
+    end;
+  end;
+end;
+
+{* GoAndEnterGuild
+ * Walks to the cooking guild and enters
+}
+function GoAndEnterGuild: Boolean;
+begin
+  if PositionGuild then
+    if EnterGuild then
+      Result := True;
+end;
+
+{* MakeFlour
+ * Walks to the cooking guild and enters
+ * Climbs to the right floor
+ * Makes flour from the wheat
+}
+function MakeFlour: boolean;
+var
+  Wheat, X, Y, i: Integer;
+  Box: TBox;
+
+begin
+   ToFloor(2);
+   ToHopper;
+   SwitchTab(tab_Inv);
+   Wheat := DTMFromString('mWAAAAHicY2FgYHBiYmBwAWJ7IHYGYkFGBgZpIJYBYh4gntSZxNBcHcFQkOnNsHB6DgM/UA8yZkTDIAAAbbkHSA==');
+   while(FindDTM(Wheat, X, Y, MIX1, MIY1, MIX2, MIY2)) do
+   begin
+      MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+     ClickMouse2(1);
+     FillHopper;
+     OperateControls;
+
+     if FindBlackChatMessage('flour bin') then
+     begin
+       for i:=0 to 27 do
+       begin
+         Box := IntToBox(InvBox(i).X1, InvBox(i).Y1, InvBox(i).X2, InvBox(i).Y2);
+         if FindDTM(Wheat, X, Y, Box.X1, Box.Y1, Box.X2, Box.Y2) then
+         begin
+           MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+           ClickMouse2(0);
+           WaitOptionMulti(['rop', 'Drop'], 500);
+         end;
+       end;
+       break;
+     end;
+     Result := True;
+   end;
+   FreeDTM(Wheat);
+end;
+
+{* MiddleFloor
+ * Walks to the middle of the floor
+ * Is smart and knows what to do for each floor
+ * Inverts the black color
+}
+procedure MiddleFloor;
+var
+  OurFloor, X, Y: Integer;
+  TPA, TPA2, TPA3: TPointArray;
+  P: TPoint;
+  Box: TBox;
+
+begin
+  OurFloor := GuildFloor;
+  if (OurFloor = 0) then
+  begin
+    SymbolAccuracy := 0.5;
+    if FindSymbol(X, Y, 'bank') then
+    begin
+      MMouse(X-10, Y+10, RandomRange(-2, 2), RandomRange(-2, 2));
+      ClickMouse2(1);
+      WaitUntilNotMoving;
+    end;
+  end else
+  begin
+    FindColorsTolerance(TPA, 0, MMX1, MMY1, MMX2, MMY2, 30);
+    Box := IntToBox(MMCX-50, MMCY-50, MMCX+50, MMCY+50);
+    TPA2 := TPAFromBox(Box);
+    TPA3 := ClearTPAFromTPA(TPA2, TPA);
+    P := MiddleTPA(TPA3);
+    MMouse(P.x+3, P.y+3, RandomRange(-3, 3), RandomRange(-3, 3));
+    ClickMouse2(1);
+    WaitUntilNotMoving;
+  end;
+end;
+
+{* Loot
+ * Loops through all choices and makes a smart decision of what item to loot
+ * Can't find the pie dish accurately using it's own colors, so a smart way of
+   detection it the other way around has been added :)
+ * MATH
+}
+procedure Loot(Name: Integer);
+var
+  TPA, PlayerBox: TPointArray;
+  P: TPoint;
+  Dist: Extended;
+  i, L, T: Integer;
+
+begin
+  TPA := GetMiniMapDotsIn('item', MMX1, MMY1, MMX2, MMY2);
+  if (Length(TPA)>0) then
+  begin
+    SortTPAFrom(TPA, Point(MMCX, MMCY));
+    P := Point(TPA[0].x, TPA[0].y);
+    Dist := Abs(MMCX-P.x) + Abs(MMCY-P.y);
+
+    if Dist > 20 then
+    begin
+      MMouse(P.x, P.y, RandomRange(-2, 2), RandomRange(-2, 2));
+      ClickMouse2(1);
+      WaitUntilNotMoving;
+    end;
+
+    PlayerBox := TPAFromBox(IntToBox(MSCX-20, MSCY-35, MSCX+20, MSCY+15));
+    //SMART_DrawBox(IntToBox(MSCX-20, MSCY-35, MSCX+20, MSCY+15));
+    TPA := FindObjByTPA(Items[Name].Color, Items[Name].Tol, Items[Name].Hue, Items[Name].Sat, 3, MSX1, MSY1, MSX2, MSY2);
+    TPA := ClearTPAFromTPA(TPA, PlayerBox);
+    if Name = 4 then
+    begin
+      if Length(TPA) > 0 then
+        for i:=0 to high(TPA) do
+          TPA[i] := Point(TPA[i].x + 35, TPA[i].y);
+    end;
+
+    L := Length(TPA);
+    if L > 0 then
+    begin
+      SortTPAFrom(TPA, Point(MSCX, MSCY));
+      writeln('detection');
+      MarkTime(T);
+      for i:=0 to L-1 do
+      begin
+        if TimeFromMark(T) > 2000 then
+          break;
+
+        Dist := Abs(MSCX-TPA[i].x) + Abs(MSCY-TPA[i].y);
+        //writeln(Dist);
+        if ((Dist > 10) and (Dist < 300)) then
+        begin
+          //writeln('moving mouse');
+          MMouse(TPA[i].x, TPA[i].y, RandomRange(-1, 1), RandomRange(-1, 1));
+          if WaitUptextMulti(Items[Name].Uptext, 500) then
+          begin
+            ClickMouse2(1);
+            Wait(RandomRange(1000, 2000));
+            WaitUntilNotMoving;
+            break;
+          end;
+        end;
+      end;
+    end;
+  end;
+end;
+
+{* CountInv
+ * Counts the amount of items in the inventory
+}
+function CountInv: Integer;
+var
+  i, count: Integer;
+
+begin
+  SwitchTab(tab_Inv);
+  for i:=1 to 29 do
+    if ExistsItem(i) then
+    Inc(count);
+  Result := count;
+end;
+
+{* Loot2ndFloor
+ * Loots stuff from the 2nd floor
+}
+function Loot2ndFloor: boolean;
+var
+  count1, count2: Integer;
+
+begin
+  count1 := CountInv;
+
+  count2 := CountInv;
+  if (count2 > count1) then
+    Result := True;
+end;
+
+{* Loot1stFloor
+ * Loots stuff from the 1st floor
+}
+function Loot1stFloor: boolean;
+var
+  count1, count2: Integer;
+
+begin
+  count1 := CountInv;
+
+  count2 := CountInv;
+  if (count2 > count1) then
+    Result := True;
+end;
+
+{* LootAll
+ * Loots stuff from the 1st & 2nd floor
+}
+procedure LootAll;
+begin
+  DeclareItems;
+  MiddleFloor;
+  while(FullInv = False) do
+  begin
+    ToFloor(1);
+    Loot(DISH);
+    Loot(APPLE);
+    Loot(APPLE);
+
+    ToFloor(2);
+    Loot(GRAPE);
+    Loot(POT);
+    Loot(APPLE);
+    Loot(JUG);
+  end;
+  writeln(FullInv);
+end;
+
+{* GetFlourFromBin
+ * Gets flour from the bin :P
+}
+procedure GetFlourFromBin;
+var
+  TPA: TPointArray;
+  i, FloorNr: Integer;
+
+begin
+  FloorNr := GuildFloor;
+  if not(GuildFloor = 0) then
+    ToFloor(0);
+
+  TPA := FindObjByTPA(15793147, 5, 1.52, 15.44, 5, MSX1, MSY1, MSX2, MSY2);
+  if Length(TPA)>0 then
+  begin
+    for i:=0 to high(TPA) do
+    begin
+      MMouse(TPA[i].x, TPA[i].y, RandomRange(-5, 5), RandomRange(-5, 5));
+      if WaitUptextMulti(['flour', 'bin', 'our'], 500) then
+      begin
+        ClickMouse2(1);
+        WaitUntilNotMoving;
+        Wait(RandomRange(7500, 10000));
+        break;
+      end;
+    end;
+  end;
+end;
+
+{* ClickOnDrain
+ * Clicks on the drain
+}
+procedure ClickOnDrain;
+var
+  TPA: TPointArray;
+  i: Integer;
+
+begin
+  TPA := FindObjByTPA(10000800, 7, 0.35, 0.22 , 5, MSX1, MSY1, MSX2, MSY2);
+  if Length(TPA)>0 then
+  begin
+    for i:=0 to high(TPA) do
+    begin
+      MMouse(TPA[i].x, TPA[i].y, RandomRange(-2, 2), RandomRange(-2, 2));
+      if WaitUptextMulti(['drain', 'and', 'Pump'], 500) then
+      begin
+        ClickMouse2(1);
+        WaitUntilNotMoving;
+        Wait(RandomRange(3000, 5000));
+        break;
+      end;
+    end;
+  end;
+end;
+
+{* FillJug
+ * Fills the jugs in your inventory
+}
+procedure FillJug;
+var
+  JugDTM, X, Y: Integer;
+
+begin
+  SwitchTab(tab_Inv);
+  JugDTM := DTMFromString('mWAAAAHicY2FgYPjJxsDwHYjfAjEzOwODCDMDAxMQiwKxJBBnpaUCVTHBMReQRMaMaBgEAEXmBLU=');
+
+  if FindDTM(JugDTM, X, Y, MIX1, MIY1, MIX2, MIY2) then
+  begin
+    MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+    ClickMouse2(1);
+    ClickOnDrain;
+  end;
+
+  FreeDTM(JugDTM);
+end;
+
+{* LoadIngredientDTMs
+ * Loads multiple DTMs
+}
+function LoadIngredientDTMs: TIntegerArray;
+var
+  JugDTM, DishDTM, AppleDTM, GrapeDTM, FlourDTM, DoughDTM: Integer;
+
+begin
+  JugDTM := DTMFromString('mggAAAHicY2NgYJjPxsAwD4insEHYs4B4LRALMzMwyAGxKBAzATEXEPMDcV5mJlAXEwbmB5LYMCMODAEAXvcF/w==');
+  DishDTM := DTMFromString('mrAAAAHic42BgYDjOxsCwiw1CHwLis0B8FYjPA/E+IH7NxMDwCogfAPEXKH4DxA+B+BEQZ/nrAU1hwon5gSQ+zEgAwwAA4OoPQw==');
+  AppleDTM := DTMFromString('mWAAAAHicY2FgYJjNxsAwGYjnAPFiIH7OBMHvgPgZEMfOEQWqYoJjLiCJjBnRMAgAAOUFB3Q=');
+  GrapeDTM := DTMFromString('mggAAAHicY2NgYDjFxsBwAIhPAPF5KH0WiI2ZGRhMgdgOiC2BWAuI9YGYgYEJB8YOGHFgCAAAsH4GPQ==');
+  FlourDTM := DTMFromString('mrAAAAHic42BgYDjBxsCwG4hPAfFpIL4GxPuB+DIQHwTiE0wQvBOIrwLxSSDeC8QHgPgyEBf5GwFNYcKJ+YEkPsxIAMMAAGYSDkI=');
+  DoughDTM := DTMFromString('mbQAAAHicY2VgYHjHxsDwHIjfQ/E3IJ7FzMAwB4inA/EiIJ4NxM1NhUDVTCiYH0iiY0YsGAwAKmAJtA==');
+  Result := [GrapeDTM, FlourDTM, AppleDTM, JugDTM, DishDTM, DoughDTM];
+end;
+
+{* CountIngredients
+ * Counts the stuff you have looted
+}
+function CountIngredients: T2DPointArray;
+var
+  X, Y, i, j, L: Integer;
+  Ingredients: TIntegerArray;
+  Box: TBox;
+
+begin
+  Ingredients := LoadIngredientDTMs;
+  SwitchTab(tab_Inv);
+
+  SetLength(Result, Length(Ingredients)+1);
+  for i:=0 to high(Ingredients) do
+    for j:=1 to 28 do
+    begin
+      Box := InvBox(j);
+      if FindDTM(Ingredients[i], X, Y, Box.X1, Box.Y1, Box.X2, Box.Y2) then
+      begin
+        L := Length(Result[i]);
+        SetLength(Result[i], L+1);
+        Result[i][L] := Point(X, Y);
+        writeln(IntToStr(i) + ': ' + ToStr(Result[i][L]));
+      end;
+    end;
+
+  FreeDTMs(Ingredients);
+end;
+
+{* DropIngredients
+ * Drops the ingredients that we can't use with our inventory
+ * One of the best procedures in this script IMO.
+}
+procedure DropIngredients;
+var
+  Lengths: TIntegerArray;
+  Positions: T2DPointArray;
+  i, NUMBER, Difference: Integer;
+
+begin
+  Positions := CountIngredients;
+  SetLength(Lengths, Length(Positions)+1);
+  for i:=0 to high(Positions) do
+    Lengths[i] := Length(Positions[i]);
+
+  // Same amount of apples as dishes
+  if not(Lengths[APPLE] = Lengths[DISH]) then
+  begin
+    Difference := Floor(Abs(Lengths[APPLE]-Lengths[DISH]));
+    writeln('Difference between apple and dishes: ' + IntToStr(Difference));
+    if Lengths[APPLE] > Lengths[DISH] then
+      NUMBER := APPLE
+    else
+      NUMBER := DISH;
+    for i:=0 to Difference-1 do
+    begin
+      MMouse(Positions[NUMBER][i].x, Positions[NUMBER][i].y, RandomRange(-3, 3), RandomRange(-3, 3));
+      if WaitUpTextMulti(['Apple', 'Pie dish'], 250) then
+      begin
+        ClickMouse2(0);
+        WaitOptionMulti(['rop', 'Drop'], 500);
+      end;
+      writeln(IntToStr(i) + ': ' + IntToStr(Lengths[NUMBER]));
+    end;
+  end;
+
+  // Same amount of jugs as grapes
+  if not(Lengths[JUG] = Lengths[GRAPE]) then
+  begin
+    Difference := Floor(Abs(Lengths[JUG]-Lengths[GRAPE]));
+    writeln('Difference between jug and grape: ' + IntToStr(Difference));
+    if Lengths[JUG] > Lengths[GRAPE] then
+      NUMBER := JUG
+    else
+      NUMBER := GRAPE;
+    for i:=0 to Difference-1 do
+    begin
+      MMouse(Positions[NUMBER][i].x, Positions[NUMBER][i].y, RandomRange(-3, 3), RandomRange(-3, 3));
+      if WaitUpTextMulti(['Jug', 'Grapes'], 250) then
+      begin
+        ClickMouse2(0);
+        WaitOptionMulti(['rop', 'Drop'], 500);
+      end;
+      writeln(IntToStr(i) + ': ' + IntToStr(Lengths[NUMBER]));
+    end;
+  end;
+
+  Wait(RandomRange(1000, 1500));
+end;
+
+{* DoughSelect
+ * Checks if we can do something with the dough or other ingredients
+}
+function DoughSelect: boolean;
+begin
+  Result := CountColorTolerance(4206603, 133, 400, 388, 465, 10) > 150;
+end;
+
+{* PieDough
+ * Makes pie dough by using the pot of flour on the drain
+}
+procedure PieDough;
+var
+  Locs: T2DPointArray;
+  PL, JL, R: Integer;
+
+begin
+  Locs := CountIngredients;
+  PL := Length(Locs[POT]);
+  JL := Length(Locs[JUG]);
+  if ((PL > 0) and (JL > 0)) then
+  begin
+    // Moving to a random pot
+    R := Random(PL);
+    MMouse(Locs[POT][r].x, Locs[POT][r].y, RandomRange(-3, 3), RandomRange(-3, 3));
+    ClickMouse2(1);
+    // Clicking on the drain
+    ClickOnDrain;
+    // Waiting for the option to make dough
+    if WaitFunc(@DoughSelect, 150, 1500) then
+    begin
+      MouseBox(226, 400, 297, 455, 1);
+      Wait(RandomRange(PL*750, PL*1500));
+    end;
+  end;
+end;
+
+{* PieMake
+ * Makes a raw apple pie
+}
+function PieMake: boolean;
+var
+  X, Y, ShellDTM: Integer;
+  DTMs: TIntegerArray;
+
+begin
+  DTMs := LoadIngredientDTMs;
+  ShellDTM := DTMFromString('mlwAAAHicY2dgYChkY2DIA+IkIC4A4logTgXiGiDWYWZgUAJibSA2A2I9IDYGYjUgnlvmCtTNhBVzAUl+HJgRD4YCANIoBls=');
+
+  // Clicking on dough
+  if FindDTM(DTMs[DOUGH], X, Y, MIX1, MIY1, MIX2, MIY2) then
+  begin
+    MMouse(X, Y, RandomRange(-2, 2), RandomRange(-2, 2));
+    ClickMouse2(1);
+    // Clicking on dish
+    if FindDTM(DTMs[DISH], X, Y, MIX1, MIY1, MIX2, MIY2) then
+    begin
+      MMouse(X, Y, RandomRange(-4, 4), RandomRange(-4, 4));
+      ClickMouse2(1);
+      // Using dough on dish to make pastry shell
+      if WaitFunc(@DoughSelect, 150, 1500) then
+      begin
+        MouseBox(236, 400, 283, 455, 1);
+        Wait(RandomRange(4000, 5000));
+        // Clicking on apple
+        if FindDTM(DTMs[APPLE], X, Y, MIX1, MIY1, MIX2, MIY2) then
+        begin
+          MMouse(X, Y, RandomRange(-4, 4), RandomRange(-4, 4));
+          ClickMouse2(1);
+          // Using apple on pie shell
+          if FindDTM(ShellDTM, X, Y, MIX1, MIY1, MIX2, MIY2) then
+          begin
+            MMouse(X, Y, RandomRange(-4, 4), RandomRange(-4, 4));
+            ClickMouse2(1);
+            // Making unfinished pie's
+            if WaitFunc(@DoughSelect, 150, 1500) then
+            begin
+              MouseBox(236, 400, 283, 455, 1);
+              Wait(RandomRange(4000, 5000));
+              Result := True;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+
+  FreeDTMs(DTMs);
+  FreeDTM(ShellDTM);
+end;
+
+{* WineMake
+ * Makes wine
+}
+procedure WineMake;
+var
+  X, Y: Integer;
+  DTMs: TIntegerArray;
+
+begin
+  FillJug;
+  DTMs := LoadIngredientDTMs;
+
+  if FindDTM(DTMs[JUG], X, Y, MIX1, MIY1, MIX2, MIY2) then
+  begin
+    MMouse(X, Y, RandomRange(-3, 3), RandomRange(-3, 3));
+    ClickMouse2(1);
+    if FindDTM(DTMs[GRAPE], X, Y, MIX1, MIY1, MIX2, MIY2) then
+    begin
+      MMouse(X, Y, RandomRange(-3, 3), RandomRange(-3, 3));
+      ClickMouse2(1);
+      if WaitFunc(@DoughSelect, 150, 1500) then
+      begin
+        MouseBox(236, 400, 283, 455, 1);
+        Wait(RandomRange(3000, 4000));
+      end;
+    end;
+  end;
+
+  FreeDTMs(DTMs);
+end;
+
+{* CookPie
+ * Cooks the pie's we have made, if any.
+}
+procedure CookPie;
+var
+  CurFloor, ApplePieDTM, i, X, Y: Integer;
+  TPA: TPointArray;
+
+begin
+  CurFloor := GuildFloor;
+  if not(CurFloor = 1) then
+    ToFloor(1);
+
+  ApplePieDTM := DTMFromString('mbQAAAHicY2VgYDjBhsAHgPgiEB9lYmDYC8SXmCBsEF7X7ANUzQTGaxp9wHx+IA8dM2LBYAAAtjIMvA==');
+  if FindDTM(ApplePieDTM, X, Y, MIX1, MIY1, MIX2, MIY2) then
+  begin
+    MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+    ClickMouse2(1);
+    TPA := FindObjByTPA(1384894, 12, 0.02, 0.47, 8, MSX1, MSY1, MSX2, MSY2);
+    for i:=0 to high(TPA) do
+    begin
+      MMouse(TPA[i].x, TPA[i].y, RandomRange(-3, 3), RandomRange(-3, 3));
+      if WaitUpTextMulti(['ange', 'Range'], 500) then
+      begin
+        ClickMouse2(1);
+        WaitUntilNotMoving;
+        if WaitFunc(@DoughSelect, 150, 1500) then
+        begin
+          MouseBox(236, 400, 283, 455, 1);
+          Wait(RandomRange(5000, 7000));
+        end;
+        break;
+      end;
+    end;
+  end;
+  FreeDTM(ApplePieDTM);
+end;
+
+{* DropEverything
+ * Drops everything in your inventory to start fresh again!
+}
+procedure DropEverything;
+var
+  i: Integer;
+  Box: TBox;
+  P: TPoint;
+
+begin
+  for i:=1 to 28 do
+    if ExistsItem(i) then
+    begin
+      Box := InvBox(i);
+      P := Point((Box.X1+Box.X2)/2, (Box.Y1+Box.Y2)/2);
+      MMouse(P.x, P.y, RandomRange(-5, 5), RandomRange(-5, 5));
+      ClickMouse2(0);
+      WaitOptionMulti(['rop', 'Drop'], 500);
+    end;
+end;
+
+begin
+  // SETTING UP SMART PROPERLY
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayerToLob;
+  OpenWorldScreen;
+  SelectWorld(10);
+  LoginPlayer;
+  Wait(1000 + Random(3000));
+  ClickNorth(SRL_ANGLE_HIGH);
+
+  // GETTING A CHEF'S HAT, WHEAT, AND ENTERING THE GUILD
+  GetChefsHat;
+  HandleWheat;
+  GoAndEnterGuild;
+
+  // INSIDE THE COOKING GUILD! THE INTERESTING PART!
+  MakeFlour;
+  MarkTime(Timer);
+  while(TimeFromMark(Timer) < 1800000) do
+  begin
+    LootAll;
+    GetFlourFromBin;
+    CountIngredients;
+    DropIngredients;
+    PieDough;
+    PieMake;
+    WineMake;
+    CookPie;
+    DropEverything;
+  end;
+  Logout;
+end.

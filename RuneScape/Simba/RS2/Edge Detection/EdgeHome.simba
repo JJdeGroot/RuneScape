@@ -1,0 +1,87 @@
+program new;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i srl/srl/misc/paintsmart.simba}
+{$loadlib irokiplugin}
+
+var
+  C :Integer;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+end;
+
+procedure Edges(X1, Y1, X2, Y2, Threshold: Integer);
+var
+  Numb, Nearest, i, a: Integer;
+  Difference, Lowest: Extended;
+  Colors: TIntegerArray;
+  ColorCoords, Edge: TPointArray;
+
+begin
+  // Grabbing all the colors and asigning a TPoint to them.
+  Colors := GetColorsBox(X1, Y1, X2, Y2, False);
+  ColorCoords := TPAFromBox(IntToBox(X1, Y1, X2, Y2));
+
+  // Finding the edges
+  for i := 0 to (Length(Colors) - 2) do
+  begin
+    Numb := i mod 3 * 8;
+    if Abs((Colors[i] shr Numb and $ff) - (Colors[i + 1] shr Numb and $ff)) > Threshold then
+    begin
+      SetLength(Edge, Length(Edge) + 1);
+      Edge[Length(Edge) - 1] := ColorCoords[i];
+    end;
+  end;
+
+  // Drawing the edges
+  SMART_DrawDotsEx(True, TPAFromBox(IntToBox(X1, Y1, X2, Y2)), RGBtoColor(1, 1, 1));
+  RAaSTPA(Edge, 10);
+  SMART_DrawDotsEx(False, Edge, clGreen);
+  Wait(5000);
+
+  // Calculating the lines to connect the points
+  for i:=0 to high(Edge) do
+  begin
+    Lowest := 10000;
+    for a:=0 to high(Edge) do
+    begin
+      Difference := (Abs(Edge[a].X - Edge[i].X) + Abs(Edge[a].Y - Edge[i].Y));
+      if (Difference < Lowest) and (Difference > 0) then
+      begin
+        Lowest := Difference;
+        Nearest := a;
+      end;
+    end;
+    SMART_DrawLine(False, Edge[i], Edge[Nearest], clWhite);
+  end;
+end;
+
+begin
+  SetUpLogin;
+  MarkTime(C);
+  Edges(MSX1, MSY1, MSX2, MSY2, 6);
+  Writeln(TimeFromMark(C));
+end.

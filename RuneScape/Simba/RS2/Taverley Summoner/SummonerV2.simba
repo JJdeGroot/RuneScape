@@ -1,0 +1,518 @@
+program JJsSummoner;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i SRL/SRL/misc/debug.simba}
+{$i SRL/SRL/misc/paintsmart.simba}
+
+var
+  Debug, FoundMagestix, FoundObelisk: Boolean;
+  B, T, PouchesMade, Selling, PouchesToMake,  StartTime, SummonXp, ScrollXp,
+  WaitTime, MagestixX, MagestixY, ObeliskX, ObeliskY: Integer;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 53;
+  Smart_Members := True;;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+end;
+
+procedure Setup;
+begin
+  Debug := False;                 // Debugging? True or False
+  WaitTime := 500 + Random(500);  // If the script is too fast for you, increase this
+  PouchesToMake := 32000;         // How many pouches to make?
+  SummonXp := 96;                 // How many summoning xp per pouch? Don't use commas or dots here! (just divide the xp to get the right number)
+  ScrollXp := 1;                  // How many summoning xp per scroll? Don't use commas or dots here! (just divide the xp to get the right number)
+  Selling := 1;
+  B := 0;
+  MarkTime(t);
+end;
+
+function IsShopUp: Boolean;
+begin
+  ColorToleranceSpeed(1);
+  if Debug then
+    WriteLn('IsShopUp colors: '+IntToStr(CountColorTolerance(3779306, 490, 81, 501, 203, 15))+'');
+  Result := (CountColorTolerance(3779306, 490, 81, 501, 203, 15) > 100); // Orange scrolling bar
+end;
+
+function IsObeliskUp: Boolean;
+begin
+  ColorToleranceSpeed(1);
+  if Debug then
+    WriteLn('IsObeliskUp colors: '+IntToStr(CountColorTolerance(105157, 198, 35, 216, 50, 1))+'');
+  Result := (CountColorTolerance(105157, 200, 37, 211, 47, 1) > 30); // Yellow X
+end;
+
+function IsMainSpotUp: Boolean;
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.02, 1.56);
+  if Debug then
+    WriteLn('IsMainSpotUp colors: '+IntToStr(CountColorTolerance(6529477, MSX1, MSY1, MSX2, MSY2, 11))+'');
+  Result := (CountColorTolerance(6529477, MSX1, MSY1, MSX2, MSY2, 11) > 2000); // Light brown of the logs
+end;
+
+procedure Antiban;
+begin
+  case Random(30000) of
+    0..9:   begin
+              WriteLn('Antiban active');
+              HoverSkill('summoning', False);
+              Wait(100 + Random(300));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    10..16: begin
+              WriteLn('Antiban active');
+              RandomRClick;
+              Wait(200 + Random(600));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+             end;
+    20..29: begin
+              WriteLn('Antiban active');
+              PickUpMouse;
+              Wait(150 + Random(450));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    30..39: begin
+              WriteLn('Antiban active');
+              RandomMovement;
+              Wait(200 + Random(400));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    40..54: begin
+              WriteLn('Antiban active');
+              BoredHuman;
+              Wait(500 + Random(1000));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    50..54: begin
+              WriteLn('Antiban active');
+              ExamineInv;
+              Wait(250 + Random(400));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    60..74: begin
+              WriteLn('Antiban active');
+              SleepAndMoveMouse(1000 + Random(5000));
+              Wait(100 + Random(300));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    70..89: begin
+              WriteLn('Antiban active');
+                case Random(7) of
+                  0: Wait(1000 + Random(10000));
+                  1: Wait(2000 + Random(4000));
+                  2: Wait(3000 + Random(1500));
+                  3: Wait(7500 + Random(2500));
+                  4: Wait(5000 + Random(5000));
+                  5: Wait(5000 + Random(20000));
+                  6: Wait(20000 + Random(5000));
+                end;
+                Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                WriteLn('Antiban done');
+            end;
+  end;
+end;
+
+function SellTime: Boolean;
+begin
+  WriteLn('Checking if we need to sell stuff');
+  Inc(B);
+  Inc(Selling);
+  if Debug then
+    WriteLn('Selling Integer: '+IntToStr(Selling)+' and B Integer: '+IntToStr(B)+'');
+  if (B > 22) then
+    begin
+      B := 0;
+      Selling := (Selling - 1);
+    end;
+  if (Selling = 2) then
+    begin
+      Selling := 0;
+      Result := True;
+    end;
+end;
+
+function TradeMagestix: Boolean;
+var
+  Colors: TPointArray;
+  SplitColors: Array of TPointArray;
+  P: TPoint;
+
+begin
+  FindNormalRandoms;
+  Antiban;
+  if not(FoundMagestix) then
+    begin
+      ColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(0.17, 1.45);
+      if FindColorsSpiralTolerance(MSCX, MSCY, Colors, 1546700, MSCX-30, MSCY-80, MSCX+30, MSCY, 14) then
+        begin
+          SplitTPAExWrap(Colors, 3, 3, SplitColors);
+          SortATPASize(SplitColors, True);
+          P := MiddleTPA(SplitColors[0]);
+          if Debug then
+            begin
+              SMART_DrawDotsEx(True, Colors, clBlue); // Blue dots @ founded colors
+              SMART_DrawBoxes(False, [GetTPABounds(Colors)], clYellow); // Box around all found colors
+              SMART_DrawBoxes(False, [GetTPABounds(SplitColors[0])], clYellow); // Box around sum icon above head
+              SMART_DrawDotsEx(False, TPAFromBox(IntToBox(P.X-6, P.Y+20, P.X+6, P.Y+30)), clRed); // Area to click in
+              DebugATPABounds(SplitColors);
+            end;
+          MMouse(P.X+RandomRange(-4, 4), P.Y+RandomRange(20, 28), RandomRange(-5, 5), RandomRange(-5, 5));
+          if WaitUpTextMulti(['alk', 'ages', 'tix'], 500) then
+            begin
+              FoundMagestix := True;
+              MagestixX := P.X;
+              MagestixY := P.Y+24;
+              if Debug then
+                begin
+                  WriteLn('X-coord: '+IntToStr(MagestixX)+'');
+                  WriteLn('Y-coord:'+IntToStr(MagestixY)+'');
+                end;
+              ClickMouse2(0);
+              if WaitOptionMulti(['rade', 'Trade'], 500) then
+                Result:=True;
+              Antiban;
+            end;
+        end;
+    end else
+    begin
+      MMouse(MagestixX, MagestixY, RandomRange(-2, 2), RandomRange(-2, 2));
+      ClickMouse2(0);
+      if WaitOptionMulti(['rade', 'Trade'], 500) then
+        Result:=True;
+      Antiban;
+    end;
+end;
+
+function SellSecondary: Boolean;
+begin
+  if WaitFunc(@IsShopUp, RandomRange(50, 100), 5000) then
+    begin
+      if Debug then
+        WriteLn('Shop screen is up');
+      WriteLn('Selling secondary');
+      if SellTime then
+        begin
+          Mousebox(567, 217, 589, 237, 0);
+          if WaitOptionMulti(['50', 'Sell 50', 'l 5'], 1000) then
+            Result:=True;
+          Wait(WaitTime);
+        end else
+        begin
+          Result:=True;
+        end;
+    end;
+end;
+
+function BuySecondary: Boolean;
+begin
+  WriteLn('Buying secondary');
+  Mousebox(182, 195, 212, 221, 0); // FIRST SPOT
+  //Mousebox(241, 199, 261, 218, 0); // SECOND SPOT IF YOU FAILED
+  if WaitOptionMulti(['50', 'y 5', 'All', '500', 'Buy 50'], 1000) then
+    begin
+      Wait(WaitTime);
+      if PinScreen then
+        begin
+          InPin(Players[0].Pin);
+          Wait(2000 + Random(2000));
+          TradeMagestix;
+          BuySecondary;
+        end;
+      Result:=True;
+    end;
+end;
+
+function CloseShop: Boolean;
+begin
+  Mousebox(491, 13, 506, 27, 1);
+  if WaitFunc(@IsMainSpotUp, RandomRange(50, 100), 5000) then
+    begin
+      if Debug then
+      WriteLn('Main spot screen is up');
+      Antiban;
+      Result:=True;
+    end;
+end;
+
+function OpenObelisk: Boolean;
+var
+  Colors: TPointArray;
+  SplitColors: Array of TPointArray;
+  P: TPoint;
+
+begin
+  Antiban;
+  if not(FoundObelisk) then
+    begin
+      ColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(0.11, 0.13);
+      if FindColorsSpiralTolerance(MSCX, MSCY, Colors, 9147284, MSX1, MSY1, MSX2, MSY2, 17) then
+        begin
+          SplitTPAExWrap(Colors, 5, 5, SplitColors);
+          SortATPASize(SplitColors, True);
+          P := MiddleTPA(SplitColors[0]);
+          if Debug then
+            begin
+              SMART_DrawDotsEx(True, Colors, clBlue); // Blue dots @ founded colors
+              SMART_DrawBoxes(False, [GetTPABounds(Colors)], clYellow); // Box around all found colors
+              SMART_DrawBoxes(False, [GetTPABounds(SplitColors[0])], clYellow); // Box around sum icon above head
+              SMART_DrawDotsEx(False, TPAFromBox(IntToBox(P.X-15, P.Y-15, P.X+15, P.Y+15)), clRed); // Area to click in
+              DebugATPABounds(SplitColors);
+            end;
+          MMouse(P.X, P.Y, RandomRange(-15, 15), RandomRange(-15, 15));
+          if WaitUpTextMulti(['fuse', 'ouch', 'lisk'], 1000) then
+            begin
+              ObeliskX := P.X;
+              ObeliskY := P.Y;
+              FoundObelisk := True;
+              case Random(7) of
+                0..4: ClickMouse2(1);
+                5..6: begin
+                        ClickMouse2(0);
+                        WaitOptionMulti(['fuse', 'ouch'], 500);
+                      end;
+              end;
+              Result:=True;
+            end;
+        end;
+    end else
+    begin
+      MMouse(ObeliskX, ObeliskY, RandomRange(-15, 15), RandomRange(-15, 15));
+      case Random(7) of
+        0..4: ClickMouse2(1);
+        5..6: begin
+                ClickMouse2(0);
+                WaitOptionMulti(['fuse', 'ouch'], 500);
+              end;
+      end;
+      Result:=True;
+  end;
+end;
+
+function MakePouches: Boolean;
+begin
+  if WaitFunc(@IsObeliskUp, RandomRange(50, 100), 5000) then
+  begin
+    if Debug then
+      WriteLn('Obelisk screen is up');
+    Mousebox(51, 68, 76, 94, 0);
+    if WaitOptionMulti(['All', 'Infuse-All'], 1000) then
+      begin
+        Wait(2500 + Random(500));
+        IncEx(PouchesMade, 23);
+        Antiban;
+        Result:=True;
+      end;
+  end;
+end;
+
+function MakeScrolls: Boolean;
+begin
+  if OpenObelisk then
+    begin
+      if WaitFunc(@IsObeliskUp, RandomRange(50, 100), 5000) then
+        begin
+          MouseBox(110, 35, 155, 50, 1);
+          Wait(2*WaitTime);
+          Mousebox(51, 68, 76, 94, 0);
+          if WaitOptionMulti(['All', 'Infuse-All'], 1000) then
+            Result:=True;
+          Wait(2500 + Random(500));
+          Antiban;
+        end;
+    end;
+end;
+
+procedure FailSafe;
+begin
+  FindNormalRandoms;
+  if (TimeFromMark(t) > 15000) then
+    begin
+      t:=0;
+      if FindChatBoxText('inventory', 8, clBlack) then
+        CloseShop;
+      ColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(0.06, 1.58);
+      if Debug then
+        WriteLn(''+IntToStr(CountColorTolerance(1803469, 494, 16, 502, 24, 13))+'');
+      if CountColorTolerance(1803469, 494, 16, 502, 24, 13) >= 25 then
+        begin
+          CloseShop;
+        end else
+        begin
+          Mousebox(479, 35, 492, 48, 1);
+        end;
+    end;
+end;
+
+procedure DrawProggy;
+var
+  Bmp: Integer;
+
+begin
+  SMART_ClearCanvas;
+  Bmp := BitmapFromString(53, 55, 'meJztmHlslGUex7trNpGrB1Bks4' +
+        'luYnZXy7FerG1pRUVEChH/2exGE42bkKyumFUIYpQNnlmRo0JvSu+' +
+        '7tLQcPabT+8aWntOZ6Zyd+z3n7kWF/T7v045dQdBllH/2zS9PhtC+' +
+        '/cz3dz/Xr///uf0TEhISGXnfmjX3rV4dGR4ecbdx/ut5dONjq1ZFA' +
+        'm/16jWRkWtwhoaG322o+SdmU8yTj0dHrATffWADZ1hYeHR0/Nq1v7' +
+        '7baOR5KeGlRzY8SvFWrly9ZMnSN998p7dX+eCDv4PH7y7by39+ede' +
+        '2Xesf3gC8iIiVy5YtP3Toc4djiudnn39+593Fc7nczY0t257a9vAf' +
+        'olaEhoWFRXz++QmWnWWYabf72ltv7btbeKLLC/N6/TabY89re+7/z' +
+        'f3AS0rKFsVvzGY3DOplZRX//HgUbGp6luUEmM8/XVZydm3k2pMnM9' +
+        '3u6yaTa2LCqddzDDPZ1TUUEvKLnxkM5vb4Od7JCy7R6cFng9FSXl7' +
+        'DcbNWqxdsOh1rNArAGx3V/5zqAezq3HVQMZwoiB7R6WVY0cEIZrPT' +
+        'bp+0WLxms8tkcsIcDr/Az/zUbCHSc31BN8HpsTE8J7g53oWTFz1gM' +
+        'xg4kwnB5tHrBZ2OMxgEaCiKc++/f3jF8hV3/tdv8QS8CfP4pnE6gM' +
+        'e7WN4JAV1uv93uMRhEnY7XalnKZrF4OG7mvff+heqHEn0nSKqmIpi' +
+        '+vez7rLFB5vJMspwIP07NzDndPlDZ7JzNwQHSbvcajYg0zmgUkRHI' +
+        'Vrvdz7LTBw4cWrp0WUTEKpTo/4GNUi02bVtpwCiYtrVE317usJgci' +
+        'C5WAJ7bOwn1JDzWYmPMFhFsExMumqpgQykWhKtgW7KEsIWHr/pRsf' +
+        'fM5j9dyDrSf/HMQE321xcyYZ2Vaf2XsiihQl4wVJeL/xquyx1tyB+' +
+        'V5Q3X55oNOuBBPRByyFOXFwlrtTETJgHxZrG4oRvYEGzQDXj79n1A' +
+        'dVu2POztv/31YtaRH0i4JWbThTNf9FSld1WmdVak9lZl9FRndFamj' +
+        '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');
+  SetTransparentColor(Bmp, clWhite);
+  FastReplaceColor(Bmp, clWhite, 0);
+  SMART_DrawBitmap(False, Bmp, Point(31, 218));
+  FreeBitmap(Bmp);
+end;
+
+procedure Proggy;
+var
+  Sec: Integer;
+
+begin
+  Sec := (1+((GetSystemTime-StartTime)/1000));
+  SMART_ClearCanvasArea(IntToBox(0, 274, 350, 338));
+  SMART_DrawText(5, 247, UpCharsEx, 'JJ''s          v2.0', RGBToColor(100, 190, 225));
+  SMART_DrawText(5, 275, UpCharsEx, 'Running for: '+TimeRunning+'', ClWhite);
+  SMART_DrawText(5, 290, UpCharsEx, 'Pouches made: '+IntToStr(PouchesMade)+' at '+IntToStr(((PouchesMade*3600)/Sec))+' per hour', ClWhite);
+  SMART_DrawText(5, 305, UpCharsEx, 'Scrolls made: '+IntToStr(10*(PouchesMade))+' at '+IntToStr(((PouchesMade*36000)/Sec))+' per hour', ClWhite);
+  SMART_DrawText(5, 320, UpCharsEx, ''+IntToStr((ScrollXp+SummonXp)*PouchesMade)+' Summoning xp gained at '+IntToStr(((((ScrollXp+SummonXp)*PouchesMade)*3600)/Sec))+' per hour', ClWhite);
+end;
+
+begin
+  SetUpLogin;
+  Setup;
+  StartTime:=GetSystemTime;
+  DrawProggy;
+  Proggy;
+  repeat
+    if TradeMagestix then
+      begin
+        SellSecondary;
+        BuySecondary;
+        CloseShop;
+        if OpenObelisk then
+          begin
+            MakePouches;
+            MakeScrolls;
+            Proggy;
+          end else
+          begin
+            Failsafe;
+          end;
+      end else
+      begin
+        FailSafe;
+      end;
+  until (not(LoggedIn)) or (PouchesMade >= PouchesToMake);
+end.

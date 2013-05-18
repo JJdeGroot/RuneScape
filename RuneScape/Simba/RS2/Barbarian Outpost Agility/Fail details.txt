@@ -1,0 +1,31 @@
+Swing fail:
+'You slip and fall into the pit below'
+
+Climb ladder:
+MSCX-100, MSCY-50, MSCX, MSCY+50
+ ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.12, 1.01);
+3030082, 11
+
+Swing success:
+'You skilfully swing across.'
+
+
+
+Log fail:
+'lose'
+'bites' 
+
+Log succes:
+'safely'
+
+
+'lose', 'bites', 'safe'
+
+
+Ledge succes:
+'skilfully'
+
+'slip'
+
+'skil', 'slip', 'time'

@@ -1,0 +1,380 @@
+program JJsSilkExchanger;
+{$DEFINE SMART8}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+{$i P07Include.simba}
+
+
+var
+  SilkExchanged: Integer;
+
+procedure Proggy;
+begin
+  writeln('-----------------------');
+  writeln('Running for: ' + MsToTime(GetTimeRunning(), TIME_BARE));
+  writeln('Silk exchanged: ' + IntToStr(SilkExchanged));
+  writeln('-----------------------');
+end;
+
+function BankBanker: boolean;
+var
+  r, T: Integer;
+  TPA: TPointArray;
+  ATPA: T2DPointArray;
+  P: TPoint;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.07, 2.91);
+
+  if FindColorsSpiralTolerance(P07_MSCX, P07_MSCY, TPA, 342865, P07_MSX1, P07_MSY1, P07_MSX2, P07_MSY2, 5) then
+  begin
+    SplitTPAWrap(TPA, 10, ATPA);
+    SortATPASize(ATPA, True);
+
+    MarkTime(T);
+    while TimeFromMark(T) < 6000 do
+    begin
+      r := RandomRange(0, Length(ATPA[0])-1);
+      P := ATPA[0][r];
+      MMouse(P.x, P.y, 0, 0);
+      if P07_WaitUptextMultiCustom(['ooth', 'boot'], 500) then
+      begin
+        ClickMouse2(0);
+        if P07_WaitOptionMulti(['qui', 'kly', 'uik'], 500) then
+        begin
+          Result := P07_WaitBankScreen(5000);
+          if Result then
+            break;
+        end;
+      end;
+    end;
+  end;
+end;
+
+function WithdrawSilk: boolean;
+var
+  SilkDTM, X, Y: Integer;
+
+begin
+  writeln('Trying to withdraw silk');
+
+  if P07_BankScreen then
+  begin
+    SilkDTM := DTMFromString('mlwAAAHicY2dgYAhmZWAIAGJPIPYF4hggDgHiaCCewsjAMBeIZwHxRCDugvKnAfHaxV1A3YxYMT+QZMWBseuAYCgAALRhCKM=');
+
+    if FindDTM(SilkDTM, X, Y, P07_MSX1, P07_MSY1, P07_MSX2, P07_MSY2) then
+    begin
+      MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+      Wait(RandomRange(400, 800));
+      ClickMouse2(0);
+      if P07_WaitOptionMulti(['All', 'Store All'], 500) then
+      begin
+        IncEx(SilkExchanged, 27);
+        Wait(RandomRange(300, 400));
+        Result := True;
+      end;
+
+      Proggy;
+    end;
+
+    FreeDTM(SilkDTM);
+  end;
+end;
+
+function IsPlayerMoving: boolean;
+begin
+  Result := PixelShift(IntToBox(P07_MMX1, P07_MMY1, P07_MMX2, P07_MMY2), RandomRange(400, 600)) > 500;
+end;
+
+function ClickSilkMerchant: boolean;
+var
+  i: Integer;
+  P: TPoint;
+  TPA: TPointArray;
+  ATPA: T2DPointArray;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.02, 0.38);
+
+  if FindColorsSpiralTolerance(P07_MSCX, P07_MSCY, TPA, 8601477, P07_MSX1, P07_MSY1, P07_MSX2, P07_MSY2, 24) then
+  begin
+    SplitTPAWrap(TPA, 8, ATPA);
+    SortATPASize(ATPA, True);
+
+    for i:=0 to high(ATPA) do
+      if Length(ATPA[i]) > 50 then
+      begin
+        P := MiddleTPA(ATPA[i]);
+        MMouse(P.x, P.y, RandomRange(-3, 3), RandomRange(-3, 3));
+        if P07_WaitUptextMultiCustom(['ilk', 'merc', 'hant'], 500) then
+        begin
+          ClickMouse2(0);
+          if P07_WaitOptionMulti(['alk', 'Talk'], 500) then
+          begin
+            while IsPlayerMoving do
+              Wait(RandomRange(100, 200));
+            Result := True;
+            break;
+          end;
+        end;
+      end;
+  end;
+end;
+
+function MerchantVisible: boolean;
+var
+  TPA: TPointArray;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.02, 0.38);
+
+  if FindColorsSpiralTolerance(P07_MSCX, P07_MSCY, TPA, 8601477, P07_MSX1, P07_MSY1, P07_MSX2, P07_MSY2, 24) then
+    Result := Length(TPA) > 40;
+
+  //writeln('Silk trader TPA length: ' + IntToStr(Length(TPA)));
+end;
+
+function AtMerchant: boolean;
+var
+  MyPos, SilkPos: TPoint;
+
+begin
+  MyPos := SPS_GetRS07Pos;
+  SilkPos := Point(255, 631);
+  Result := Distance(MyPos.x, MyPos.y, SilkPos.x, SilkPos.y) < 15;
+end;
+
+function WalkToMerchant: boolean;
+var
+  Path: TPointArray;
+
+begin
+  Path := [Point(259, 695), Point(243, 695), Point(219, 691),
+           Point(215, 671), Point(215, 655), Point(199, 635),
+           Point(207, 615), Point(231, 611), Point(251, 615),
+           Point(255, 631)];
+  Result := SPS_Walk07Path(Path);
+
+  while IsPlayerMoving do
+    Wait(RandomRange(100, 200));
+end;
+
+function AtBank: boolean;
+var
+  MyPos, BankPos: TPoint;
+
+begin
+  MyPos := SPS_GetRS07Pos;
+  BankPos := Point(259, 695);
+  Result := Distance(MyPos.x, MyPos.y, BankPos.x, BankPos.y) < 15;
+  writeln('At bank: ' + BoolToStr(Result));
+end;
+
+function WalkToBank: boolean;
+var
+  Path: TPointArray;
+
+begin
+  KeyDown(17);
+  Path := [Point(255, 631), Point(251, 615), Point(231, 611),
+           Point(207, 615), Point(199, 635), Point(215, 655),
+           Point(215, 671), Point(219, 691),Point(243, 695),
+           Point(259, 695)];
+  Result := SPS_Walk07Path(Path);
+  KeyUp(17);
+
+  while IsPlayerMoving do
+    Wait(RandomRange(100, 200));
+end;
+
+procedure SearchForMerchant;
+var
+  P: TPoint;
+
+begin
+  MMouse(P07_MSCX, P07_MSCY, RandomRange(-10, 10), RandomRange(-10, 10));
+  if P07_WaitUptextMultiCustom(['ilk', 'merc', 'hant'], 500) then
+  begin
+    ClickMouse2(0);
+    if P07_WaitOptionMulti(['alk', 'Talk'], 500) then
+    begin
+      while IsPlayerMoving do
+        Wait(RandomRange(100, 200));
+    end;
+  end;
+end;
+
+function HaveFineSilkChat: boolean;
+begin
+  Result := GetColor(206, 429) = 0;
+end;
+
+function MayBeInterestedChat: boolean;
+begin
+  Result := GetColor(330, 434) = 0;
+end;
+
+function SelectPriceOption: boolean;
+begin
+  Result := GetColor(245, 408) = 0;
+end;
+
+function SelectPriceChat: boolean;
+begin
+  Result := GetColor(245, 413) = 0;
+end;
+
+function BeGenerousChat: boolean;
+begin
+  Result := GetColor(308, 424) = 0;
+end;
+
+function DoSixtyOption: boolean;
+begin
+  Result := GetColor(338, 417) = 0;
+end;
+
+function DoSixtyChat: boolean;
+begin
+  Result := GetColor(157, 421) = 0;
+end;
+
+function HardBargainChat: boolean;
+begin
+  Result := GetColor(230, 437) = 0;
+end;
+
+procedure DebugChats;
+begin
+  writeln('HaveFineSilkChat: ' + BoolToStr(HaveFineSilkChat));
+  writeln('MayBeInterestedChat: ' + BoolToStr(MayBeInterestedChat));
+  writeln('SelectPriceOption: ' + BoolToStr(SelectPriceOption));
+  writeln('SelectPriceChat: ' + BoolToStr(SelectPriceChat));
+  writeln('BeGenerousChat: ' + BoolToStr(BeGenerousChat));
+  writeln('DoSixtyOption: ' + BoolToStr(DoSixtyOption));
+  writeln('DoSixtyChat: ' + BoolToStr(DoSixtyChat));
+  writeln('HardBargainChat: ' + BoolToStr(HardBargainChat));
+end;
+
+function InChatWithMerchant: boolean;
+begin
+  Result := HaveFineSilkChat or
+            MayBeInterestedChat or
+            SelectPriceOption or
+            SelectPriceChat or
+            BeGenerousChat or
+            DoSixtyOption or
+            DoSixtyChat or
+            HardBargainChat;
+end;
+
+procedure ClickPlayerContinue;
+begin
+  MouseBox(143, 446, 286, 455, 1);
+end;
+
+procedure ClickMerchantContinue;
+begin
+  MouseBox(234, 446, 377, 455, 1);
+end;
+
+procedure Select120Coins;
+begin
+  Mousebox(228, 422, 288, 433, 1);
+end;
+
+procedure Select60Coins;
+begin
+  Mousebox(177, 413, 340, 425, 1);
+end;
+
+procedure HandleChat;
+begin
+  if HaveFineSilkChat then
+    ClickPlayerContinue;
+
+  if MayBeInterestedChat then
+  begin
+    ClickMerchantContinue;
+    Wait(RandomRange(150, 200));
+  end;
+
+  if SelectPriceOption then
+    Select120Coins;
+
+  if SelectPriceChat then
+    ClickPlayerContinue;
+
+  if BeGenerousChat then
+  begin
+    ClickMerchantContinue;
+    Wait(RandomRange(150, 200));
+  end;
+
+  if DoSixtyOption then
+  begin
+    Select60Coins;
+    Wait(RandomRange(150, 200));
+  end;
+
+  if DoSixtyChat then
+    ClickPlayerContinue;
+
+  if HardBargainChat then
+  begin
+    ClickMerchantContinue;
+    Wait(RandomRange(200, 300));
+  end;
+
+  Wait(RandomRange(50, 150));
+end;
+
+begin
+  SetupSRL;
+  SPS_Setup(RUNESCAPE_SURFACE, ['0_1']);
+  SetupP07Include;
+
+  SPS_Tolerance := 800.0;   //800
+  SPS_MatchesPercent := 0.40; //0.35
+  MouseSpeed := 500;
+  WriteLn('Script started!');
+
+  writeln('My Pos: ' + ToStr(SPS_GetRS07Pos));
+
+  repeat
+    if P07_InvFull then
+    begin
+      writeln('inv full going to exchange');
+      if AtMerchant then
+      begin
+        if MerchantVisible then
+        begin
+          if not InChatWithMerchant then
+            ClickSilkMerchant
+          else
+            HandleChat;
+        end else
+        begin
+          SearchForMerchant;
+        end;
+      end else
+        WalkToMerchant;
+    end else
+    begin
+      writeln('inv not full!');
+      if not AtBank then
+        WalkToBank;
+
+      if not P07_BankScreen then
+        BankBanker
+      else
+        WithdrawSilk;
+    end;
+  until(false);
+
+
+  WriteLn('Script ended!');
+end.

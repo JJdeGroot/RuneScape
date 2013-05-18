@@ -1,0 +1,110 @@
+program Edge;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i srl/srl/misc/paintsmart.simba}
+{$loadlib irokiplugin}
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+end;
+
+procedure Edges(X1, Y1, X2, Y2, Threshold: Integer);
+var
+  Width, Height, ClientBMP, i, a, b: Integer;
+  Colors: TIntegerArray;
+  ColorCoords, Edge: TPointArray;
+  EdgeSplit: T2DPointArray;
+  Box: TBox;
+
+begin
+  // Making a bmp and showing in debug box
+  Box := IntToBox(X1, Y1, X2, Y2);
+  Width := Box.X2-Box.X1;
+  Height := Box.Y2-Box.Y1;
+  DisplayDebugImgWindow(Width, Height);
+  ClientBMP := BitmapFromClient(Box.X1, Box.Y1, Box.X2, Box.Y2);
+  DrawBitmapDebugImg(ClientBMP);
+  FreeBitmap(ClientBMP);
+
+  // Grabbing all the colors and asigning a TPoint to them.
+  Colors := GetColorsBox(Box.X1, Box.Y1, Box.X2, Box.Y2, False);
+  SetLength(ColorCoords, Length(Colors));
+  for i:=0 to high(Colors)-1 do
+  begin
+    if a > (Box.Y2-Box.Y1) then
+    begin
+      a := 0;
+      Inc(b);
+    end;
+    ColorCoords[i] := Point(Box.X1+b, Box.Y1+a);
+    Inc(a);
+  end;
+
+  // Finding the edges
+  for i:=0 to high(Colors)-1 do
+  begin
+    // Checking R value
+    if Abs((Colors[i] and $ff) - (Colors[i+1] and $ff)) > Threshold then
+    begin
+      SetLength(Edge, Length(Edge)+1);
+      Edge[Length(Edge)-1] := ColorCoords[i];
+      Continue;
+    end;
+
+    // Checking G value
+    if Abs((Colors[i] shr 8 and $ff) - (Colors[i+1] shr 8 and $ff)) > Threshold then
+    begin
+      SetLength(Edge, Length(Edge)+1);
+      Edge[Length(Edge)-1] := ColorCoords[i];
+      Continue;
+    end;
+
+    //Checking B value
+    if Abs((Colors[i] shr 16 and $ff) - (Colors[i+1] shr 16 and $ff)) > Threshold then
+    begin
+      SetLength(Edge, Length(Edge)+1);
+      Edge[Length(Edge)-1] := ColorCoords[i];
+      Continue;
+    end;
+  end;
+
+  // Drawing the edges
+  SMART_DrawDotsEx(True, TPAFromBox(Box), RGBtoColor(1, 1, 1));
+  SMART_DrawDotsEx(False, Edge, RGBToColor(255, 255, 255));
+end;
+
+procedure GoodRotation;
+begin
+  SMART_DrawCircle(False, Point(294, 28), 3, False, clRed);
+  SMART_DrawCircle(False, Point(176, 273), 3, False, clRed);
+end;
+
+begin
+  SetUpLogin;
+  SMART_ClearCanvas;
+  GoodRotation;
+ // Edges(MSX1, MSY1, MSX2, MSY2, 6);
+end.

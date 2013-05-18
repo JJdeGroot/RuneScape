@@ -1,0 +1,521 @@
+{* AccountCreator made by J J *}
+program AccountCreator;
+{$DEFINE SMART}
+{$i SRL/SRL.simba}
+{$i sps/sps.simba}
+{$loadlib Appa_Simba}
+
+const
+  login = '';
+  pass = '';
+  activation = 'https://secure.runescape.com/m=email-register/submit_code.ws?code=';
+  unread = '<div><a class="TextSemiBold" href="#">Activate Your RuneScape Account?</a></div>';
+  read = '<div><a href="#">Activate Your RuneScape Account?</a></div>';
+  Y_OFFSET_LOGIN = -25;
+  Y_OFFSET_RUNESCAPE = -50;
+
+var
+  Count: Integer;
+
+// Clicks on a point in a box
+procedure ClickBox(B: TBox; ClickType: Integer);
+var
+  X, Y: Integer;
+
+begin
+  X := RandomRange(B.X1, B.X2);
+  Y := RandomRange(B.Y1, B.Y2);
+  MMouse(X, Y, 0, 0);
+  ClickMouse2(ClickType);
+end;
+
+// Clicks on the create a new account text
+function CreateNewAccount: boolean;
+var
+  LoginCreateAccountBox: TBox;
+
+begin
+  if RSReady then
+  begin
+    LoginCreateAccountBox := IntToBox(320, 416+Y_OFFSET_LOGIN, 443, 427+Y_OFFSET_LOGIN);
+    ClickBox(LoginCreateAccountBox, 1);
+    Result := True;
+  end;
+end;
+
+// Counts the blue colors of the facebook ad at the creation screen
+function CreateScreen: boolean;
+begin
+  Result := CountColorTolerance(RGBtoColor(75, 115, 180), 63, 141+Y_OFFSET_LOGIN, 711, 167+Y_OFFSET_LOGIN, 30) > 50;
+end;
+
+// Registers a new account
+function RegisterAccount: boolean;
+var
+  CreateEmailBox1, CreateEmailBox2,
+  CreatePasswordBox1, CreatePasswordBox2, CreateAgeBox,
+  CreateContinueBox: TBox;
+  CreateBoxes: TBoxArray;
+  i: Integer;
+  Details: TStringArray;
+
+begin
+  if WaitFunc(@CreateScreen, 200, 5000) then
+  begin
+    CreateEmailBox1 := IntToBox(250, 166+Y_OFFSET_LOGIN, 475, 186+Y_OFFSET_LOGIN);
+    CreateEmailBox2 := IntToBox(250, 196+Y_OFFSET_LOGIN, 475, 214+Y_OFFSET_LOGIN);
+    CreatePasswordBox1 := IntToBox(250, 227+Y_OFFSET_LOGIN, 475, 247+Y_OFFSET_LOGIN);
+    CreatePasswordBox2 := IntToBox(250, 256+Y_OFFSET_LOGIN, 475, 276+Y_OFFSET_LOGIN);
+    CreateAgeBox := IntToBox(250, 290+Y_OFFSET_LOGIN, 302, 309+Y_OFFSET_LOGIN);
+    CreateContinueBox := IntToBox(258, 400+Y_OFFSET_LOGIN, 338, 416+Y_OFFSET_LOGIN);
+
+    CreateBoxes := [CreateEmailBox1, CreateEmailBox2,
+                    CreatePasswordBox1, CreatePasswordBox2,
+                    CreateAgeBox];
+
+    Details := ['accounttest123+' + IntToStr(Count) + '@outlook.com',
+                'accounttest123+' + IntToStr(Count) + '@outlook.com',
+                'tester123', 'tester123', '18'];
+
+    for i:=0 to high(Details) do
+    begin
+      ClickBox(CreateBoxes[i], 1);
+      Wait(RandomRange(300, 600));
+      TypeSendEx(Details[i], False);
+      Wait(RandomRange(300, 600));
+    end;
+
+    ClickBox(CreateContinueBox, 1);
+    Result := True;
+  end;
+end;
+
+// Counts the blue colors of the facebook ad at the login screen
+function LoginScreen: boolean;
+begin
+  Result := CountColorTolerance(RGBtoColor(75, 115, 180), 331, 359+Y_OFFSET_LOGIN, 434, 389+Y_OFFSET_LOGIN, 30) > 50;
+end;
+
+// Exits the registration screen
+function ExitRegistration: boolean;
+var
+  XIcon, T, X, Y: Integer;
+
+begin
+  XIcon := BitmapFromString(15, 15, 'meJyTloYCKSkpRUXFiIiIhQsXbtq0GUimpWVoaGhIYwBJScn4+PibN28BEVDljBmzp06dAdGVmpomIyODrLK3t//ly5dz5y1KSSlwdY0yNfU3NfEFIn+/yNb2zubmVllZOYjtcXFxQJUTJ0728I12cE8wt4w2MY7X0opWVPQSlzGXltfNyS0Amg82VurSpYtAM13cI32zuyMm7bYLqNbVTgIqNkicopE6iZlXS1JSs7KySktLKzAwEKg4LCwNyPQqmBt/4KvvzHPaDmX6ybMdN33SrN7GIezAyKjs4uIVEBAwefK0JUtWWFj4AxUDDbTJWe6/67vjwntAlXptx3ilozlYLRkYtRUV9VNTU4Fe7u6epKLioKwcpCQXLS0TbdR02PHQP7NFj4S0szlYnLg4HYCKgS6Ji4sFhkNzc4+0tI2EhLuIcKiczxTzxY+Mpl4xmn5RKWUut5Av0GSgM4CKw8PDwsPDgeGgqGjJwmYl6dIEVKldt4dfPgnI1m3fLhPcwMplBFQMdIanp4eysgrQJTY2nkC7xB3LgaaB3MniBERiVlnirlnA0GBhlgR6UF1dQ1BIOCUlBRgyIqI6QPXsXNZAezk5rTjYTNlYDYBmMjIJ6+kbe3l5QWIQGJuFhUVJSYlAh4FkYQhoIBDp6hqHhATLyclBFAsJi8jIyEZFRRUWFgKtU1HRBOoCIiADyPX29pKVlcVMTmpq6kApoK7ExASgae7u7urq6sgKADJ/vo8=');
+  Wait(RandomRange(3000, 5000));
+  MarkTime(T);
+
+  while(TimeFromMark(T) < 60000) do
+  begin
+    if not(FindBitmapToleranceIn(XIcon, X, Y, 608, 89, 699, 168, 20)) then
+    begin
+      MMouse(RandomRange(108, 656), RandomRange(105, 497), 0, 0);
+      Wait(RandomRange(500, 1500));
+    end else
+    begin
+      MMouse(X, Y, 0, 0);
+      ClickMouse2(1);
+
+      if WaitFunc(@LoginScreen, 200, 5000) then
+      begin
+        Result := True;
+        break;
+      end;
+    end;
+  end;
+
+  FreeBitmap(XIcon);
+end;
+
+// Waits until the page is loaded
+function appa_WaitUntilLoaded(TimeOut: Integer): boolean;
+var
+  t: Integer;
+
+begin
+  MarkTime(t);
+  while (not appa_PageLoaded) and appa_Showing and (TimeFromMark(t) < TimeOut) do
+    Wait(RandomRange(300, 600));
+
+  Result := appa_PageState >= 3;
+end;
+
+// Navigates to a certain page with a timeout
+function appa_NavigateTo(URL: string; TimeOut: Integer): Boolean;
+begin
+  if (not appa_Showing) then
+    Exit;
+
+  appa_Navigate(URL);
+  Wait(RandomRange(1000, 2000));
+  Result := appa_WaitUntilLoaded(TimeOut);
+end;
+
+// Prints out all elements
+procedure PrintElements;
+var
+  Elements: TAppaElementArray;
+  i: Integer;
+
+begin
+  appa_GetElements(Elements);
+  for i:=0 to high(Elements) do
+  begin
+    WriteLn('Element ' + IntToStr(i) + ' Box: ' + ToStr(Elements[i].Box));
+    WriteLn('Element ' + IntToStr(i) + ' ClassName: ' + ToStr(Elements[i].ClassName));
+    WriteLn('Element ' + IntToStr(i) + ' ID: ' + ToStr(Elements[i].ID));
+    WriteLn('Element ' + IntToStr(i) + ' innerHTML: ' + ToStr(Elements[i].innerHTML));
+    WriteLn('Element ' + IntToStr(i) + ' outerHTML: ' + ToStr(Elements[i].outerHTML));
+    WriteLn('Element ' + IntToStr(i) + ' Tag: ' + ToStr(Elements[i].Tag));
+  end;
+end;
+
+// Prints all the form details out
+procedure PrintForms;
+var
+ Forms: TAppaFormArray;
+ i, j: Integer;
+begin
+  appa_GetForms(Forms);
+  for i:=0 to high(Forms) do
+  begin
+    WriteLn('Forms ' + IntToStr(i) + ' Action: ' + ToStr(Forms[i].Action));
+    WriteLn('Elements ' + IntToStr(i));
+    for j:=0 to high(Forms[i].Elements) do
+    begin
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' ClassName: ' + ToStr(Forms[i].Elements[j].ClassName));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' Name: ' + ToStr(Forms[i].Elements[j].Name));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' ID: ' + ToStr(Forms[i].Elements[j].ID));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' outerHTML: ' + ToStr(Forms[i].Elements[j].outerHTML));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' Tag: ' + ToStr(Forms[i].Elements[j].Tag));
+      WriteLn('Element ' + IntToStr(i) + '/' + IntToStr(j) + ' Value: ' + ToStr(Forms[i].Elements[j].Value));
+     end;
+    WriteLn('Forms ' + IntToStr(i) + ' Method: ' + ToStr(Forms[i].Method));
+    WriteLn('Forms ' + IntToStr(i) + ' Name: ' + ToStr(Forms[i].Name));
+
+    //appa_FormElementAction(const FormIndex, elIndex INteger, const act Tappaelementarray, const param: ansistring);
+
+  end;
+end;
+
+// Moves the mouse to a random spot in a box
+procedure appa_ClickBox(B: TBox; ClickType: boolean);
+var
+  X, Y: Integer;
+
+begin
+  X := RandomRange(B.X1, B.X2);
+  Y := RandomRange(B.Y1, B.Y2);
+  appa_MoveMouse(X, Y);
+  appa_HoldMouse(X, Y, ClickType);
+  Wait(RandomRange(50, 70));
+  appa_ReleaseMouse(X, Y, ClickType);
+  writeln(Point(X, Y));
+end;
+
+// Logs in to your hotmail account
+function OpenEmailBox: boolean;
+var
+  Forms: TAppaFormArray;
+  Elements: TAppaElementArray;
+  i, j: Integer;
+  Box: TBox;
+
+begin
+  appa_ShowForm; //Show the form
+  appa_SetSize(1000, 600);
+
+  if appa_NavigateTo('http://www.hotmail.com', 10000) then
+  begin
+    if(Pos('bay002.mail.live.com', appa_CurrentPage) > 0) then
+    begin
+      Result := True;
+      Exit;
+    end;
+
+    appa_GetForms(Forms);
+
+    for i:=0 to high(Forms) do
+      for j:=0 to high(Forms[i].Elements) do
+        case Forms[i].Elements[j].Name of
+          'login':  appa_FormElementAction(i, j, appa_SetValue, login);
+          'passwd': appa_FormElementAction(i, j, appa_SetValue, pass);
+        end;
+
+    Wait(RandomRange(300, 600));
+    appa_GetElements(Elements);
+    for i:=0 to high(Elements) do
+      if(Elements[i].ID = 'idSIButton9') then
+      begin
+        Box := IntToBox(Elements[i].Box.X1+5, Elements[i].Box.Y1+5, Elements[i].Box.X2-5, Elements[i].Box.Y2-5);
+        appa_ClickBox(Box, True);
+        Result := True;
+      end;
+   end;
+end;
+
+// Activates your account straight from the e-mail
+function UnreadEmail: boolean;
+var
+  Elements: TAppaElementArray;
+  i: Integer;
+
+begin
+  // <a href="https://secure.runescape.com/m=email-register/submit_code.ws?code=0zhToMl1x3MziupHAn4C5khabjqJ6V2-FsAuig&amp;address=accounttest123%2B12%40outlook.com&amp;js=1"
+  //https://secure.runescape.com/m=email-register/submit_code.ws?code=0zhToMl1x3MziupHAn4C5khabjqJ6V2-FsAuig&amp;address=accounttest123%2B12%40outlook.com
+
+  appa_GetElements(Elements);
+  for i:=0 to high(Elements) do
+    if(Elements[i].innerHTML = unread) then
+    begin
+      appa_ClickBox(Elements[i].Box, True);
+      Wait(RandomRange(1500, 3000)); // Wait to open the email
+      Result := True;
+      break;
+    end;
+end;
+
+function ActivateAccount: boolean;
+var
+  Elements: TAppaElementArray;
+  j, Position: Integer;
+  Link: String;
+
+begin
+  appa_GetElements(Elements);
+  for j:=0 to high(Elements) do
+    if (Pos(activation, Elements[j].innerHTML) > 0) then
+    begin
+      Link := Between('account: <a href="', '" target="', Elements[j].innerHTML);
+
+      while(Pos('amp;', Link) > 0) do
+      begin
+        Position := Pos('amp;', Link);
+        Delete(Link, Position, 4);
+        //writeln('Modified link: ' + Link);
+      end;
+      WriteLn('Activation link ' + IntToStr(Count) + ': ' + Link);
+
+      if appa_NavigateTo(Link, 10000) then
+      begin
+        Result := True;
+        break;
+      end;
+    end;
+end;
+
+function StyleScreen: boolean;
+begin
+  Result := CountColorTolerance(RGBToColor(70, 90, 20), 16, 43 + Y_OFFSET_LOGIN, 759, 515 + Y_OFFSET_LOGIN, 35) > 3000;
+end;
+
+function NameScreen: boolean;
+begin
+  Result := CountColorTolerance(RGBtoColor(25, 25, 25), 31, 158 + Y_OFFSET_LOGIN, 379, 400 + Y_OFFSET_LOGIN, 20) > 1000;
+end;
+
+
+// Sets up your RuneScape character
+function HandleSetup: boolean;
+var
+  T: Integer;
+  DisplayName: String;
+  Style: boolean;
+
+begin
+  MarkTime(T);
+  while (TimeFromMark(T) < 60000) do
+  begin
+    if StyleScreen then
+    begin
+      MouseBox(630, 474 + Y_OFFSET_LOGIN, 719, 491+ Y_OFFSET_LOGIN, 1);
+      Wait(RandomRange(2000, 3000));
+      ClickMouse2(1);
+      Wait(RandomRange(2000, 3000));
+      Style := True;
+    end;
+
+    if Style then
+      if NameScreen then
+      begin
+        MouseBox(158, 235 + Y_OFFSET_LOGIN, 330, 252 + Y_OFFSET_LOGIN, 1);
+        Wait(RandomRange(300, 600));
+        DisplayName := IntToStr(Count) + 'rsdeals' + IntToStr(RandomRange(100, 999));
+        TypeSendEx(DisplayName, False);
+        Mousebox(165, 368 + Y_OFFSET_LOGIN, 245, 388 + Y_OFFSET_LOGIN, 1);
+        Result := True;
+        break;
+      end;
+  end;
+end;
+
+// Skips the cutscene
+procedure SkipCutscene;
+begin
+  // If we have a cutscene then
+  if PercentBlackMM > 90 then
+  begin
+    KeyDown(VK_ESCAPE);
+    Wait(RandomRange(50, 100));
+    KeyUp(VK_ESCAPE);
+  end else
+  begin
+    // Check if we need to press continue
+    if CountColorTolerance(RGBToColor(230, 180, 70), 130, 235, 538, 385, 50) > 500 then
+    begin
+      MouseBox(434, 443 + Y_OFFSET_LOGIN, 613, 460 + Y_OFFSET_LOGIN, 1);
+      Wait(RandomRange(7000, 9000));
+    end;
+  end;
+end;
+
+function TutorialStart: boolean;
+begin
+  Result := CountColorTolerance(RGBtoColor(14, 14, 14), 84, 126 + Y_OFFSET_RUNESCAPE, 432, 336 + Y_OFFSET_RUNESCAPE, 10) > 1000;
+end;
+
+// Handles the tutorial
+procedure HandleTutorial;
+begin
+  // Rotates the angle then puts it back to north/high
+  MakeCompass(RandomRange(10, 350));
+  ClickNorth(SRL_ANGLE_HIGH);
+
+  // Goes to the Noticeboard
+  Mousebox(558, 224 + Y_OFFSET_RUNESCAPE, 577, 249 + Y_OFFSET_RUNESCAPE, 1);
+  Wait(RandomRange(1000, 2000));
+
+  // Opens the noticeboard
+  Mousebox(565, 261 + Y_OFFSET_RUNESCAPE, 684, 274 + Y_OFFSET_RUNESCAPE, 1);
+  Wait(RandomRange(2000, 3000));
+
+  // Clicks on back
+  Mousebox(681, 218 + Y_OFFSET_RUNESCAPE, 738, 231 + Y_OFFSET_RUNESCAPE, 1);
+  Wait(RandomRange(500, 1000));
+
+  // Clicks on options
+  Mousebox(683, 131 + Y_OFFSET_RUNESCAPE, 735, 142 + Y_OFFSET_RUNESCAPE, 1);
+  Wait(RandomRange(2000, 3000));
+
+  // Puts the tutorial off
+  Mousebox(330, 370 + Y_OFFSET_RUNESCAPE, 434, 384 + Y_OFFSET_RUNESCAPE, 1);
+  Wait(RandomRange(2000, 3000));
+end;
+
+// Lodestone teleports to lumbridge
+function LodestoneToLumbridge: boolean;
+var
+  X, Y, HomeTeleport: Integer;
+
+begin
+  if not(GetCurrentTab = tab_Magic) then
+  begin
+    GameTab(tab_Magic);
+    Wait(RandomRange(1000, 2000));
+  end;
+
+  HomeTeleport := DTMFromString('mbQAAAHicY2VgYFjIxsCwgA1CzwDiVUB8lomB4QgQXwPic1C878gnhrY5N1AwP1A/OmbEgsEAAMfVEgE=');
+  if FindDTM(HomeTeleport, X, Y, MIX1, MIY1, MIX2, MIY2) then
+  begin
+    MMouse(X, Y, RandomRange(-5, 5), RandomRange(-5, 5));
+    ClickMouse2(1);
+    if WaitFunc(@LodestoneScreen, RandomRange(200, 400), 4000) then
+    begin
+      Wait(RandomRange(1000, 2000));
+      MouseBox(320, 233, 334, 245, 1);
+      Wait(RandomRange(20000, 22500));
+      Result := True;
+    end;
+  end;
+  FreeDTM(HomeTeleport);
+end;
+
+// Tries to walk to the grand exchange, time out after 5 minutes.
+procedure WalkToGrandExchange;
+var
+  ToLumbridge, ToVarrock, ToGrandExchange: TPointArray;
+  MyPos, MyGoal: TPoint;
+  Difference, T: Integer;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['10_6', '10_7', '10_8', '10_9', '11_6', '11_7', '11_8', '11_9', '12_8', '12_9']);
+
+  ToLumbridge := [Point(4775, 3755), Point(4770, 3751), Point(4760, 3742), Point(4756, 3736), Point(4748, 3728), Point(4741, 3719)]
+  ToVarrock := [Point(4755, 3734), Point(4748, 3726), Point(4743, 3719), Point(4732, 3711), Point(4726, 3700), Point(4728, 3689), Point(4722, 3681), Point(4717, 3670), Point(4712, 3660), Point(4706, 3647), Point(4706, 3633), Point(4705, 3622), Point(4705, 3613), Point(4701, 3601), Point(4701, 3590), Point(4700, 3579), Point(4700, 3568), Point(4700, 3557), Point(4697, 3550), Point(4691, 3544), Point(4680, 3544), Point(4664, 3542), Point(4649, 3540), Point(4638, 3542), Point(4626, 3539), Point(4616, 3536), Point(4603, 3531), Point(4597, 3523), Point(4596, 3512), Point(4596, 3498), Point(4595, 3486), Point(4595, 3471), Point(4594, 3459), Point(4591, 3447), Point(4586, 3438), Point(4581, 3430), Point(4574, 3426), Point(4567, 3423), Point(4559, 3417), Point(4548, 3412), Point(4544, 3401), Point(4543, 3391), Point(4546, 3383), Point(4549, 3367), Point(4549, 3362), Point(4545, 3356), Point(4538, 3351), Point(4536, 3341), Point(4539, 3332), Point(4542, 3320), Point(4546, 3311), Point(4547, 3300), Point(4547, 3287), Point(4541, 3275), Point(4542, 3266), Point(4542, 3258), Point(4543, 3251), Point(4542, 3244), Point(4542, 3238), Point(4542, 3231), Point(4542, 3221), Point(4547, 3207), Point(4551, 3195), Point(4559, 3183), Point(4572, 3175), Point(4586, 3171), Point(4597, 3171), Point(4607, 3168), Point(4617, 3163), Point(4628, 3159), Point(4636, 3155), Point(4645, 3150), Point(4652, 3150), Point(4667, 3150), Point(4678, 3150), Point(4678, 3145), Point(4679, 3133)];
+  ToGrandExchange := [Point(4682, 3125), Point(4682, 3122), Point(4683, 3115), Point(4683, 3110), Point(4683, 3104), Point(4683, 3097), Point(4683, 3091), Point(4684, 3082), Point(4685, 3074), Point(4685, 3069), Point(4685, 3061), Point(4685, 3052), Point(4684, 3046), Point(4683, 3037), Point(4682, 3029), Point(4680, 3020), Point(4680, 3013), Point(4680, 3006), Point(4680, 2997), Point(4680, 2989), Point(4680, 2983), Point(4680, 2976), Point(4679, 2968), Point(4678, 2963), Point(4675, 2955), Point(4670, 2946), Point(4666, 2940), Point(4660, 2935), Point(4654, 2935), Point(4646, 2934), Point(4638, 2934), Point(4623, 2930), Point(4616, 2930), Point(4603, 2929), Point(4589, 2929), Point(4581, 2926), Point(4581, 2919), Point(4578, 2911), Point(4577, 2903), Point(4577, 2894), Point(4578, 2885), Point(4579, 2878), Point(4583, 2869), Point(4583, 2863), Point(4580, 2857), Point(4573, 2847), Point(4560, 2847), Point(4549, 2848), Point(4538, 2845), Point(4531, 2841), Point(4522, 2838), Point(4514, 2832), Point(4511, 2825), Point(4506, 2815), Point(4503, 2809), Point(4503, 2803), Point(4503, 2797), Point(4502, 2790), Point(4502, 2783), Point(4502, 2777), Point(4498, 2768), Point(4495, 2766)];
+
+  MarkTime(T);
+  while(TimeFromMark(T) < (5 * 60000)) do
+  begin
+    if SPS_WalkPath(ToLumbridge) then
+    begin
+      Wait(RandomRange(10000, 15000));
+      ClickNorth(SRL_Angle_HIGH);
+      if SPS_WalkPath(ToVarrock) then
+      begin
+        // resting
+        Mouse(715, 95, 10, 10, mouse_right);
+        WaitOptionMulti(['est', 'Rest'], 500);
+        Wait(RandomRange(20000, 30000));
+        if SPS_WalkPath(ToGrandExchange) then
+        begin
+          MyPos := SPS_GetMyPos;
+          MyGoal := Point(4495, 2766);
+          Difference := Distance(MyPos.x, MyPos.y, MyGoal.x, MyGoal.y);
+          if Difference < 30 then
+          begin
+            case (Count mod 3) of
+              0: SPS_BlindWalk(Point(4562, 2751));
+              1: SPS_BlindWalk(Point(4431, 2752));
+              2: SPS_BlindWalk(Point(4430, 2640));
+            end;
+            break;
+          end;
+        end;
+      end;
+    end;
+    LodestoneToLumbridge;
+  end;
+end;
+
+begin
+  SetupSRL;
+  Count := 63;
+  OpenEmailBox;
+  while(Count < 100) do
+  begin
+    CreateNewAccount;
+    RegisterAccount;
+    if WaitFunc(@UnreadEmail, RandomRange(500, 1500), 600000) then     // max 10 mins wait for email
+    begin
+      ActivateAccount;
+      WriteLn('Account ' + IntToStr(Count) + ' activated');
+      Wait(RandomRange(6000, 8000));
+      if HandleSetup then
+      begin
+        WriteLn('handled setup');
+        Wait(RandomRange(6000, 8000));
+        SkipCutscene;
+        if WaitFunc(@TutorialStart, RandomRange(500, 1000), 20000) then
+        begin
+          HandleTutorial;
+          LodestoneToLumbridge;
+        end;
+        Logout;
+      end else
+      begin
+        WriteLn('Failed to handle setup, waiting a few minutes to get the login screen');
+        Wait(RandomRange(6*60000, 8*60000));
+      end;
+    end else
+    begin
+      WriteLn('We failed to activate account ' + IntToStr(Count));
+      WriteLn('Trying to exit the registration form to start again');
+      ExitRegistration;
+    end;
+
+    Inc(Count);
+    OpenEmailBox;
+  end;
+end.

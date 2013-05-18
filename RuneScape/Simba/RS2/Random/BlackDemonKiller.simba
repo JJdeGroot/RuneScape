@@ -1,0 +1,355 @@
+program Test;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+{$i srl/srl/misc/paintsmart.simba}
+
+var
+  Debug: Boolean;
+  n, DX, DY: Integer;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+end;
+
+function AttackDemon: Boolean;
+var
+  X, Y: Integer;
+  Demon: TPointArray;
+  DemonSplit: T2DPointArray;
+
+begin
+  WriteLn('Attacking black demon');
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(1.20, 0.52);
+  if FindColorsSpiralTolerance(MSCX, MSCY, Demon, 1776669, MSX1, MSY1, MSX2, MSY2, 7) then
+    begin
+      SplitTPAExWrap(Demon, 1, 1, DemonSplit);
+      SortATPASize(DemonSplit, True);
+      if Length(DemonSplit[0]) > 0 then
+        begin
+          MiddleTPAEx(DemonSplit[0], X, Y);
+          if Debug then
+            begin
+              //SMART_DrawDotsEx(False, DemonSplit[0], clPurple);
+              SMART_DrawBoxes(False, [GetTPABounds(DemonSplit[0])], clRed);
+              SMART_DrawCircle(False, Point(X, Y), 2, False, clYellow);
+            end;
+          MMouse(X, Y, RandomRange(-5, 5), RandomRange(-30, 5));
+          Wait(RandomRange(50, 150));
+          if WaitUpTextMulti(['demon', 'ttac', 'lack'], 500) then
+            begin
+              case Random(7) of
+                0..4: begin; ClickMouse2(1); Result:=True; end;
+                5..6: begin
+                        ClickMouse2(0);
+                        if WaitOptionMulti(['demon', 'ttac', 'lack'], 500) then
+                          Result := True;
+                      end;
+              end;
+            end;
+        end;
+    end;
+end;
+
+function AttackDemonWest: Boolean;
+var
+  X, Y: Integer;
+  Demon: TPointArray;
+  DemonSplit: T2DPointArray;
+
+begin
+  WriteLn('Attacking black demon');
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(1.20, 0.52);
+  if FindColorsSpiralTolerance(MSCX, MSCY, Demon, 1776669, MSX1, MSY1, MSCX, MSY2, 7) then
+    begin
+      SplitTPAExWrap(Demon, 1, 1, DemonSplit);
+      SortATPASize(DemonSplit, True);
+      if Length(DemonSplit[0]) > 0 then
+        begin
+          MiddleTPAEx(DemonSplit[0], X, Y);
+          if Debug then
+            begin
+              //SMART_DrawDotsEx(False, DemonSplit[0], clPurple);
+              SMART_DrawBoxes(False, [GetTPABounds(DemonSplit[0])], clRed);
+              SMART_DrawCircle(False, Point(X, Y), 2, False, clYellow);
+            end;
+          MMouse(X, Y, RandomRange(-5, 5), RandomRange(-30, 5));
+          Wait(RandomRange(50, 150));
+          if WaitUpTextMulti(['demon', 'ttac', 'lack'], 500) then
+            begin
+              case Random(7) of
+                0..4: begin; ClickMouse2(1); Result:=True; end;
+                5..6: begin
+                        ClickMouse2(0);
+                        if WaitOptionMulti(['demon', 'ttac', 'lack'], 500) then
+                          Result := True;
+                      end;
+              end;
+              DX := X+15;
+              DY := Y-15;
+            end;
+        end;
+    end;
+end;
+
+function AttackDemonEast: Boolean;
+var
+  X, Y: Integer;
+  Demon: TPointArray;
+  DemonSplit: T2DPointArray;
+
+begin
+  WriteLn('Attacking black demon');
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(1.20, 0.52);
+  if FindColorsSpiralTolerance(MSCX, MSCY, Demon, 1776669, MSCX, MSY1, MSX2, MSY2, 7) then
+    begin
+      SplitTPAExWrap(Demon, 1, 1, DemonSplit);
+      SortATPASize(DemonSplit, True);
+      if Length(DemonSplit[0]) > 0 then
+        begin
+          MiddleTPAEx(DemonSplit[0], X, Y);
+          if Debug then
+            begin
+              //SMART_DrawDotsEx(False, DemonSplit[0], clPurple);
+              SMART_DrawBoxes(False, [GetTPABounds(DemonSplit[0])], clRed);
+              SMART_DrawCircle(False, Point(X, Y), 2, False, clYellow);
+            end;
+          MMouse(X, Y, RandomRange(-5, 5), RandomRange(-30, 5));
+          Wait(RandomRange(50, 150));
+          if WaitUpTextMulti(['demon', 'ttac', 'lack'], 500) then
+            begin
+              case Random(7) of
+                0..4: begin; ClickMouse2(1); Result:=True; end;
+                5..6: begin
+                        ClickMouse2(0);
+                        if WaitOptionMulti(['demon', 'ttac', 'lack'], 500) then
+                          Result := True;
+                      end;
+              end;
+              DX := X-15;
+              DY := Y-15;
+            end;
+        end;
+    end;
+end;
+
+function Position: String;
+var
+  P: TPoint;
+  EastBox, WestBox: TBox;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['0_8']);
+  P := SPS_GetMyPos;
+  WriteLn('Our position: '+ToStr(P)+'');
+  WestBox := IntToBox(203, 3420, 227, 3475);
+  EastBox := IntToBox(231, 3420, 275, 3471);
+  if PointInBox(P, WestBox) then
+    begin
+      WriteLn('West');
+      Result := 'West';
+    end;
+  if PointInBox(P, EastBox) then
+    begin
+      WriteLn('East');
+      Result := 'East';
+    end;
+end;
+
+procedure Safespot;
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['0_8']);
+  case Position of
+    'West': SPS_WalkToPos(Point(227, 3439));
+    'East': SPS_WalkToPos(Point(243, 3427));
+  end;
+end;
+
+procedure CheckSafespot;
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['0_8']);
+  case Position of
+    'West': begin
+              if not(SPS_GetMyPos = Point(227, 3439)) then
+                SPS_WalkToPos(Point(227, 3439));
+            end;
+    'East': begin
+              if not(SPS_GetMyPos = Point(243, 3427)) then
+                SPS_WalkToPos(Point(243, 3427));
+            end;
+  end;
+end;
+
+procedure Scrolling;
+var
+  X, Y, SumTab: Integer;
+
+begin
+  SumTab := DTMFromString('mwQAAAHic42RgYPBlgmArKB0PxNZAHIdEdzEyMJQDcScQz4HSFUA8G4pB7DhjYQZsgI+PD87+D8SMVMBwAAAsuwmK');
+  if not(FindDTM(SumTab, X, Y, MIX1, MIY1, MIX2, MIY2)) then
+    begin
+      Mousebox(699, 134, 715, 153, 0);
+      ClickMouse2(0);
+      Wait(RandomRange(50, 150));
+      WaitOptionMulti(['etai', 'ails'], 500);
+      Wait(250 + Random(250));
+      case Random(3) of
+        0: begin; Mousebox(578, 430, 602, 452, 1); Wait(500 + Random(1000)); end;
+      end;
+      Mousebox(563, 242, 577, 259, 1);
+    end else
+    begin
+      case Random(3) of
+        0: begin; Mousebox(578, 430, 602, 452, 1); Wait(500 + Random(1000)); end;
+      end;
+      Mousebox(563, 242, 577, 259, 1);
+    end;
+  FreeDTM(SumTab);
+end;
+
+procedure ScrollDemon;
+var
+  a: Integer;
+
+begin
+  begin
+    case Position of
+      'West': AttackDemonWest;
+      'East': AttackDemonEast;
+    end;
+    repeat
+      inc(a);
+      Scrolling;
+      MMouse(DX, DY, RandomRange(-5, 5), RandomRange(-5, 5));
+      case Random(7) of
+        0..4: ClickMouse2(1);
+        5..6: begin
+                ClickMouse2(0);
+                WaitOptionMulti(['demon', 'ttac', 'lack'], 500);
+              end;
+      end;
+      Wait(RandomRange(1000, 2000));
+    until(a>RandomRange(2, 6));
+  end;
+end;
+
+procedure ResetTime;
+begin;
+  n:=0
+  MarkTime(n);
+end;
+
+procedure RenewFamiliar;
+var
+  Flask, SumTab, X, Y: Integer;
+
+begin
+if TimeFromMark(n)>300000 then
+  begin;
+  if FindColor(X, Y, 127, 0, 338, 518, 479) then
+    begin
+      ResetTime;
+      WriteLn('Renewing familiar');
+      if GetCurrentTab = (tab_Inv) then
+      begin
+        WriteLn('Inventory tab')
+      end else
+      begin
+        MouseBox(642, 168, 671, 204, 1);    //FTab(tab_Inv);
+        WriteLn('Inventory tab');
+        Wait(300 + Random(300));
+      end;
+
+      Flask := DTMFromString('mAAEAAHic42FgYHBiYmBwBmJrKLYEYhsgdgRidyD2BmIfKA3iPwPquQHEt4H4ARC/AOIPQPwJit8C8ROo3B0glj12BkgyEY3/A0lGGmJkAAAVShDj');
+      if FindDTM(Flask, X, Y, MIX1, MIY1, MIX2, MIY2) then
+      MMouse(X, Y, 2, 2);
+        case Random(7) of
+          0..4: Mouse(X, Y, 0, 0, 1);
+          5..6: begin;
+                  Mouse(X, Y, 0, 0, 0);
+                  WaitOptionMulti(['Dri', 'ink'], 250);
+                end;
+        end;
+      FreeDTM(Flask);
+      WriteLn('Renewed summoning points');
+      Wait(300 + Random(300));
+
+      SumTab := DTMFromString('mwQAAAHic42RgYPBlgmArKB0PxNZAHIdEdzEyMJQDcScQz4HSFUA8G4pB7DhjYQZsgI+PD87+D8SMVMBwAAAsuwmK');
+        case Random(9) of
+          0..5: begin;
+                  Mousebox(690, 127, 746, 160, 0);
+                  WaitOptionMulti(['Renew', 'enew'], 150);
+                  Wait(100 + Random(200));
+                end;
+          6..7: begin;
+                  if not(FindDTM(SumTab, X, Y, MIX1, MIY1, MIX2, MIY2)) then
+                    begin
+                      Mousebox(690, 127, 746, 160, 0);
+                      WaitOptionMulti(['etai', 'ails'], 150);
+                      Wait(100 + Random(200));
+                      MouseBox(623, 376, 659, 412, 1);
+                    end else
+                  MouseBox(623, 376, 659, 412, 1);
+                end;
+          8:    begin;
+                  if not(FindDTM(SumTab, X, Y, MIX1, MIY1, MIX2, MIY2)) then
+                    begin
+                      Mousebox(690, 127, 746, 160, 0);
+                      WaitOptionMulti(['etai', 'ails'], 150);
+                      Wait(100 + Random(200));
+                      MouseBox(623, 376, 659, 412, 0);
+                      WaitOptionMulti(['Ren', 'enew'], 150);
+                    end else
+                  MouseBox(623, 376, 659, 412, 0);
+                  WaitOptionMulti(['Ren', 'enew'], 150);
+                end;
+        end;
+      Wait(300 + Random(300));
+    end else
+    begin
+      WriteLn('Familiar lives');
+    end;
+  end;
+end;
+
+begin
+  SetUpLogin;
+  MarkTime(n);
+  Debug := False;
+  SMART_ClearCanvas;
+  {AttackDemon;
+  Wait(500 + Random(500));
+  Safespot;
+  CheckSafespot;}
+  repeat
+    ScrollDemon;
+  until(false);
+end.

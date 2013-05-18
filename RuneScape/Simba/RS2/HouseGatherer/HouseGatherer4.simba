@@ -1,0 +1,246 @@
+program HouseGatherer;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i SRL/srl/misc/smartgraphics.simba}
+
+var
+  StartTime, GatheredItems: Integer;
+
+const
+  ItemPrice = 500; // The price of the item we are gathering
+  KeyChoice = VK_3; // VK_1 = bucket, VK_2 = spade, VK_3 = tinderbox, etc.
+  ButlerName = '8qtl8!'; // Do not change
+  BankOption = '1'; // '1' is from moneypouch '2' is from bank (butler payment)
+
+function ClickTools: boolean;
+var
+  TPA: TPointArray;
+  ATPA, ToolsATPA: T2DPointArray;
+  P: TPoint;
+  i, L: Integer;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.00, 1.67);
+  if FindColorsSpiralTolerance(MSCX, MSCY, TPA, 15924733, MSX1, MSY1, MSX2, MSY2, 1) then
+  begin
+    SMART_DrawDotsEx(True, TPA, clYellow);
+    SplitTPAWrap(TPA, 30, ATPA);
+    for i:=0 to high(ATPA) do
+    begin
+      if Length(ATPA[i]) > 50 then
+      begin
+        L := Length(ToolsATPA);
+        SetLength(ToolsATPA, L+1);
+        ToolsATPA[L] := ATPA[i];
+      end;
+
+      L := Length(ToolsATPA);
+      if L > 0 then
+      begin
+        SortATPAFrom(ToolsATPA, Point(MSCX, MSCY));
+        SMART_DrawDotsEx(False, ToolsATPA[0], clRed);
+        P := MiddleTPA(ToolsATPA[0]);
+        MMouse(P.x, P.y, RandomRange(-6, 6), RandomRange(-6, 6));
+        ClickMouse2(1);
+        Wait(RandomRange(50, 100));
+        Result := True;
+        break;
+      end;
+    end;
+  end;
+end;
+
+function ClickButler: boolean;
+var
+  TPA: TPointArray;
+  ATPA, ButlerATPA: T2DPointArray;
+  P: TPoint;
+  L, i: Integer;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.26, 1.14);
+  if FindColorsSpiralTolerance(MSCX, MSCY, TPA, 1121870, MSX1, MSY1, MSX2, MSY2, 12) then
+  begin
+    SMART_DrawDotsEx(True, TPA, clAqua);
+    SplitTPAWrap(TPA, 10, ATPA);
+    for i:=0 to high(ATPA) do
+    begin
+      if Length(ATPA[i]) > 50 then
+      begin
+        L := Length(ButlerATPA);
+        SetLength(ButlerATPA, L+1);
+        ButlerATPA[L] := ATPA[i];
+      end;
+
+      L := Length(ButlerATPA);
+      if L > 0 then
+      begin
+        SortATPAFrom(ButlerATPA, Point(MSCX, MSCY));
+        SMART_DrawDotsEx(False, ButlerATPA[0], clRed);
+        P := MiddleTPA(ButlerATPA[0]);
+        MMouse(P.x, P.y, RandomRange(-4, 4), RandomRange(-4, 4));
+        ClickMouse2(1);
+        Wait(RandomRange(400, 800));
+        Result := True;
+        break;
+      end;
+    end;
+  end;
+end;
+
+function FullInv: boolean;
+var
+  i: Integer;
+
+begin
+  if not(GetCurrentTab = tab_Inv) then
+  begin
+    FTab(tab_Inv);
+    Wait(RandomRange(500, 1000));
+  end;
+
+  for i:=1 to 28 do
+    if not(ExistsItem(i)) then
+    begin
+      Result := False;
+      Exit;
+    end;
+
+  Result := True;
+end;
+
+function ClickItemInInv: boolean;
+var
+  i: Integer;
+
+begin
+  if not(GetCurrentTab = tab_Inv) then
+  begin
+    FTab(tab_Inv);
+    Wait(RandomRange(500, 1000));
+  end;
+
+  for i:=1 to 28 do
+    if ExistsItem(i) then
+    begin
+      InvMouse(i, 1);
+      Result := True;
+      break;
+    end;
+end;
+
+function ItemToBankScreen: boolean;
+var
+  TPA: TPointARray;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(6.01, 4.13);
+  if FindColorsSpiralTolerance(MCCX, MCCY, TPA, 1450008, MCX1, MCY1, MCX2, MCY2, 5) then
+    Result := Length(TPA) > 5000;
+  //writeln('TPA Length: ' + IntToStr(Length(TPA)));
+end;
+
+function EnterAmountScreen: boolean;
+var
+  TPA: TPointArray;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.08, 1.39);
+  if FindColorsSpiralTolerance(MCCX, MCCY, TPA, 9352648, MCX1, MCY1, MCX2, MCY2, 10) then
+    Result := Length(TPA) > 40000;
+  //writeln('TPA2 Length: ' + IntToStr(Length(TPA)));
+end;
+
+function ButlerNeedsFee: boolean;
+var
+  s: String;
+
+begin
+  s := getNPCChatName;
+  Result := (s = ButlerName);
+end;
+
+function GatherStuff: boolean;
+begin
+  if not FullInv then
+  begin
+    if not(IsKeyDown(KeyChoice)) then
+      KeyDown(KeyChoice);
+    while not FullInv do
+      if not(ClickTools) then
+      begin
+        Result := False;
+        Exit;
+      end;
+    KeyUp(KeyChoice);
+  end;
+  Result := True;
+end;
+
+function BankItems: boolean;
+var
+  i: Integer;
+
+begin
+  if FullInv then
+    if ClickItemInInv then
+      if WaitFunc(@ClickButler, RandomRange(200, 600), 15000) then
+        if WaitFunc(@ItemToBankScreen, RandomRange(50, 100), 2000) then
+        begin
+          if ButlerNeedsFee then
+          begin
+            ClickContinue(True, True);
+            TypeSendEx(BankOption, False);
+            Result := BankItems;
+            Exit;
+          end;
+
+          TypeSendEx('1', False);
+          if WaitFunc(@EnterAmountScreen, RandomRange(50, 100), 2000) then
+          begin
+            TypeSendEx('20', True);
+            if not(IsKeyDown(KeyChoice)) then
+              KeyDown(KeyChoice);
+            for i:=0 to 4 do
+              ClickTools;
+            KeyUp(KeyChoice);
+            Result := True;
+          end;
+        end;
+end;
+
+procedure Proggy;
+var
+  RunTime, Profit: Integer;
+  Multiplier: Extended;
+  s: String;
+
+
+begin
+  RunTime := GetSystemTime - StartTime;
+  s := MsToTime(RunTime, Time_Formal);
+  Multiplier := 3600000 / RunTime;
+  Profit := ItemPrice*GatheredItems;
+  writeln('------------------------------------------------------------------');
+  writeln('Running for: ' + s);
+  writeln('We have gathered ' + IntToStr(GatheredItems) + ' items at ' + IntToStr(Round(Multiplier*GatheredItems)) + ' per hour');
+  writeln('Price per item: ' + ToStr(ItemPrice) + ' gp');
+  writeln('We made ' + IntToStr(Profit) + ' gp profit at ' + IntToStr(Round(Profit*Multiplier)) + ' per hour');
+  writeln('------------------------------------------------------------------');
+end;
+
+begin
+  SetupSRL;
+  ClickNorth(SRL_ANGLE_HIGH);
+  StartTime := GetSystemTime;
+  repeat
+    GatherStuff;
+    if BankItems then
+      IncEx(GatheredItems, 20);
+    Proggy;
+  until(false);
+end.

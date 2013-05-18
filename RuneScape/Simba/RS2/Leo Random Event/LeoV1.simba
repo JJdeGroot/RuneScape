@@ -1,0 +1,94 @@
+program JJsLeoSolver;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i SRL/SRL/misc/paintsmart.simba}
+
+var
+  Debug: Boolean;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+end;
+
+{*******************************************************************************
+function GrabGravestoneColor: String;
+by: J J
+Description: Returns molly's hair color by using the hair color while in chat
+*******************************************************************************}
+function GrabGravestoneColor: String;
+var
+  GraveColor, Tol, Col, i: Integer;
+  GraveColorExtended, Lowest: Extended;
+  GraveColors: TIntegerArray;
+  Speed2Modifiers, GraveDefinedColors: TExtendedArray;
+
+begin
+  GraveColors := GetColors(TPAFromBox(IntToBox(MSCX-10, MSCY-50, MSCX+10, MSCY-30)));
+  GraveColor := GetBestColor(GraveColors, 2, Tol, Speed2Modifiers);
+
+  if Debug then
+    begin
+      SMART_DrawBoxes(False, [IntToBox(MSCX-10, MSCY-50, MSCX+10, MSCY-30)], clRed);
+      WriteLn('Grave colors: '+ToStr(GraveColors)+'');
+      WriteLn('Best grave colors: '+ToStr(GraveColor)+'');
+      WriteLn('Best tolerance: '+ToStr(Tol)+'');
+      WriteLn('Modifiers: '+ToStr(Speed2Modifiers)+'');
+    end;
+
+  // Yellow, Red, Pink, Violet, Cyan, Blue, Green, Orange, Gray \\
+  GraveDefinedColors := [2178123, 6186381, 8803737, 9133418, 8421975, 8481352, 6196853, 5532823, 7763312];
+  GraveColorExtended := GraveColor;
+  Lowest := GraveDefinedColors[0]+1;
+  for i:=0 to 8 do
+    begin
+      if Abs(GraveColor-GraveDefinedColors[i]) < Lowest then
+        begin
+          Lowest := Abs(GraveColor-GraveDefinedColors[i]);
+          Col := i;
+        end;
+    end;
+  case Col of
+    0: WriteLn('Yellow');
+    1: WriteLn('Red');
+    2: WriteLn('Pink');
+    3: WriteLn('Violet');
+    4: WriteLn('Cyan');
+    5: WriteLn('Blue');
+    6: WriteLn('Green');
+    7: WriteLn('Orange');
+    8: WriteLn('Gray');
+  end;
+  //WriteLn('Grave color: '+GraveColor+'');
+end;
+
+begin
+  SetUpLogin;
+  SMART_ClearCanvas;
+  Debug := True;
+  GrabGravestoneColor;
+end.

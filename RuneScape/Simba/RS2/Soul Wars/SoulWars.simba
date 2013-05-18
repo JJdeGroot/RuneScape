@@ -1,0 +1,380 @@
+program JJsSoulWars;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+{$i SRL/SRL/misc/paintsmart.simba}
+{$i SRL/SRL/misc/debug.simba}
+
+var
+  Debug: Boolean;
+  DesiredTeam, JoinedTeam: String;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 44;
+  Smart_Members := True;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayerToLob;
+  OpenWorldScreen;
+  SelectWorld(44);
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+// General procedures & functions
+////////////////////////////////////////////////////////////////////////////////
+
+procedure SetupPreferences;
+begin
+  Debug := True;
+  DesiredTeam := 'Blue';
+end;
+
+procedure WaitUntilNotMoving;
+begin
+  Wait(500 + Random(500));
+  repeat
+    Wait(250 + Random(250));
+  until not(IsMoving);
+  Wait(500 + Random(500));
+end;
+
+function ObjFinder(Hue, Sat: Extended; Color, Tolerance, X1, Y1, X2, Y2: Integer; Width, Height:Integer; Sort: Boolean; Uptext: Array of String; xOffset, yOffset, UptextWaitTime: Integer): Boolean;
+var
+  X, Y, i: Integer;
+  ColorTPA: TPointArray;
+  ColorATPA: T2DPointArray;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(Hue, Sat);
+  if FindColorsTolerance(ColorTPA, Color, X1, Y1, X2, Y2, Tolerance) then
+    begin
+      SplitTPAExWrap(ColorTPA, Width, Height, ColorATPA);
+      if Debug then
+        begin
+          SMART_ClearCanvas;
+          SMART_DrawDotsEx(False, ColorTPA, clYellow);
+          SMART_DrawBoxes(False, [GetTPABounds(ColorTPA)], clRed);
+          DebugATPABounds(ColorATPA);
+        end;
+      SortATPASize(ColorATPA, Sort);
+      for i:=0 to High(ColorATPA) do
+        begin
+          MiddleTPAEx(ColorATPA[i], X, Y);
+          MMouse(X, Y, xOffset, yOffset);
+          if WaitUpTextMulti(Uptext, UptextWaitTime) then
+            begin
+              Result := True;
+              Break;
+            end;
+        end;
+    end;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+// Outside Soul Wars
+////////////////////////////////////////////////////////////////////////////////
+
+function WaitingLobby: Boolean;
+begin
+  if Debug then
+    begin
+      SMART_DrawBoxes(False, [IntToBox(417, 28, 492, 39)], clPurple);
+      WriteLn(''+IntToStr(CountColorTolerance(39423, 417, 28, 492, 39, 1))+'');
+    end;
+  if CountColorTolerance(39423, 417, 28, 492, 39, 1) > 100 then
+    Result := True;
+end;
+
+function EnterGreenPortal: Boolean;
+begin
+  if ObjFinder(0.42, 0.92, 5083218, 16, MSX1, MSY1, MSX2, MSY2, 2, 2, True, ['oin', 'team', 'alance', 'ortal'], RandomRange(-10, 10), RandomRange(-10, 10), 500) then
+    begin
+      case Random(7) of
+        0..4: ClickMouse2(1);
+        5..6: begin
+                ClickMouse2(0);
+                WaitOptionMulti(['oin', 'team', 'alance', 'ortal'], 500);
+              end;
+      end;
+      if WaitFunc(@WaitingLobby, RandomRange(500, 1000), 10000) then
+        Result := True;
+    end;
+end;
+
+function EnterRedPortal: Boolean;
+begin
+  if ObjFinder(0.06, 1.01, 4541312, 19, MSX1, MSY1, MSX2, MSY2, 5, 5, True, ['ass', 'Red', 'barrier'], 0, 0, 500) then
+    begin
+      case Random(7) of
+        0..4: ClickMouse2(1);
+        5..6: begin
+                ClickMouse2(0);
+                WaitOptionMulti(['ass', 'Red', 'barrier'], 500);
+              end;
+      end;
+      if WaitFunc(@WaitingLobby, RandomRange(500, 1000), 10000) then
+        Result := True;
+    end;
+end;
+
+function EnterBluePortal: Boolean;
+begin
+  if ObjFinder(0.30, 1.66, 12287841, 18, MSX1, MSY1, MSX2, MSY2, 5, 5, False, ['ass', 'Blue', 'barrier'], 0, 0, 500) then
+    begin
+      case Random(7) of
+        0..4: ClickMouse2(1);
+        5..6: begin
+                ClickMouse2(0);
+                WaitOptionMulti(['ass', 'Blue', 'barrier'], 500);
+              end;
+      end;
+      if WaitFunc(@WaitingLobby, RandomRange(500, 1000), 10000) then
+        Result := True;
+    end;
+end;
+
+function DefineTeam: String;
+var
+  i: Integer;
+  CountedColors: Array[0..1] of Integer;
+  Colors, Tolerances: Array of Integer;
+  HueMod, SatMod: Array of Extended;
+
+begin
+  HueMod := [0.59, 0.10]
+  SatMod := [0.44, 2.16]
+  Colors := [8682097, 2017512]
+  Tolerances := [10, 5]
+
+  ColorToleranceSpeed(2);
+  for i:=0 to 1 do
+    begin
+      SetColorSpeed2Modifiers(HueMod[i], SatMod[i]);
+      CountedColors[i] := CountColorTolerance(Colors[i], MMX1, MMY1, MMX2, MMY2, Tolerances[i]);
+      if Debug then
+        WriteLn('Counted colors: '+IntToStr(CountedColors[i])+'');
+      if CountedColors[i] > 10000 then
+        begin
+          case i of
+            0: Result := 'Blue';
+            1: Result := 'Red';
+          end;
+          Break;
+        end;
+    end;
+end;
+
+function WalkToGreenPortal: Boolean;
+var
+  P: TPoint;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['0_4']);
+  P := SPS_GetMyPos;
+  if Debug then
+    WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+  if not(SPS_WalkPath([Point(247, 1820), Point(247, 1825), Point(247, 1830),
+                       Point(247, 1835), Point(247, 1840), Point(247, 1845),
+                       Point(247, 1850), Point(247, 1855), Point(247, 1860),
+                       Point(247, 1865)])) then
+    SPS_BlindWalk(Point(247, 1865));
+  WaitUntilNotMoving;
+
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.42, 0.92);
+  if Debug then
+    WriteLn(''+IntToStr(CountColorTolerance(5083218, MSX1, MSY1, MSX2, MSY2, 16))+'');
+  if CountColorTolerance(5083218, MSX1, MSY1, MSX2, MSY2, 16) > 1500 then
+    Result := True;
+end;
+
+function WalkToRedPortal: Boolean;
+var
+  P: TPoint;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['0_4']);
+  P := SPS_GetMyPos;
+  if Debug then
+    WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+  if not(SPS_WalkPath([Point(247, 1820), Point(247, 1825), Point(247, 1830),
+                       Point(247, 1835), Point(247, 1840), Point(247, 1845),
+                       Point(247, 1850), Point(247, 1855), Point(247, 1860),
+                       Point(255, 1860), Point(260, 1860), Point(265, 1860),
+                       Point(270, 1860), Point(275, 1860)])) then
+    SPS_BlindWalk(Point(275, 1860));
+  WaitUntilNotMoving;
+
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.05, 0.90);
+  if Debug then
+    WriteLn(''+IntToStr(CountColorTolerance(4672919, MSX1, MSY1, MSX2, MSY2, 14))+'');
+  if CountColorTolerance(4672919, MSX1, MSY1, MSX2, MSY2, 14) > 50 then
+    Result := True;
+end;
+
+function WalkToBluePortal: Boolean;
+var
+  P: TPoint;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['0_4']);
+  P := SPS_GetMyPos;
+  if Debug then
+    WriteLn(''+IntToStr(P.X)+', '+IntToStr(P.Y)+'');
+  if not(SPS_WalkPath([Point(247, 1820), Point(247, 1825), Point(247, 1830),
+                       Point(247, 1835), Point(247, 1840), Point(247, 1845),
+                       Point(247, 1850), Point(247, 1855), Point(247, 1860),
+                       Point(235, 1860), Point(225, 1865), Point(215, 1865)])) then
+    SPS_BlindWalk(Point(215, 1865));
+  WaitUntilNotMoving;
+
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.30, 1.66);
+  if Debug then
+    WriteLn(''+IntToStr(CountColorTolerance(12287841, MSX1, MSY1, MSX2, MSY2, 18))+'');
+  if CountColorTolerance(12287841, MSX1, MSY1, MSX2, MSY2, 18) > 20000 then
+    Result := True;
+end;
+
+procedure JoinFailsafe;
+var
+  X, Y: Integer;
+
+begin
+  if FindColorSpiralTolerance(X, Y, 328942, MMX1, MMY1, MMX2, MMY2, 15) then
+    begin
+      MMouse(X, Y, RandomRange(-2, 2), RandomRange(-2, 2));
+      ClickMouse2(1);
+    end else
+    begin
+      RadialWalkTolerance(6582386, 70, 290, 50, RandomRange(-2, 2), RandomRange(-2, 2), 25);
+    end;
+  WaitUntilNotMoving;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+// Inside Soul Wars
+////////////////////////////////////////////////////////////////////////////////
+
+function WalkToMiddle: Boolean;
+var
+  BluePath, RedPath: TPointArray;
+
+begin
+  case JoinedTeam of
+    'Red':  begin
+              RedPath :=  [Point(959, 4996), Point(963, 4998), Point(966, 5007),
+                           Point(971, 5013), Point(976, 5015), Point(983, 5018),
+                           Point(985, 5029), Point(984, 5036), Point(983, 5042),
+                           Point(983, 5052), Point(983, 5058), Point(981, 5066),
+                           Point(979, 5075), Point(977, 5083), Point(976, 5091),
+                           Point(970, 5098), Point(963, 5102), Point(956, 5102),
+                           Point(947, 5101), Point(941, 5099), Point(934, 5098),
+                           Point(930, 5093), Point(924, 5088), Point(920, 5084),
+                           Point(917, 5081), Point(906, 5076), Point(897, 5074),
+                           Point(889, 5071), Point(878, 5068), Point(867, 5064),
+                           Point(861, 5062), Point(852, 5059), Point(842, 5055),
+                           Point(831, 5052), Point(823, 5048), Point(812, 5043),
+                           Point(804, 5039), Point(796, 5035), Point(785, 5031),
+                           Point(777, 5029), Point(770, 5029), Point(755, 5031),
+                           Point(740, 5029), Point(727, 5029), Point(716, 5029),
+                           Point(709, 5029), Point(701, 5028), Point(692, 5029),
+                           Point(684, 5028), Point(672, 5026)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['2_12','1_12']);
+              SPS_WalkPath(RedPath);
+            end;
+    'Blue': begin
+              BluePath := [Point(379, 5055), Point(374, 5054), Point(371, 5052),
+                           Point(369, 5050), Point(365, 5047), Point(360, 5043),
+                           Point(358, 5040), Point(355, 5037), Point(352, 5030),
+                           Point(349, 5017), Point(349, 5012), Point(349, 5007),
+                           Point(349, 5000), Point(351, 4996), Point(354, 4990),
+                           Point(357, 4985), Point(360, 4980), Point(364, 4976),
+                           Point(369, 4971), Point(376, 4967), Point(382, 4964),
+                           Point(388, 4963), Point(394, 4963), Point(401, 4966),
+                           Point(407, 4970), Point(414, 4975), Point(418, 4978),
+                           Point(424, 4982), Point(429, 4986), Point(436, 4991),
+                           Point(446, 4996), Point(454, 5000), Point(457, 5003),
+                           Point(464, 5006), Point(474, 5010), Point(481, 5013),
+                           Point(488, 5016), Point(496, 5020), Point(507, 5022),
+                           Point(517, 5021), Point(527, 5022), Point(538, 5023),
+                           Point(546, 5023), Point(557, 5021), Point(566, 5021),
+                           Point(577, 5022), Point(586, 5022), Point(597, 5023),
+                           Point(606, 5023), Point(616, 5023), Point(624, 5024),
+                           Point(631, 5025), Point(638, 5026), Point(645, 5027),
+                           Point(651, 5027), Point(657, 5027), Point(667, 5027)];
+              SPS_Setup(RUNESCAPE_SURFACE, ['0_12','1_12']);
+              SPS_WalkPath(RedPath);
+            end;
+  end;
+end;
+
+procedure Test;
+begin
+{========================= Procedures / Function list ==========================
+    JoinFailsafe;
+    ObjDetector;
+    WaitingLobby;
+    EnterGreenPortal;
+    EnterRedPortal;
+    EnterBluePortal;
+    WalkToGreenPortal;
+    WalkToRedPortal;
+    WalkToBluePortal;
+    WalkToMiddle;
+===============================================================================}
+
+  {case DesiredTeam of
+    'Red': begin
+             if WalkToRedPortal then
+               if not(EnterRedPortal) then
+                 JoinFailsafe;
+           end;
+    'Blue': begin
+              if WalkToBluePortal then
+                if not(EnterBluePortal) then
+                  JoinFailsafe;
+            end;
+    'Green': begin
+               if WalkToGreenPortal then
+                if not(EnterGreenPortal) then
+                  JoinFailsafe;
+             end;
+  end;
+  case DefineTeam of
+    'Red': JoinedTeam := 'Red';
+    'Blue': JoinedTeam := 'Blue';
+  end;}
+  WalkToMiddle;
+end;
+
+begin
+  SetUpLogin;
+  SetupPreferences;
+  Test;
+  //JoinFailsafe;
+end.

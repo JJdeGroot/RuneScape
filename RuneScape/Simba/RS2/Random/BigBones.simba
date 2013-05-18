@@ -1,0 +1,80 @@
+program RobinsBigBoneCollector;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i SRL/SRL/misc/paintsmart.simba}
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+end;
+
+procedure WaitUntilWalking;
+begin
+  Wait(500 + Random(500));
+  if (IsMoving=True) then
+    begin
+      repeat
+        Wait(100 + Random(100));
+      until(IsMoving=False);
+    end;
+  Wait(500 + Random(500));
+end;
+
+function PickUpBones: Boolean;
+var
+  X, Y, i: Integer;
+  BoneColors: TPointArray;
+  BoneSplit: Array of TPointArray;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.28, 0.62);
+  if FindColorsSpiralTolerance(X, Y, BoneColors, 12106952, MSX1, MSY1, MSX2, MSY2, 15) then
+    begin
+      SplitTPAExWrap(BoneColors, 3, 3, BoneSplit);
+      SortATPASize(BoneSplit, True);
+      SMART_DrawDotsEx(False, BoneColors, clYellow); // Big Bones worden geel
+      SMART_DrawBoxes(False, [IntToBox(GetTPABounds(BoneSplit[0]).X1, GetTPABounds(BoneSplit[0]).Y1, GetTPABounds(BoneSplit[0]).X2, GetTPABounds(BoneSplit[0]).Y2)], clRed); // Rode box om big bones
+      for i:=0 to High(BoneSplit) do
+        begin
+          MiddleTPAEx(BoneSplit[i], X, Y);
+          MMouse(X, Y, RandomRange(-1, 1), RandomRange(-1, 1));
+          if WaitUpTextMulti(['ig', 'Big', 'ig bones', 'Big bones'], 1000) then
+            begin
+              ClickMouse2(1);
+              WaitUntilWalking;
+              Result:=True;
+              Break;
+            end;
+        end;
+    end;
+end;
+
+begin
+  SetUpLogin;
+  PickUpBones;
+end.

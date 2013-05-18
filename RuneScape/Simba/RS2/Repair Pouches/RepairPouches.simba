@@ -1,0 +1,278 @@
+program Test;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+end;
+
+procedure WaitUntilWalking;
+begin
+  Wait(500 + Random(500));
+  repeat
+    Wait(100 + Random(100));
+  until(IsMoving=False);
+  Wait(500 + Random(500));
+end;
+
+function MageWalkTele: Boolean;
+var
+  X, Y, w: Integer;
+  P: TPoint;
+  DitchColors, MageColors: TPointArray;
+  DitchColorsSplit, MageColorsSplit: T2DPointArray;
+
+begin
+  // Mage tab, lodestone to edge, walk to tree n/e of lodestone
+  ColorToleranceSpeed(1);
+  if not(GameTab(tab_magic)) then
+    FTab(tab_magic);
+  Mousebox(562, 217, 585, 240, 1);
+  Wait(1500 + Random(1000));
+  MouseBox(272, 136, 311, 175, 1);
+  Wait(18000 + Random(3000));
+  RadialWalkTolerance(1465390, 0, 60, 75, 5, 5, 14);
+  WaitUntilWalking;
+
+  // Jumps over the ditch
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.10, 0.11);
+  if FindColorsSpiralTolerance(X, Y, DitchColors, 3950670, 270, 0, 515, 125, 12) then
+    begin
+      DitchColorsSplit := SplitTPAEx(DitchColors, 10, 10);
+      SortATPASize(DitchColorsSplit, True);
+      P := MiddleTPA(DitchColorsSplit[0]);
+      MMouse(P.X, P.Y, RandomRange(-1, 1), RandomRange(-1, 1));
+      if WaitUpTextMulti(['ross', 'ilder', 'all'], 500) then
+        begin
+          Wait(20 + Random(60));
+          ClickMouse2(1);
+        end;
+    end;
+  Wait(6000 + Random(2000));
+  WaitUntilWalking;
+
+  // Walks to the mage of zamorak
+  w:=0;
+    repeat
+      inc(w);
+      Mousebox(650, 40, 660, 50, 1);
+      WaitUntilWalking;
+    until(w>2);
+  WaitUntilWalking;
+  MouseBox(660, 70, 670, 80, 1);
+  WaitUntilWalking;
+
+  // Detects the mage of zamorak and teleports
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.16, 0.16);
+  if CountColorTolerance(1515855, MSX1, MSY1, MSX2, MSY2, 15) < 200 then
+    begin
+      w:=0;
+      repeat
+        Wait(1000 + Random(1000));
+      until (CountColorTolerance(1515855, MSX1, MSY1, MSX2, MSY2, 15) > 200) or (w>14);
+    end;
+  if FindColorsSpiralTolerance(X, Y, MageColors, 1515855, MSX1, MSY1, MSX2, MSY2, 15) then
+    begin
+      w:=0;
+      repeat
+        MageColorsSplit := SplitTPAEx(MageColors, 15, 25);
+        SortATPASize(MageColorsSplit, True);
+        P := MiddleTPA(MageColorsSplit[0]);
+        MMouse(P.X, P.Y, RandomRange(-1, 1), RandomRange(-1, 1));
+      until (WaitUpTextMulti(['lk-t', 'age of', 'amorak'], 500)) or (W>4);
+      ClickMouse2(0);
+      WaitOptionMulti(['ele', 'eleport', 'Teleport'], 500);
+      Wait(5000 + Random(2000));
+    end;
+end;
+
+function CountAtAbyss: string;
+begin
+  // GAP
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.05, 0.12);
+  if CountColorTolerance(2370642, MSX1, MSY1, MSX2, MSY2, 6) > 500 then
+    Result:='gap';
+  WriteLn('Gap colors: '+IntToStr(CountColorTolerance(2370642, MSX1, MSY1, MSX2, MSY2, 6))+'');
+
+  // EYES
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.28, 1.53);
+  if CountColorTolerance(1735536, MSX1, MSY1, MSX2, MSY2, 8) > 200 then
+    Result:='eyes';
+  WriteLn('Eyes colors: '+IntToStr(CountColorTolerance(1735536, MSX1, MSY1, MSX2, MSY2, 8))+'');
+
+  ColorToleranceSpeed(1);
+end;
+
+function PassAbyss: Boolean;
+var
+  i, W, X, Y: Integer;
+  ObstacleOptions: array of string;
+  GapColors, EyeColors: TPointArray;
+  GapColorsSplit, EyeColorsSplit: T2DPointArray;
+  P: TPoint;
+
+begin
+  ObstacleOptions := ['gap', 'eyes']
+  for i:=0 to 1 do
+    begin
+      if CountAtAbyss = ObstacleOptions[i] then
+        begin
+          case i of
+            0: begin
+                 WriteLn('gap found');
+                 ColorToleranceSpeed(2);
+                 SetColorSpeed2Modifiers(0.28, 1.53);
+                 if FindColorsSpiralTolerance(X, Y, GapColors, 2370642, MSX1, MSY1, MSX2, MSY2, 6) then
+                   begin
+                     W:=0;
+                     repeat
+                       repeat
+                         GapColorsSplit := SplitTPAEx(GapColors, 30, 30);
+                         SortATPASize(GapColorsSplit, True);
+                         P := MiddleTPA(GapColorsSplit[0]);
+                         MMouse(P.X, P.Y, RandomRange(-3, 3), RandomRange(-3, 3));
+                       until (WaitUpTextMulti(['que', 'thro', 'Gap'], 500)) or (W>4);
+                       W:=0;
+                       ClickMouse2(1);
+                       Wait(5000 + Random(2000));
+                     until (FindChatBoxText('manage', 8, clBlack)) or (FindChatBoxText('crawl', 8, clBlack)) or (W>9)
+                     Result:=True;
+                   end;
+               end;
+            1: begin
+                 WriteLn('eyes found');
+                 ColorToleranceSpeed(2);
+                 SetColorSpeed2Modifiers(0.28, 1.53);
+                 if FindColorsSpiralTolerance(X, Y, EyeColors, 2370642, MSX1, MSY1, MSX2, MSY2, 6) then
+                   begin
+                     W:=0;
+                     repeat
+                       repeat
+                         inc(W);
+                         EyeColorsSplit := SplitTPAEx(EyeColors, 5, 5);
+                         SortATPASize(EyeColorsSplit, True);
+                         P := MiddleTPA(EyeColorsSplit[0]);
+                         MMouse(P.X, P.Y, RandomRange(-1, 1), RandomRange(-1, 1));
+                       until (WaitUpTextMulti(['istr', 'act', 'Eyes'], 500)) or (W>4);
+                       ClickMouse2(1);
+                       Wait(5000 + Random(2000));
+                     until (FindChatBoxText('sneak', 8, clBlack)) or (FindChatBoxText('looking', 8, clBlack)) or (W>4)
+                     Result:=True;
+                   end;
+               end;
+          end;
+        end;
+    end;
+end;
+
+procedure AbyssWalk;
+var
+  StartAngles, EndAngles, Radiuses, LargeRadius: Array of Integer;
+  i, q, r: Integer;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.02, 0.47);
+  StartAngles := [0, 90, 180, 270];
+  EndAngles := [90, 180, 270, 359];
+  Radiuses := [35, 65, 20, 50, 15, 40, 75];
+  i := RandomRange(0, 3);
+
+  for q:=0 to 6 do
+    begin
+      if RadialWalkTolerance(582887, StartAngles[i], EndAngles[i], Radiuses[q], RandomRange(-5, 5), RandomRange(-5, 5), 8) then
+        begin
+          WaitUntilWalking;
+        end;
+    end;
+
+    LargeRadius := [50, 60, 75];
+    for r:=0 to 2 do
+    begin
+      if RadialWalkTolerance(582887, 0, 359, LargeRadius[r], RandomRange(-5, 5), RandomRange(-5, 5), 8) then
+        begin
+          WaitUntilWalking;
+        end;
+   end;
+end;
+
+procedure WalkToDarkmage;
+var
+  DarkMageSpot, X, Y, a, b, w: Integer;
+  aFound: Extended;
+  DarkMageColors: TPointArray;
+  DarkMageSplit: T2DPointArray;
+  P: TPoint;
+
+begin
+  DarkMageSpot := DTMFromString('mlwAAAHicY2dgYFjExsCwDoinA/FiKJ4LxJuAWIqJgUGCCUILArESEAsDsRwQ//7PyfDp9XswDhTmZogR5WH4+PEdGIsAzeXCgYFaGRhxYCgAAClvE+s=');
+  if FindDTMRotated(DarkMageSpot, X, Y, MMX1, MMY1, MMX2, MMY2, -Pi/4, Pi/4, Pi/60, aFound) then
+    begin
+      case Random(2) of
+        0: a := RandomRange(-10, -5);
+        1: a := RandomRange(5, 10);
+      end;
+      case Random(2) of
+        0: b := RandomRange(-10, -5);
+        1: b := RandomRange(5, 10);
+      end;
+      MMouse(X, Y, a, b);
+      Wait(20 + Random(60));
+      ClickMouse2(1);
+      WaitUntilWalking;
+
+      ColorToleranceSpeed(1);
+      if FindColorsSpiralTolerance(X, Y, DarkMageColors, 855309, MSX1, MSY1, MSX2, MSY2, 1) then
+        begin
+          W:=0;
+          repeat
+            inc(W);
+            DarkMageSplit := SplitTPAEx(DarkMageColors, 15, 15);
+            SortATPASize(DarkMageSplit, True);
+            P := MiddleTPA(DarkMageSplit[0]);
+            MMouse(P.X, P.Y, RandomRange(-2, 2), RandomRange(-2, 2));
+         until (WaitUpTextMulti(['alk', 'ark m', 'Dark Mage'], 500)) or (W>4);
+         ClickMouse2(0);
+         WaitOptionMulti(['epai', 'ouch', 'ai-ou'], 500);
+       end;
+    end;
+end;
+
+begin
+  SetUpLogin;
+  MageWalkTele;
+  repeat
+    AbyssWalk;
+  until(PassAbyss);
+  WalkToDarkMage;
+end.

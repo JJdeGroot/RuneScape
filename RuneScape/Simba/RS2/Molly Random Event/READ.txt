@@ -1,0 +1,73 @@
+== Using hair color: ==
+
+Blond hair: matches with cage, tiles on wall and earrings
+Light brown hair: matches with tiles on wall, boots and boxes
+Dark brown hair: matches with boots and boxes
+Red hair: matches with tiles on wall and red clothes
+
+Searching for skin color near the hair color does not work either.
+If molly is next to the boxes at the background it will detect skin color near..
+but it doesnt use the hair color but it uses the color of the boxes.
+
+Which means it will return a false result. This basicly means that using the hair color
+is not a viable option.
+
+== Making a DDTM: ==
+Making a DDTM has some negative side effects aswell. 
+One of the first things to handle is that Molly slightly changes position every time you log out/in
+It isn't that hard to get around that. You can filter points and get a box around Molly,
+then you can grab certain points such as the middle point of the box and the top point / bottom point,
+or you can just add some other stuff.
+
+Eventually it grabbed the middle point, the hair color, the pants and the arm color perfectly.
+The problem is that the perspective of the Molly's is changing at the other room.
+But that is not all, once you pass the door the colors won't match anymore. Obviously you
+can add tolerance, but the colors simply aren't matching anymore.
+
+About the perspective changing, you can use DTM rotated and some other stuff but it will
+still return false results. Some times it will use the red color of the torches instead of the 
+red color of the clothes of Molly. Sometimes it will use the brown color of the boxes instead of the
+brown hair color of Molly. Sometimes it will use the yellow color of the tiles on the wall
+instead of the blond hair color of Molly. And the list goes on....
+
+This makes means that a DDTM doesn't work properly.
+
+== Making a bitmap of the hair: ==
+I've also tried to make a bitmap of the hair by using the BitmapFromClient() procedure.
+I got the coords by using the same method as making a DDTM. As explained before you unfortunately
+can't ust static coords to grab the Molly hair color. Anyways, once you make a 3x3 px DTM of the hair
+and try to change for it you get the perspective problem again..
+
+I tried FindBitmapToleranceIn and even used RotateBitmap and a combination of those (eg. rotating bitmap
+for some degrees, searching again, increasing tolerance 5 times, etc.)
+
+So yeah. Making a bitmap of the hairdoesn't work either.
+
+== Making a bitmap of the clothes: ==
+Just doesn't work. Will detect the other molly's aswell.
+
+== Using the colors of the clothes: ==
+Just doesn't work. Will detect the other molly's aswell.
+
+
+
+Other options?
+I have no idea. I have added the script that I have made. It works fairly well, it does return
+the right color of Molly's hair but it looks close to impossible to me to actually return
+the coords of Molly.
+
+The "only" thing that needs to be done to complete the solver is to return molly's position.
+If someone can make a function that returns the position of molly's haircolor it would be
+greatly appreciated.
+
+Once the molly's hair coordinate is known you can just go down in height to get near the feet.
+Once you know the feet coords of the desired Molly with the desired hair color you can input it
+in the function I made which converts the TPoint to a Box Number.
+
+Then you can input the box number in the grabber function and it will move there.
+
+So yeah, I've added a .rar with all the information and the script, hope someone can help me
+with this.
+
+
+

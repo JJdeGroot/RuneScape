@@ -1,0 +1,797 @@
+program Test;
+{$DEFINE SMART}
+{$i srl/srl/misc/smart.simba}
+{$i srl/srl.simba}
+{$i SRL/SRL/misc/paintsmart.simba}
+
+
+var
+  X, Y, n, Charms, Kills, StartTime, BreakTime: integer;
+
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      // Fill in the fields with your details
+      Name := '';
+      Pass := '';
+      Pin := '1234';
+      Active := True;
+      // Taking breaks and for how long?
+      Booleans[0] := False;  // Take breaks
+      Integers[0] := 120;   // Minimum time to play before breaking
+      Integers[1] := 300;   // Maximum time to play before breaking
+    end;
+end;
+
+
+procedure ResetBreakTimer;
+begin
+  BreakTime := GetSystemTime + RandomRange(Players[CurrentPlayer].Integers[0] * 60000, Players[CurrentPlayer].Integers[1] * 60000);
+end;
+
+
+procedure TakeBreak;
+var
+    H, M, S, T, BreakFor: Integer;
+
+begin
+  if (GetSystemTime >= BreakTime) and Players[CurrentPlayer].Booleans[0] then
+    begin
+      Wait(15000 + Random(10000));
+      Logout;
+      BreakFor := RandomRange(10 * 60000, 30 * 60000);   // Break between 10-30 minutes
+      ConvertTime(BreakFor, H, M, S);
+      Writeln('Break for: ' + IntToStr(M)+ 'm:' + IntToStr(S)+ 's');
+      MarkTime(T);
+        repeat
+          wait(1000);
+          until (BreakFor < TimeFromMark(T))
+      LogInPlayer;
+      ResetBreakTimer;
+      Wait(1000 + Random(3000));
+      ClickNorth(0);
+      MarkTime(n);
+    end;
+end;
+
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 27;
+  Smart_Members := True;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  ResetBreakTimer;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+  MarkTime(n);
+end;
+
+
+function TalkToMino(var fx, fy: Integer): Boolean;
+var
+  arP: TPointArray;
+  ararP: T2DPointArray;
+  tmpCTS, i, arL, w: Integer;
+  P: TPoint;
+
+begin
+MarkTime(w)
+  repeat
+    tmpCTS := GetColorToleranceSpeed;
+    ColorToleranceSpeed(2);
+
+// REMOVE THE // BEFORE THE TWO LINES THAT FIT YOUR FAMILIAR!
+//==========================================================================================
+    //SetColorSpeed2Modifiers(0.17, 1.93);                              // BRONZE MINOTAUR
+    //FindColorsTolerance(arP, 8371400, MSX1, MSY1, MSX2, MSY2, 17);    // BRONZE MINOTAUR
+    //SetColorSpeed2Modifiers(0.51, 0.10);                              // IRON MINOTAUR
+    //FindColorsTolerance(arP, 3816253, MSX1, MSY1, MSX2, MSY2, 11);    // IRON MINOTAUR
+    //SetColorSpeed2Modifiers(0.13, 0.19);                              // STEEL MINOTAUR
+    //FindColorsTolerance(arP, 9474973, MSX1, MSY1, MSX2, MSY2, 23);    // STEEL MINOTAUR
+    SetColorSpeed2Modifiers(0.04, 0.39);                                // MITHRIL MINOTAUR
+    FindColorsTolerance(arP, 7231059, MSX1, MSY1, MSX2, MSY2, 18);      // MITHRIL MINOTAUR
+//==========================================================================================
+
+    SortTPAFrom(arP, Point(MSCX, MSCY));
+    ararP := SplitTPAEx(arP, 100, 100);
+    arL := High(ararP);
+
+    for i := 0 to arL do
+      begin
+        P := MiddleTPA(ararP[i]);
+        MMouse(P.x, P.y, 5, 5);
+        if WaitUpTextMulti(['nter', 'ract'], 300) then
+          case Random(8) of
+            0..4: Mouse(P.X, P.Y, 0, 0, 1);
+            5..7: begin;
+                    Mouse(P.X, P.Y, 0, 0, 0);
+                    WaitOptionMulti(['nter', 'ract'], 250);
+                  end;
+          end;
+      if (DidRedClick=True) then Exit;
+      end;
+until (DidRedClick=True) or (TimeFromMark(w) >= 10000);
+Result:=True;
+end;
+
+
+procedure TalkWithMino;
+var
+  X, Y: Integer;
+
+begin;
+  Wait(100 + Random(200));
+    repeat
+      //WriteLn('We are moving')
+      Wait(50 + Random(50));
+    until (IsMoving=False);
+    if (IsMoving=False) then
+      begin
+        WriteLn('We aren`t moving anymore');
+      end else
+      begin
+        repeat
+          Wait(50 + Random(50))
+        until (IsMoving=False);
+      end;
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.09, 1.64);
+  if FindColorSpiralTolerance(X, Y, 2717512, 225, 461, 294, 474, 23)  then
+    begin
+      case Random(3) of
+        0..1: begin;
+                repeat
+                  Wait(500 + Random(2500));
+                  KeyDown(32);
+                until not(FindColorSpiralTolerance(X, Y, 2717512, 225, 461, 294, 474, 23));
+              end;
+        2:    begin;
+                case Random(3) of
+                  0..1: begin;
+                          Wait(500 + Random(1500));
+                          MouseBox(225, 461, 294, 474, 2);
+                            repeat
+                              MouseBox(225, 461, 294, 474, 1);
+                              Wait(1500 + Random(1500));
+                          until not(FindColorSpiralTolerance(X, Y, 2717512, 225, 461, 294, 474, 23));
+                        end;
+                 2:     begin;
+                          MouseBox(225, 461, 294, 474, 2);
+                            repeat
+                              Wait(500 + Random(1500));
+                              MouseBox(225, 461, 294, 474, 1);
+                            until not(FindColorSpiralTolerance(X, Y, 2717512, 225, 461, 294, 474, 23));
+                        end;
+                end;
+            end;
+      end;
+    end;
+end;
+
+
+procedure Antiban;
+begin
+  case Random(45000) of
+    0..4:       begin
+                  WriteLn('Antiban active');
+                  HoverSkill('defence', False);
+                  Wait(50 + Random(50));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    1000..1009: begin
+                  WriteLn('Antiban active');
+                  HoverSkill('hitpoints', False);
+                  Wait(50 + Random(50));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    2000..2009: begin
+                  WriteLn('Antiban active');
+                  HoverSkill('summoning', False);
+                  Wait(50 + Random(50));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    3000..3004: begin
+                  WriteLn('Antiban active');
+                  HoverSkill('random', False);
+                  Wait(50 + Random(50));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    4000..4009: begin
+                  WriteLn('Antiban active');
+                  RandomRClick;
+                  Wait(250 + Random(500));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    5000..5019: begin
+                  WriteLn('Antiban active');
+                  PickUpMouse;
+                  Wait(100 + Random(200));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    6000..6019: begin
+                  WriteLn('Antiban active');
+                  RandomMovement;
+                  Wait(100 + Random(100));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    7000..7019: begin
+                  WriteLn('Antiban active');
+                  BoredHuman;
+                  Wait(300 + Random(600));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    8000..8009: begin
+                  WriteLn('Antiban active');
+                  ExamineInv;
+                  Wait(150 + Random(250));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                 end;
+    9000..9019: begin
+                  WriteLn('Antiban active');
+                  SleepAndMoveMouse(1000 + Random(5000));
+                  Wait(200 + Random(200));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                 end;
+    9994..9999: begin
+                  WriteLn('Antiban active');
+                  TalkToMino(X, Y);
+                  TalkWithMino;
+                  Wait(200 + Random(300));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+  end;
+end;
+
+
+procedure Antiban2;
+begin
+  case Random(45000) of
+    0..4:       begin
+                  WriteLn('Antiban active');
+                  HoverSkill('defence', False);
+                  Wait(50 + Random(50));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    1000..1009: begin
+                  WriteLn('Antiban active');
+                  HoverSkill('hitpoints', False);
+                  Wait(50 + Random(50));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    2000..2009: begin
+                  WriteLn('Antiban active');
+                  HoverSkill('summoning', False);
+                  Wait(50 + Random(50));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    3000..3004: begin
+                  WriteLn('Antiban active');
+                  HoverSkill('random', False);
+                  Wait(50 + Random(50));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    4000..4009: begin
+                  WriteLn('Antiban active');
+                  RandomRClick;
+                  Wait(250 + Random(500));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    5000..5019: begin
+                  WriteLn('Antiban active');
+                  PickUpMouse;
+                  Wait(100 + Random(200));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    6000..6019: begin
+                  WriteLn('Antiban active');
+                  RandomMovement;
+                  Wait(100 + Random(100));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    7000..7019: begin
+                  WriteLn('Antiban active');
+                  BoredHuman;
+                  Wait(300 + Random(600));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                end;
+    8000..8009: begin
+                  WriteLn('Antiban active');
+                  ExamineInv;
+                  Wait(150 + Random(250));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                 end;
+    9000..9019: begin
+                  WriteLn('Antiban active');
+                  SleepAndMoveMouse(1000 + Random(5000));
+                  Wait(200 + Random(200));
+                  MMouse(256, 161, 250, 160);
+                  WriteLn('Antiban done');
+                 end;
+  end;
+end;
+
+
+function AttackMonster(var fx, fy: Integer): Boolean;
+var
+  arP: TPointArray;
+  ararP: T2DPointArray;
+  tmpCTS, i, arL, q, a: Integer;
+  P: TPoint;
+
+begin
+  case Random(200) of
+    0: begin;
+         Wait(100 + Random(300));
+         ClickNorth(0);
+         Wait(100 + Random(300));
+       end;
+  end;
+MarkTime(q);
+a:=0;
+  repeat
+
+    tmpCTS := GetColorToleranceSpeed;
+    ColorToleranceSpeed(2);
+    SetColorSpeed2Modifiers(0.33, 1.07);
+
+    if not(FindColorsTolerance(arP, 7157061, MSX1, MSY1, MSX2, MSY2, 13)) then
+    begin;
+      WriteLn('Attempt '+IntToStr(a)+' of finding a monster')
+      inc(a);
+      Antiban2
+      Wait(50 + Random(50));
+      if (a>=49) then
+        begin
+          Writeln('Moving around');
+          FindColorSpiralTolerance(X, Y, 587493, 580, 27, 672, 145, 20);
+          MMouse(X, Y, 5, 5);
+          Mouse(X, Y, 0, 0, 1);
+          Wait(100 + Random(200));
+            repeat
+              //WriteLn('We are moving')
+              Wait(50 + Random(50));
+            until (IsMoving=False);
+            if (IsMoving=False) then
+              begin
+                WriteLn('We aren`t moving anymore');
+              end else
+              begin
+                repeat
+                  Wait(50 + Random(50))
+                until (IsMoving=False);
+              end;
+        end;
+      if (a>=52) then
+        begin
+          WriteLn('Something wrent wrong, checking what happened');
+          FindNormalRandoms;
+          if not(FindNormalRandoms) then
+            begin
+              WriteLn('We are not in a random event, something else must have happened. Terminating script to be safe');
+              TerminateScript;
+            end else
+          WriteLn('We are in a random event, trying to solve it');
+          FindNormalRandoms;
+        end;
+      if (a>=54) then
+        begin
+          WriteLn('No idea what happened, terminating script to be safe');
+          TerminateScript;
+        end;
+    end;
+
+    ColorToleranceSpeed(2);
+    SetColorSpeed2Modifiers(0.33, 1.07);
+    FindColorsTolerance(arP, 7157061, MSX1, MSY1, MSX2, MSY2, 13);
+    SortTPAFrom(arP, Point(MSCX, MSCY));
+    ararP := SplitTPAEx(arP, 50, 50);
+    arL := High(ararP);
+
+    for i := 0 to arL do
+    begin
+      P := MiddleTPA(ararP[i]);
+      MMouse(P.x, P.y, 5, 5);
+      if WaitUpTextMulti(['ela', 'bom'], 150) then
+        case Random(8) of
+          0..4: Mouse(P.X, P.Y, 0, 0, 1);
+          5..7: begin;
+                  Mouse(P.X, P.Y, 0, 0, 0);
+                  WaitOptionMulti(['tta', 'tack'], 150);
+                end;
+        end;
+      if (DidRedClick=True) then
+        begin
+          WriteLn('Monster attacked');
+          Result := True;
+          Exit;
+        end else
+    end;
+
+  until (TimeFromMark(q) >= 15000);
+end;
+
+
+procedure UseFamiliar;
+var
+  X, Y, r, SumTab: integer;
+
+begin
+MarkTime(r);
+ColorToleranceSpeed(2);
+SetColorSpeed2Modifiers(0.79, 0.00);
+repeat
+  begin;
+    Wait(100 + Random(100));
+  end;
+until FindColorSpiralTolerance(X, Y, 46153, 182, 84, 321, 240, 10) or (TimeFromMark(r) >= 5000);
+  if (TimeFromMark(r) >= 5000) then
+    begin
+      AttackMonster(X, Y);
+      Wait(1500 + Random(1000));
+    end else
+
+  if (TimeFromMark(r) >= 7500) then
+    begin
+      if not(FindColorSpiralTolerance(X, Y, 46153, 212, 118, 318, 224, 8)) then
+      Exit;
+    end else
+
+  if FindColorSpiralTolerance(X, Y, 46153, 210, 116, 323, 232, 8) then
+  begin
+    SumTab := DTMFromString('mwQAAAHic42RgYPBlgmArKB0PxNZAHIdEdzEyMJQDcScQz4HSFUA8G4pB7DhjYQZsgI+PD87+D8SMVMBwAAAsuwmK');
+    repeat
+      ColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(0.39, 0.42);
+      WriteLn('In fight');
+      case Random(8) of
+        0..3: begin;
+                Mousebox(690, 127, 746, 160, 1);
+                if FindColorSpiralTolerance(X, Y, 7837285, 209, 114, 309, 214, 30) then
+                  MMouse(X, Y, 2, 2);
+                  if WaitUpTextMulti(['ela', 'bom'], 150) then
+                    begin
+                      Mouse(X, Y, 0, 0, 1)
+                    end else
+                  WaitOptionMulti(['ela', 'bom'], 150)
+              end;
+        4..5: begin;
+                 Mousebox(690, 127, 746, 160, 1);
+                if FindColorSpiralTolerance(X, Y, 7837285, 209, 114, 309, 214, 30) then
+                  MMouse(X, Y, 2, 2);
+                  if WaitUpTextMulti(['ela', 'bom'], 150) then
+                    begin
+                      Mouse(X, Y, 0, 0, 0);
+                      WaitOptionMulti(['tta', 'tack'], 150);
+                    end else
+                    WaitOptionMulti(['ela', 'bom'], 150)
+              end;
+        6..7: begin;
+                if not(FindDTM(SumTab, X, Y, MIX1, MIY1, MIX2, MIY2)) then
+                        begin
+                          Mousebox(690, 127, 746, 160, 0);
+                          WaitOptionMulti(['etai', 'ails'], 150);
+                        end else
+                          case Random(5) of
+                            0..2: begin;
+                                    Mousebox(694, 233, 725, 277, 1);
+                                    if FindColorSpiralTolerance(X, Y, 7837285, 209, 114, 309, 214, 30) then
+                                      MMouse(X, Y, 2, 2);
+                                      if WaitUpTextMulti(['ela', 'bom'], 150) then
+                                        begin
+                                          Mouse(X, Y, 0, 0, 1);
+                                        end else
+                                        WaitOptionMulti(['ela', 'bom'], 150);
+                                   end;
+                            3..4:    begin;
+                                    Mousebox(694, 233, 725, 277, 1);
+                                    if FindColorSpiralTolerance(X, Y, 7837285, 209, 114, 309, 214, 30) then
+                                      MMouse(X, Y, 2, 2);
+                                      if WaitUpTextMulti(['ela', 'bom'], 150) then
+                                        begin
+                                          Mouse(X, Y, 0, 0, 0);
+                                          WaitOptionMulti(['tta', 'tack'], 150);
+                                        end else
+                                        WaitOptionMulti(['ela', 'bom'], 150);
+                                  end;
+                          end;
+              end;
+      end;
+    until (DidRedClick=True) or (TimeFromMark(r) >= 7500);
+    FreeDTM(SumTab);
+    WriteLn('Familiar is helping');
+  end;
+Wait(50 + Random(100));
+end;
+
+
+procedure CheckFamiliar;
+var
+  X, Y, SumTab: integer;
+
+begin
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.09, 1.50);
+  if not(FindColorSpiralTolerance(X, Y, 8041405, 210, 116, 323, 232, 16)) then
+    begin
+    SumTab := DTMFromString('mwQAAAHic42RgYPBlgmArKB0PxNZAHIdEdzEyMJQDcScQz4HSFUA8G4pB7DhjYQZsgI+PD87+D8SMVMBwAAAsuwmK');
+      case Random(4) of
+      0..2: begin;
+              Mousebox(690, 127, 746, 160, 0);
+              WaitOptionMulti(['all', 'ilia'], 150);
+            end;
+      3:    begin;
+              case Random(4) of
+              0..2: begin;
+                      if not(FindDTM(SumTab, X, Y, MIX1, MIY1, MIX2, MIY2)) then
+                        begin
+                          Mousebox(690, 127, 746, 160, 0);
+                          WaitOptionMulti(['etai', 'ails'], 150);
+                          Wait(100 + Random(200));
+                          Mousebox(570, 422, 607, 457, 1);
+                        end else
+                      Mousebox(570, 422, 607, 457, 1);
+                    end;
+              3:    begin;
+                      if not(FindDTM(SumTab, X, Y, MIX1, MIY1, MIX2, MIY2)) then
+                        begin
+                          Mousebox(690, 127, 746, 160, 0);
+                          WaitOptionMulti(['etai', 'ails'], 150);
+                          Wait(100 + Random(200));
+                          Mousebox(570, 422, 607, 457, 0);
+                          WaitOptionMulti(['all', 'Call'], 150);
+                        end else
+                      Mousebox(570, 422, 607, 457, 0);
+                      WaitOptionMulti(['all', 'Call'], 150);
+                    end;
+              end;
+            end;
+      end;
+    WriteLn('Called familiar');
+    FreeDTM(SumTab);
+    end else
+end;
+
+
+procedure CheckIfDead;
+var
+  X, Y, k, u: integer;
+
+begin
+MarkTime(k);
+ColorToleranceSpeed(2);
+SetColorSpeed2Modifiers(1.54, 4.05);
+  repeat
+    Wait(50 + Random(50));
+    Antiban2;
+    Wait(50 + Random(50));
+  until FindColorSpiralTolerance(X, Y, 7015215, MSX1, MSY1, MSX2, MSY2, 5) or (TimeFromMark(k) >= 20000);
+  WriteLn('Monster is dead');
+  Inc(Kills);
+  MarkTime(u);
+  repeat
+    Wait(50 + Random(50));
+    Antiban2;
+    Wait(50 + Random(50));
+  until(TimeFromMark(u) > RandomRange(5500, 5800));
+end;
+
+
+procedure CheckLoot;
+var
+  X, Y: integer;
+
+begin
+ColorToleranceSpeed(2);
+//SetColorSpeed2Modifiers(1.01, 1.02);
+//if FindColorSpiralTolerance(X, Y, 6266284, MSX1, MSY1, MSX2, MSY2, 4) then
+//SetColorSpeed2Modifiers(1.03, 1.28);
+//if FindColorSpiralTolerance(X, Y, 6397613, MSX1, MSY1, MSX2, MSY2, 4) then
+SetColorSpeed2Modifiers(1.03, 1.28);
+if FindColorSpiralTolerance(X, Y, 6397613 , MSX1, MSY1, MSX2, MSY2, 4) then
+    begin;
+      MMouse(X, Y, 0, 0);
+        if WaitUpTextMulti(['ake Go', 'harm'], 150) then
+          begin
+            case Random(3) of
+              0..1: begin; Mouse(X, Y, 0, 0, True); inc(Charms); end;
+              2:    begin;
+                      Mouse(X, Y, 0, 0, False);
+                      if WaitOptionMulti(['ake Go', 'harm'], 150) then
+                        begin
+                          inc(Charms);
+                        end else
+                    end;
+            end;
+            Wait(100 + Random(200));
+              repeat
+                //WriteLn('We are moving')
+                Wait(50 + Random(50));
+              until (IsMoving=False);
+              if (IsMoving=False) then
+                begin
+                  WriteLn('We aren`t moving anymore');
+                end else
+                begin
+                  repeat
+                    Wait(50 + Random(50))
+                  until (IsMoving=False);
+                end;
+          WriteLn('Collected a gold charm');
+          end else
+            begin;
+              Mouse(X, Y, 0, 0, False);
+              if WaitOptionMulti(['ake Go', 'harm'], 150) then
+                begin
+                  Wait(100 + Random(200));
+                    repeat
+                      //WriteLn('We are moving')
+                      Wait(50 + Random(50));
+                    until (IsMoving=False);
+                    if (IsMoving=False) then
+                      begin
+                        WriteLn('We aren`t moving anymore');
+                      end else
+                      begin
+                        repeat
+                          Wait(50 + Random(50))
+                        until (IsMoving=False);
+                      end;
+                  WriteLn('Collected a gold charm');
+                  inc(Charms);
+                end else
+          end;
+    end;
+end;
+
+
+procedure ResetTime;
+begin;
+  n:=0
+  MarkTime(n);
+end;
+
+
+procedure RenewFamiliar;
+var
+  Flask, SumTab, X, Y: Integer;
+
+begin
+if TimeFromMark(n)>300000 then
+  begin;
+  if FindColor(X, Y, 127, 0, 338, 518, 479) then
+    begin
+      ResetTime;
+      WriteLn('Renewing familiar');
+      if GetCurrentTab = (tab_Inv) then
+      begin
+        WriteLn('Inventory tab')
+      end else
+      begin
+        MouseBox(642, 168, 671, 204, 1);    //FTab(tab_Inv);
+        WriteLn('Inventory tab');
+        Wait(300 + Random(300));
+      end;
+
+      Flask := DTMFromString('mAAEAAHic42FgYHBiYmBwBmJrKLYEYhsgdgRidyD2BmIfKA3iPwPquQHEt4H4ARC/AOIPQPwJit8C8ROo3B0glj12BkgyEY3/A0lGGmJkAAAVShDj');
+      if FindDTM(Flask, X, Y, MIX1, MIY1, MIX2, MIY2) then
+      MMouse(X, Y, 2, 2);
+        case Random(6) of
+          0..3: Mouse(X, Y, 0, 0, 1);
+          4..5: begin;
+                  Mouse(X, Y, 0, 0, 0);
+                  WaitOptionMulti(['Dri', 'ink'], 250);
+                end;
+        end;
+      FreeDTM(Flask);
+      WriteLn('Renewed summoning points');
+      Wait(100 + Random(300));
+
+      SumTab := DTMFromString('mwQAAAHic42RgYPBlgmArKB0PxNZAHIdEdzEyMJQDcScQz4HSFUA8G4pB7DhjYQZsgI+PD87+D8SMVMBwAAAsuwmK');
+        case Random(9) of
+          0..5: begin;
+                  Mousebox(690, 127, 746, 160, 0);
+                  WaitOptionMulti(['Renew', 'enew'], 150);
+                  Wait(100 + Random(200));
+                end;
+          6..7: begin;
+                  if not(FindDTM(SumTab, X, Y, MIX1, MIY1, MIX2, MIY2)) then
+                    begin
+                      Mousebox(690, 127, 746, 160, 0);
+                      WaitOptionMulti(['etai', 'ails'], 150);
+                      Wait(100 + Random(200));
+                      MouseBox(623, 376, 659, 412, 1);
+                    end else
+                  MouseBox(623, 376, 659, 412, 1);
+                end;
+          8:    begin;
+                  if not(FindDTM(SumTab, X, Y, MIX1, MIY1, MIX2, MIY2)) then
+                    begin
+                      Mousebox(690, 127, 746, 160, 0);
+                      WaitOptionMulti(['etai', 'ails'], 150);
+                      Wait(100 + Random(200));
+                      MouseBox(623, 376, 659, 412, 0);
+                      WaitOptionMulti(['Ren', 'enew'], 150);
+                    end else
+                  MouseBox(623, 376, 659, 412, 0);
+                  WaitOptionMulti(['Ren', 'enew'], 150);
+                end;
+        end;
+      Wait(100 + Random(100));
+    end else
+    WriteLn('Familiar lives');
+  end else;
+end;
+
+
+procedure OnScreenProggy;
+var
+  Sec, DefExp, HpExp, DefExpRate, HpExpRate, CharmRate, KillsRate:Integer;
+  Kills2, DefExp2, HpExp2, Charms2: String;
+begin
+  Sec:=(1+((GetSystemTime-StartTime)/1000));
+  DefExp:=(20*(Kills));
+  HpExp:=((DefExp)/3);
+  KillsRate :=((3600*(Kills))/(Sec));
+  DefExpRate:=((3600*(DefExp))/(Sec));
+  HpExpRate:=((3600*(HpExp))/(Sec));
+  CharmRate:=((3600*(Charms))/(Sec));
+
+  Kills2 := ''+IntToStr(Kills)+' monsters killed at '+IntToStr(KillsRate)+' per hour';
+  DefExp2 := ''+IntToStr(DefExp)+' defence experience gained at '+IntToStr(DefExpRate)+' per hour'
+  HpExp2 := ''+IntToStr(HpExp)+' hitpoints experience gained at '+IntToStr(HpExpRate)+' per hour'
+  Charms2 := ''+IntToStr(Charms)+' gold charms gained at '+IntToStr(CharmRate)+' per hour'
+
+  SMART_ClearCanvas;
+  SMART_DrawText(5, 269, UpCharsEx, Kills2, clYellow);
+  SMART_DrawText(5, 286, UpCharsEx, DefExp2, clYellow);
+  SMART_DrawText(5, 303, UpCharsEx, HpExp2, clYellow);
+  SMART_DrawText(5, 320, UpCharsEx, Charms2, clYellow);
+end;
+
+
+begin
+  SetUpLogin;
+  OnScreenProggy;
+  StartTime:=GetSystemTime;
+  repeat
+    AttackMonster(X, Y);
+    UseFamiliar;
+    CheckFamiliar;
+    CheckIfDead;
+    CheckLoot;
+    RenewFamiliar;
+    OnScreenProggy;
+    TakeBreak;
+  until not(LoggedIn);
+end.

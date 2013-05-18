@@ -1,0 +1,325 @@
+program JJsWoManThiever;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i srl/srl/misc/paintsmart.simba}
+
+var
+  i, a, PickPockets, AntibanChance, EatPercentage: Integer;
+  Preference: String;
+  Leecher: Boolean;
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  Wait(1000 + Random(3000));
+  ClickNorth(0);
+end;
+
+procedure ScriptDetails;
+begin
+  Preference := 'Random';
+  Players[CurrentPlayer].Level[SKILL_HITPOINTS] := 40;
+  AntibanChance := 18000;
+  EatPercentage := 30;
+  Leecher := False;
+end;
+
+procedure Antiban;
+begin
+  case Random(AntibanChance) of
+    0..9:   begin
+              WriteLn('Antiban active');
+              HoverSkill('random', False);
+              Wait(100 + Random(300));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    10..16: begin
+              WriteLn('Antiban active');
+              RandomRClick;
+              Wait(200 + Random(600));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+             end;
+    20..29: begin
+              WriteLn('Antiban active');
+              PickUpMouse;
+              Wait(150 + Random(450));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    30..39: begin
+              WriteLn('Antiban active');
+              RandomMovement;
+              Wait(200 + Random(400));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    40..54: begin
+              WriteLn('Antiban active');
+              BoredHuman;
+              Wait(500 + Random(1000));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    50..54: begin
+              WriteLn('Antiban active');
+              ExamineInv;
+              Wait(250 + Random(400));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    60..74: begin
+              WriteLn('Antiban active');
+              SleepAndMoveMouse(1000 + Random(5000));
+              Wait(100 + Random(300));
+              Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+              WriteLn('Antiban done');
+            end;
+    70..89: begin
+              WriteLn('Antiban active');
+                case Random(7) of
+                  0: Wait(1000 + Random(10000));
+                  1: Wait(2000 + Random(4000));
+                  2: Wait(3000 + Random(1500));
+                  3: Wait(7500 + Random(2500));
+                  4: Wait(5000 + Random(5000));
+                  5: Wait(5000 + Random(20000));
+                  6: Wait(20000 + Random(5000));
+                end;
+                Mousebox(MSX1, MSY1, MSX2, MSY2, 2);
+                WriteLn('Antiban done');
+            end;
+  end;
+end;
+
+function FindWoman: Boolean;
+var
+  i, j, t: Integer;
+  ATPA: Array[0..1] of TPointArray;
+  Colors, Tol, Area: Array of Integer;
+  BoxSize: Array[0..1] of Integer;
+  HueMod, SatMod: Array of Extended;
+  TBox: Array[0..1] of TBox;
+  ClearTPA: TPointArray;
+
+begin
+  // Details of the red shirt & gray skirt of woman
+  Colors := [1190202, 5397343]
+  Tol := [11, 12]
+  HueMod := [0.22, 0.22]
+  SatMod := [2.43, 0.05]
+  Area := [MSX1, MSY1, MSX2, MSY2]
+  ClearTPA := TPAFromBox(IntToBox(240, 110, 285, 140));
+  SMART_ClearCanvasArea(IntToBox(Area[0]-2, Area[1]-2, Area[2]+2, Area[3]+2));
+  MarkTime(t);
+
+  for i:=0 to high(Colors) do
+    begin
+      SetColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(HueMod[i], SatMod[i]);
+      if FindColorsSpiralTolerance(MSCX, MSCY, ATPA[i], Colors[i], Area[0], Area[1], Area[2], Area[3], Tol[i]) then
+        begin
+          //WriteLn('Points: '+ToStr(ATPA[i])+'');
+          ClearTPAFromTPA(ATPA[i], ClearTPA);
+          WriteLn('Length: '+IntToStr(Length(ATPA[i]))+'');
+          if (Length(ATPA[i])<50) then
+            Exit;
+          TBox[i] := GetTPABounds(ATPA[i]);
+          BoxSize[i] := (TBox[i].x1 + TBox[i].y1 + TBox[i].x2 + TBox[i].y2);
+          SMART_DrawBoxEx(False, IntToBox(TBox[i].x1, TBox[i].y1, TBox[i].x2, TBox[i].y2), clRed);
+        end;
+    end;
+  for i:=0 to (high(Colors)-1) do
+    begin
+      for j:=0 to high(ATPA[i]) do
+      if NearbyPointInArray(ATPA[i][j], 3, ATPA[i+1]) then
+        begin
+          if TimeFromMark(t) < 750 then
+            begin
+              MMouse(ATPA[i][j].x, ATPA[i][j].y, 2, RandomRange(-4, 4));
+              if WaitUptextMulti(['tta', 'ack', 'an', 'Man'], 200) then
+                begin
+                  //WriteLn('Point: '+ToStr(ATPA[i][j])+'');
+                  WriteLn('Found a woman');
+                  ClickMouse2(0);
+                  WaitOptionMulti(['ick', 'ock', 'ket', 'PickPocket'], 250);
+                  Result:=True;
+                  Exit;
+                end;
+            end else
+            begin
+              WriteLn('Too many attempts to find the woman, trying again soon');
+              Exit;
+            end;
+        end;
+    end;
+end;
+
+procedure LeecherMessage;
+var
+  Text: String;
+begin
+  Text := 'I am botting!';
+  SMART_DrawDots(TPAFromBox(IntToBox(MSX1, MSY1, MSX2, MSY2)));
+  SMART_DrawText(MSCX-165, MSCY-15, BigChars, 'LEECH MODUS ACTIVATED', clBlack);
+  repeat
+    for i := 1 to Length(Text) do
+      SendKeys(Text[i], 0);
+    TypeByte(VK_RETURN);
+  until(false);
+end;
+
+function FindMan: Boolean;
+var
+  i, j, t: Integer;
+  ATPA: Array[0..1] of TPointArray;
+  Colors, Tol, Area: Array of Integer;
+  BoxSize: Array[0..1] of Integer;
+  HueMod, SatMod: Array of Extended;
+  TBox: Array[0..1] of TBox;
+  ClearTPA: TPointArray;
+
+begin
+  // Details of the gray shirt & blue pants of man
+  Colors := [7638418, 3552820]
+  Tol := [19, 11]
+  HueMod := [0.10, 0.51]
+  SatMod := [0.28, 0.11]
+  Area := [MSX1, MSY1, MSX2, MSY2]
+  ClearTPA := TPAFromBox(IntToBox(240, 110, 285, 140));
+  SMART_ClearCanvasArea(IntToBox(Area[0]-2, Area[1]-2, Area[2]+2, Area[3]+2));
+  MarkTime(t);
+
+  for i:=0 to high(Colors) do
+    begin
+      SetColorToleranceSpeed(2);
+      SetColorSpeed2Modifiers(HueMod[i], SatMod[i]);
+      if FindColorsSpiralTolerance(MSCX, MSCY, ATPA[i], Colors[i], Area[0], Area[1], Area[2], Area[3], Tol[i]) then
+        begin
+          //WriteLn('Points: '+ToStr(ATPA[i])+'');
+          ClearTPAFromTPA(ATPA[i], ClearTPA);
+          WriteLn('Length: '+IntToStr(Length(ATPA[i]))+'');
+          if (Length(ATPA[i])<50) then
+            Exit;
+          TBox[i] := GetTPABounds(ATPA[i]);
+          BoxSize[i] := (TBox[i].x1 + TBox[i].y1 + TBox[i].x2 + TBox[i].y2);
+          SMART_DrawBoxEx(False, IntToBox(TBox[i].x1, TBox[i].y1, TBox[i].x2, TBox[i].y2), clRed);
+        end;
+    end;
+  for i:=0 to (high(Colors)-1) do
+    begin
+      for j:=0 to high(ATPA[i]) do
+      if NearbyPointInArray(ATPA[i][j], 3, ATPA[i+1]) then
+        begin
+          if TimeFromMark(t) < 750 then
+            begin
+              MMouse(ATPA[i][j].x, ATPA[i][j].y, RandomRange(1, 4), RandomRange(-4, 4));
+              if WaitUptextMulti(['tta', 'ack', 'an', 'Man'], 200) then
+                begin
+                  //WriteLn('Point: '+ToStr(ATPA[i][j])+'');
+                  WriteLn('Found a man');
+                  ClickMouse2(0);
+                  WaitOptionMulti(['ick', 'ock', 'ket', 'PickPocket'], 250);
+                  Result:=True;
+                  Exit;
+                end;
+            end else
+            begin
+              WriteLn('Too many attempts to find the man, trying again soon');
+              Exit;
+            end;
+        end;
+    end;
+end;
+
+procedure Eat; //Thanks R4nd0m & Narcle for the examples
+var
+  X, Y, i: Integer;
+begin
+  if (HPPercent<EatPercentage) and LoggedIn then
+    begin
+      if not InvEmpty then
+        begin
+          for i := 1 to 28 do
+          if ExistsItem(i) then
+            begin
+              MMouseItem(i);
+              GetMousePos(X, Y);
+              if WaitUptextMulti(['at', 'Eat'], 500) then
+                begin
+                  case Random(7) of
+                    0..4: ClickMouse2(1);
+                    5..6: begin;
+                            ClickMouse2(0);
+                            WaitOptionMulti(['at', 'Eat'], 500);
+                          end;
+                  end;
+                  Wait(500 + Random(500));
+                  Exit;
+                end;
+            end;
+        end;
+    end else
+      WriteLn('We have enough lifepoints left');
+end;
+
+begin
+  SetUpLogin;
+  ScriptDetails;
+  if Leecher then
+    LeecherMessage;
+  i := Random(2);
+  repeat
+    repeat
+      case Preference of
+        'Man': FindMan;
+        'Woman': FindWoman;
+        'Random': begin
+                    Pickpockets := RandomRange(10, 20);
+                    case i of
+                      0: begin
+                           FindMan;
+                           Inc(a);
+                         end;
+                      1: begin
+                           FindWoman;
+                           Inc(a);
+                         end;
+                    end;
+                    if a>PickPockets then
+                      begin
+                        i := Random(2);
+                        a := 0;
+                      end;
+                  end;
+      end;
+      FindNormalRandoms;
+      Antiban;
+      Wait(500 + Random(1000));
+    until FindChatBoxText('ail', 8, clBlack) or FindChatBoxText('tun', 8, clBlack);
+    Wait(4000 + Random(1500));
+  until not(LoggedIn);
+end.

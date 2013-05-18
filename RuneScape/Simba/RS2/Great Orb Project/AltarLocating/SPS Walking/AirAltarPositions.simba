@@ -1,0 +1,219 @@
+program Test;
+{$DEFINE SMART}
+{$i srl/srl.simba}
+{$i sps/sps.simba}
+
+procedure DeclarePlayers;
+begin
+  HowManyPlayers := 1;
+  NumberOfPlayers(HowManyPlayers);
+  CurrentPlayer := 0;
+
+  with Players[0] do
+    begin
+      Name := '';
+      Pass := '';
+      Pin := '';
+      Active := True;
+    end;
+end;
+
+procedure SetupLogin;
+begin
+  //ClearDebug;
+  Smart_Server := 10;
+  Smart_Members := False;
+  Smart_Signed := True;
+  Smart_SuperDetail := False;
+  SetupSRL;
+  DeclarePlayers;
+  LoginPlayer;
+  //Wait(1000 + Random(3000));
+  //ClickNorth(0);
+end;
+
+function GreenOrbs: Boolean;
+var
+  X, Y, i: integer;
+  GreenOrbCol: TPointArray;
+  GreenOrbSplit: T2DPointArray;
+  P: TPoint;
+
+begin
+  // This will click on the green orbs \\
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(0.42, 1.72);
+  WriteLn('Counted green colors: '+IntToStr(CountColorTolerance(4115289, 0, 70, 421, 337, 20))+'');
+  if CountColorTolerance(4115289, 0, 70, 421, 337, 20) < 100 then
+    begin
+      WriteLn('We haven`t been able to find any green orbs on our screen. Moving');
+      RadialWalkTolerance(62451, 0, 359, 75, 0, 0, 6);
+    end else
+      begin
+        SetColorSpeed2Modifiers(0.42, 1.72);
+        if FindColorsSpiralTolerance(MSCX, MSCY, GreenOrbCol, 4115289, 0, 70, 421, 337, 20) then
+          begin
+            SortTPAFrom(GreenOrbCol, Point(MSCX, MSCY));
+            GreenOrbSplit := SplitTPAEx(GreenOrbCol, 20, 20);
+            SortATPASize(GreenOrbSplit, True);
+            for i:=0 to 2 do
+              begin
+                P := MiddleTPA(GreenOrbSplit[i]);
+                MMouse(P.X, P.Y, 2, 2);
+                  if WaitUpTextMulti(['en or', 'Green Orb'], 250) then
+                    begin
+                      ClickMouse2(1);
+                      Result:=True;
+                      Break;
+                    end;
+              end;
+          end else
+            begin
+              WriteLn('We haven`t been able to detect any green orbs');
+            end;
+      end;
+end;
+
+procedure SPSCheck;
+var
+  MyPos:TPoint;
+
+begin
+  SPS_Setup(RUNESCAPE_SURFACE, ['99_1']);
+  MyPos:=SPS_GetMyPos;
+  Writeln('My position is  x: '+inttostr(MyPos.x)+' y: '+inttostr(MyPos.y));
+end;
+
+procedure AirAltarPositions;
+var
+  MyPos: TPoint;
+  AirN, AirNE, AirE, AirSE, AirS, AirSW, AirW, AirNW, AirM: TBox;
+  AirPositions: Array of TBox;
+  i: Integer;
+
+begin
+  if (GreenOrbs=True) then
+  begin
+    SPS_Setup(RUNESCAPE_SURFACE, ['99_1']);
+    MyPos := SPS_GetMyPos;
+    Writeln('My position is  x: '+IntToStr(MyPos.x)+' y: '+IntToStr(MyPos.y)+'');
+
+    AirN := IntToBox(39847, 607, 39855, 619);
+    AirNE := IntToBox(39859, 603, 39867, 619);
+    AirE := IntToBox(39863, 623, 39867, 635);
+    AirSE := IntToBox(39859, 639, 39867, 651);
+    AirS := IntToBox(39847, 651, 39859, 655);
+    AirSW := IntToBox(39827, 639, 39843, 659);
+    AirW := IntToBox(39821, 623, 39835, 635);
+    AirNW := IntToBox(39831, 611, 39839, 619);
+    AirM := IntToBox(39839, 619, 39859, 639);
+    AirPositions := [AirN, AirNE, AirE, AirSE, AirS, AirSW, AirW, AirNW, AirM];
+
+    for i:=0 to 8 do
+    if PointInBox(MyPos, AirPositions[i]) then
+      begin
+        WriteLn('Our location is located');
+        case i of
+          0: begin
+               WriteLn('We are north of the air altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(39851, RandomRange(623,627)));
+               GreenOrbs;
+               case Random(2) of
+                 0: SPS_BlindWalk(Point(39843, RandomRange(627, 635)));
+                 1: SPS_BlindWalk(Point(39855, RandomRange(627, 635)));
+               end;
+               GreenOrbs;
+             end;
+          1: begin
+               WriteLn('We are north east of the air altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(RandomRange(39855, 39863), RandomRange(615, 623)));
+               GreenOrbs;
+               SPS_BlindWalk(Point(RandomRange(39851, 39859), RandomRange(623, 631)));
+               GreenOrbs;
+             end;
+          2: begin
+               WriteLn('We are east of the air altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(RandomRange(39855, 39859), 631));
+               GreenOrbs;
+               case Random(2) of
+                 0: SPS_BlindWalk(Point(RandomRange(39843, 39851), 623));
+                 1: SPS_BlindWalk(Point(RandomRange(39843, 39851), 639));
+               end;
+               GreenOrbs;
+             end;
+          3: begin
+               WriteLn('We are south east of the air altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(RandomRange(39855, 39863), RandomRange(635, 643)));
+               GreenOrbs;
+               SPS_BlindWalk(Point(RandomRange(39843, 39847), RandomRange(623, 635)));
+               GreenOrbs;
+             end;
+          4: begin
+               WriteLn('We are south of the air altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(39851, RandomRange(635, 639)));
+               GreenOrbs;
+               case Random(2) of
+                 0: SPS_BlindWalk(Point(RandomRange(39839, 39847), RandomRange(631, 635)));
+                 1: SPS_BlindWalk(Point(RandomRange(39853, 39859), RandomRange(631, 635)));
+               end;
+               GreenOrbs;
+             end;
+          5: begin
+               WriteLn('We are south west of the air altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(RandomRange(39835, 39843), RandomRange(635, 643)));
+               GreenOrbs;
+               SPS_BlindWalk(Point(RandomRange(39839, 39847), RandomRange(631, 635)));
+               GreenOrbs;
+             end;
+          6: begin
+               WriteLn('We are west of the air altar');
+               WriteLn('Walking to the altar');
+               SPS_BlindWalk(Point(RandomRange(39839, 39843), 631));
+               GreenOrbs;
+               case Random(2) of
+                 0: SPS_BlindWalk(Point(RandomRange(39847, 39851), 623));
+                 1: SPS_BlindWalk(Point(RandomRange(39843, 39851), 639));
+               end;
+               GreenOrbs;
+             end;
+          7: begin
+               WriteLn('We are north west of the air altar');
+               SPS_BlindWalk(Point(RandomRange(39835, 39843), RandomRange(619, 627)));
+               GreenOrbs;
+               case Random(2) of
+                 0: SPS_BlindWalk(Point(39843, RandomRange(631, 635)));
+                 1: SPS_BlindWalk(Point(RandomRange(39847, 39851), 623));
+               end;
+               GreenOrbs;
+             end;
+          8: begin
+               WriteLn('We are around the air altar');
+               SPS_BlindWalk(Point(RandomRange(39843, 39855), RandomRange(623, 639)));
+               GreenOrbs;
+             end;
+        end;
+      end else
+      begin
+        if MyPos = Point(-1, -1) then
+        begin
+          WriteLn('SPS failed');
+        end;
+      end;
+  end else
+  begin
+    WriteLn('Green Orbs is false');
+  end;
+end;
+
+begin
+  SetUpLogin;
+  //GreenOrbs;
+  SPSCheck;
+  //AirAltarPositions;
+end.
