@@ -14,6 +14,7 @@ import org.tribot.api2007.Camera;
 import org.tribot.api2007.GameTab;
 import org.tribot.api2007.Interfaces;
 import org.tribot.api2007.Inventory;
+import org.tribot.api2007.NPCs;
 import org.tribot.api2007.Objects;
 import org.tribot.api2007.Player;
 import org.tribot.api2007.Screen;
@@ -22,35 +23,39 @@ import org.tribot.api2007.Walking;
 import org.tribot.api2007.GameTab.TABS;
 import org.tribot.api2007.types.RSInterfaceChild;
 import org.tribot.api2007.types.RSItem;
+import org.tribot.api2007.types.RSNPC;
 import org.tribot.api2007.types.RSObject;
 import org.tribot.api2007.types.RSTile;
 import org.tribot.script.EnumScript;
 import org.tribot.script.ScriptManifest;
 import org.tribot.script.interfaces.Painting;
 
-@ScriptManifest(authors = { "J J" }, category = "Money making", name = "JJ's Flax Spinner 2007")
+@ScriptManifest(authors = { "J J" }, category = "Crafting", name = "JJ's Flax Spinner 2007")
 public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painting {
 
-	private final RSTile BANK_TILE = new RSTile(3209, 3219, 2),
+	private final RSTile BANK_TILE = new RSTile(3208, 3220, 2),
 					     STAIRS_BANK_TILE = new RSTile(3205, 3209, 2),
 					     STAIRS_SPIN_WHEEL_TILE = new RSTile(3205, 3209, 1),
-					     SPIN_TILE = new RSTile(3209, 3214, 1),
-					     DOOR_TILE = new RSTile(3206, 3214, 1),
-					     STAIRS_COOK_TILE = new RSTile(3207, 3210, 0),
+					     SPIN_TILE = new RSTile(3209, 3213, 1),
+					     DOOR_TILE = new RSTile(3207, 3214, 1),
+					     STAIRS_COOK_TILE = new RSTile(3206, 3209, 0),
 					     LUMBY_TILE = new RSTile(3222, 3218, 0);
 	private final int FLAX_ID = 1779,
-					  CLOSED_DOOR_ID = 1536,
-					  SPINNING_WHEEL_ID = 3632,
-					  STAIRS_COOK_ID = 1738,
-					  STAIRS_WHEEL_ID = 1739,
-					  STAIRS_BANK_ID = 1740,
+					  CLOSED_DOOR_ID = 2784,
+					  SPINNING_WHEEL_ID = 9004,
+					  STAIRS_COOK_ID = 2649,
+					  STAIRS_WHEEL_ID = 2781,
+					  STAIRS_BANK_ID = 1316,
 					  CRAFTING_ANIMATION_ID = 894,
 					  BOW_STRING_ID = 1777,
 					  START_XP = Skills.getXP("Crafting"),
 					  ROTATION = 270,
 					  ANGLE = 100,
-					  HOME_TELE_ANIMATION = 4847;
-	private final int[] STAIRS_IDS = {STAIRS_COOK_ID, STAIRS_WHEEL_ID};
+					  HOME_TELE_ANIMATION = 4847,
+					  EVIL_CHICKEN_ID = 2466,
+					  SWARM_ID = 1737;
+	private final int[] STAIRS_IDS = {STAIRS_COOK_ID, STAIRS_WHEEL_ID},
+				        RANDOM_IDS = {EVIL_CHICKEN_ID, SWARM_ID};
 	private final long START_TIME = System.currentTimeMillis();
 	
 	private JJsFlaxState SCRIPT_STATE = getState();
@@ -61,7 +66,7 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 		// CALCULATIONS
 		long timeRan = System.currentTimeMillis()-START_TIME;
 		double multiplier = timeRan / 3600000D;
-		
+
 		int xpGained = CURRENT_XP-START_XP;
 		int xpPerHour = (int) (xpGained / multiplier);
 		
@@ -98,7 +103,9 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 	}
 	
 	private JJsFlaxState getState(){
-		if(Player.getPosition().getPlane() == 0){
+		if(haveCombatRandom()){
+			return JJsFlaxState.COMBAT_RANDOM;
+		}else if(Player.getPosition().getPlane() == 0){
 			return JJsFlaxState.DEATH_WALK;
 		}else if(haveFlax()){
 			if(atBank()){
@@ -178,14 +185,14 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 	private boolean withdrawFlax(){
 		if(Banking.isBankScreenOpen()){
 			RSItem[] flax = Banking.find(FLAX_ID);
+			int count = Inventory.getAll().length;
 			if(flax != null && flax.length > 0 && flax[0].click("Withdraw All")){
-				sleep(400, 800);
 				long t = System.currentTimeMillis();
-				while(Timing.timeFromMark(t) < General.random(2000, 3000)){
-					if(haveFlax()){
+				while(Timing.timeFromMark(t) < General.random(1500, 2500)){
+					if(Inventory.getAll().length > count){
 						return true;
 					}
-					sleep(50, 150);
+					sleep(20, 80);
 				}
 			}
 		}
@@ -195,14 +202,17 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 	private boolean depositBowstring(){
 		if(Banking.isBankScreenOpen()){
 			RSItem[] string = Inventory.find(BOW_STRING_ID);
-			if(string != null && string.length > 0 && string[0].click("Store All")){
-				sleep(400, 800);
-				long t = System.currentTimeMillis();
-				while(Timing.timeFromMark(t) < General.random(2000, 3000)){
-					if(!haveBowstring()){
-						return true;
+			int count = Inventory.getAll().length;
+			if(string != null && string.length > 0){
+				int r = General.random(0, string.length-1);
+				if(string[r].click("Store All")){
+					long t = System.currentTimeMillis();
+					while(Timing.timeFromMark(t) < General.random(1500, 2500)){
+						if(Inventory.getAll().length < count){
+							return true;
+						}
+						sleep(20, 80);
 					}
-					sleep(50, 150);
 				}
 			}
 		}
@@ -214,11 +224,11 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 			RSItem[] all = Inventory.getAll();
 			if(all != null && all.length > 0 && all[0].click("Store All")){
 				long t = System.currentTimeMillis();
-				while(Timing.timeFromMark(t) < General.random(2000, 3000)){
+				while(Timing.timeFromMark(t) < General.random(1500, 2500)){
 					if(Inventory.getAll().length < all.length){
 						return true;
 					}
-					sleep(50, 150);
+					sleep(20, 80);
 				}
 			}
 		}
@@ -226,7 +236,7 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 	}
 	
 	private void waitUntilIdle(RSTile tile){
-		sleep(500, 1000);
+		sleep(400, 800);
 		long t = System.currentTimeMillis();
 	
 		while(Timing.timeFromMark(t) < General.random(400, 800)){
@@ -263,6 +273,9 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 		}else if(plane == 2){
 			// At bank
 			return walkToTile(STAIRS_BANK_TILE);
+		}else if(plane == 0){
+			// At cook
+			return walkToTile(STAIRS_COOK_TILE);
 		}
 		return false;
 	}
@@ -307,7 +320,7 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 	private boolean openDoor(){
 		RSObject[] door = Objects.findNearest(15, CLOSED_DOOR_ID);
 		if(door != null && door.length > 0){
-			// Setting camera angle around 90 degrees
+			// Setting camera angle around 270 degrees if needed
 			int currentRotation = Camera.getCameraRotation();
 			if(Math.abs(ROTATION-currentRotation) > 10){
 				Camera.setCameraRotation(General.random(ROTATION-5, ROTATION+5));
@@ -319,6 +332,7 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 				return true;
 			}else{
 				Camera.turnToTile(door[0].getPosition());
+				openDoor();
 			}
 		}
 		return false;
@@ -326,11 +340,9 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 	
 	private boolean spinWheel(){
 		RSObject[] wheel = Objects.findNearest(10, SPINNING_WHEEL_ID);
-		if(wheel != null && wheel.length > 0){
-			if(DynamicClicking.clickRSObject(wheel[0], "Spin")){
-				waitUntilIdle(wheel[0].getPosition());
-				return true;
-			}
+		if(wheel != null && wheel.length > 0 && DynamicClicking.clickRSObject(wheel[0], "Spin")){
+			waitUntilIdle(wheel[0].getPosition());
+			return true;
 		}
 		return false;
 	}
@@ -369,16 +381,14 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 	
 	private boolean typeAmount(){
 		if(haveAmountInterface()){
-			int r = General.random(0, 5);
-			if(r < 5){
-				Keyboard.typeSend("33");
+			sleep(20, 800);
+			int r = General.random(1, 10);
+			if(r <= 2){
+				Keyboard.typeSend("28"); // 20% chance
+			}else if(r <= 4){
+				Keyboard.typeSend("333"); // 20% chance
 			}else{
-				int rr = General.random(0, 4);
-				if(rr < 3){
-					Keyboard.typeSend("333");
-				}else{
-					Keyboard.typeSend("28");
-				}
+				Keyboard.typeSend("33"); // 60% chance
 			}
 			return true;
 		}
@@ -391,7 +401,7 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 			if(Player.getAnimation() == CRAFTING_ANIMATION_ID){
 				return true;
 			}
-			sleep(50, 100);
+			sleep(20, 80);
 		}
 		return false;
 	}
@@ -417,23 +427,74 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 	
 	private boolean atBank(){
 		RSTile myPos = Player.getPosition();
-		return myPos.distanceTo(BANK_TILE) < 2;
+		return myPos.distanceTo(BANK_TILE) <= 3;
 	}
 	
 	private boolean atSpinWheel(){
 		RSTile myPos = Player.getPosition();
-		return myPos.distanceTo(SPIN_TILE) < 2;
+		return myPos.distanceTo(SPIN_TILE) <= 2;
+	}
+	
+	private boolean haveCombatRandom(){
+		RSNPC[] all = NPCs.getAll();
+		for(int id : RANDOM_IDS){
+			for(RSNPC npc : all){
+				if(npc.getID() == id && npc.isInteractingWithMe()){
+					System.out.println("We have a random event with ID: " + id);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	private boolean handleCombatRandom(){
+		switch(SCRIPT_STATE){
+			// EVADE BY WALKING AWAY TO NEXT LOC
+			case DEPOSIT_BOW_STRING: case DEPOSIT_JUNK: case WITHDRAW_FLAX:	case OPEN_BANK:
+				return walkToTile(STAIRS_BANK_TILE);
+
+			// EVADE BY WALKING AWAY TO NEXT LOC
+			case CRAFTING: 	case OPEN_DOOR: case SELECT_FLAX: case TYPE_AMOUNT: case USE_SPIN_WHEEL: case WALK_TO_DOOR:
+				return walkToTile(STAIRS_SPIN_WHEEL_TILE);
+			
+			// EVADE BY WALKING TO RANDOM SPOT
+			default: 
+				RSTile myTile = Player.getPosition();
+				RSTile evadeTile = new RSTile(myTile.getX() + General.random(-8, 8), myTile.getY() + General.random(-8, 8));
+				return walkToTile(evadeTile);
+		}
+	}
+	
+	private boolean openBankBooth(){
+		RSObject[] banks = Objects.findNearest(10, 18491);
+		if(banks != null && banks.length > 0){
+			RSObject bank = banks[0];
+			if(DynamicClicking.clickRSObject(bank, "Bank")){
+				long t = System.currentTimeMillis();
+				while(Timing.timeFromMark(t) < General.random(1200, 1800)){
+					if(Banking.isBankScreenOpen()){
+						return true;
+					}
+					sleep(20, 80);
+				}
+			}
+		}
+		return false;
 	}
 	
 	private boolean handleDeathWalk(){
 		RSObject[] stairs = Objects.findNearest(20, STAIRS_COOK_ID);
 		if(stairs != null && stairs.length > 0){
-			if(Player.getPosition().distanceTo(STAIRS_COOK_TILE) > 2){
+			if(stairs[0].isOnScreen() && Player.getPosition().distanceTo(stairs[0].getPosition()) <= 5){
+				println("Found stairs, climbing!");
+				if(DynamicClicking.clickRSObject(stairs[0], "up")){
+					waitUntilIdle(stairs[0].getPosition());
+					return true;
+				}
+			}else{
 				println("Found stairs, but can't interact yet, walking there!!");
 				walkToTile(STAIRS_COOK_TILE);
-				return true;
-			}else if(DynamicClicking.clickRSObject(stairs[0], "up")){
-				waitUntilIdle(stairs[0].getPosition());
 				return true;
 			}
 		}else{
@@ -482,22 +543,28 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 			Camera.setCameraAngle(ANGLE);
 		}
 		
-		// Setting camera angle around 90 degrees
-		int currentRotation = Camera.getCameraRotation();
-		println("Rotation: " + currentRotation);
-		if(Math.abs(ROTATION-currentRotation) > 10){
-			Camera.setCameraRotation(General.random(ROTATION-5, ROTATION+5));
-		}
-		
+		Walking.control_click = true;
+		Walking.walking_timeout = General.random(4000, 6000);
+
 		return getState();
-	}
+	}	
 
 	@Override
 	public JJsFlaxState handleState(JJsFlaxState state) {
 		SCRIPT_STATE = state;
 		CURRENT_XP = Skills.getXP("Crafting");
 
+		// Setting camera angle around 270 degrees
+		int currentRotation = Camera.getCameraRotation();
+		if(Math.abs(ROTATION-currentRotation) > 10){
+			Camera.setCameraRotation(General.random(ROTATION-5, ROTATION+5));
+		}
+				
 		switch(SCRIPT_STATE){
+			case COMBAT_RANDOM:
+				handleCombatRandom();
+				break;
+		
 			case BANK_TO_STAIRS:
 				walkToStairs();
 				break;
@@ -515,7 +582,7 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 				break;
 				
 			case OPEN_BANK:
-				Banking.openBankBanker();
+				openBankBooth();
 				break;
 				
 			case OPEN_DOOR:
@@ -564,8 +631,7 @@ public class JJsFlaxSpinner07 extends EnumScript<JJsFlaxState> implements Painti
 				break;
 		}
 		
-		sleep(20, 60);
-		
+		sleep(20, 80);
 		return getState();
 	}
 }
