@@ -42,7 +42,7 @@ public class JJsWillowChopper extends Script implements Painting {
 
 	// Chopping related
 	private final Rectangle willow_area = new Rectangle(2958, 3188, 14, 14);
-	private final int[] willow_ids = {3640, 3639, 2586};
+	private final int[] willow_ids = {23724, 23722, 23723};
 	private final int willow_id = 1519;
 	// Shop related
 	private final Rectangle store_area = new Rectangle(2947, 3212, 3, 6);

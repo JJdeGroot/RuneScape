@@ -14,12 +14,15 @@ import org.tribot.api2007.Player;
 import org.tribot.api2007.Skills;
 import org.tribot.api2007.types.RSInterfaceChild;
 import org.tribot.api2007.types.RSItem;
-import org.tribot.script.Script;
+import org.tribot.script.EnumScript;
 import org.tribot.script.ScriptManifest;
 import org.tribot.script.interfaces.Painting;
 
-@ScriptManifest(authors = { "J J" }, category = "Herblore", name = "JJ's Herblore", description = "Place the two items you need in spot #1 and spot #2 of your inventory. If you want to make unfinished potions, place vial of water in spot #1 or spot #2 and the herb in the other spot. Same story for other potions: place the unfinished potion in spot #1 or spot #2 and the ingredient in the other spot")
-public class JJsHerblore extends Script implements Painting {
+import scripts.jjsherblore.State;
+import scripts.jjsherblore.GUI;
+
+@ScriptManifest(authors = { "J J" }, category = "Herblore", name = "JJ's Herblore", description = "Have the items you need visible in the bank. Start the script and enter the ID's of the items you are using. Example: vial of water ID and guam ID")
+public class JJsHerblore extends EnumScript<State> implements Painting {
 
 	private final long startTime = System.currentTimeMillis();
 	private final int potionInterface = 309;
@@ -27,15 +30,13 @@ public class JJsHerblore extends Script implements Painting {
 	private final int mixAnimation = 393;
 	private final int startXp = Skills.getXP("Herblore");
 	
-	private int item1 = 97;
-	private int item2 = 1975;
+	private int item1ID;
+	private int item2ID;
 	private int mixed = 0;
 	private int currentXp = startXp;
-	
-	private enum State {
-		DEPOSITING, WITHDRAWING, CLOSING_BANK, CLICKING_ITEMS, 
-		CLICK_MIX_INTERFACE, MIXING, OPENING_BANK;
-	}
+
+	private GUI gui;
+	private boolean guiInitialized = false;
 	private State state;
 	
 	/// GENERAL \\\
@@ -89,8 +90,8 @@ public class JJsHerblore extends Script implements Painting {
 	/// UNFINISHED POTIONS \\\
 	/** Withdraws the items required to mix */
 	private boolean withdrawSupplies(){
-		RSItem[] items1 = Banking.find(item1);
-		RSItem[] items2 = Banking.find(item2);
+		RSItem[] items1 = Banking.find(item1ID);
+		RSItem[] items2 = Banking.find(item2ID);
 		if(items1.length > 0 && items2.length > 0){
 			if(General.random(0, 1) == 1){
 				if(Banking.withdrawItem(items1[0], 14) && items2[0].click("Withdraw All")){
@@ -105,13 +106,13 @@ public class JJsHerblore extends Script implements Painting {
 	
 	/** Checks if we can mix ingredients */
 	private boolean canMake(){
-		return Inventory.getCount(item1) > 0 && Inventory.getCount(item2) > 0;
+		return Inventory.getCount(item1ID) > 0 && Inventory.getCount(item2ID) > 0;
 	}
 	
 	/** Clicks item1 and then item2 */
 	private boolean useItems(){
-		RSItem[] items1 = Inventory.find(item1);
-		RSItem[] items2 = Inventory.find(item2);
+		RSItem[] items1 = Inventory.find(item1ID);
+		RSItem[] items2 = Inventory.find(item2ID);
 		if(items1.length > 0 && items2.length > 0){
 			int r1 = General.random(0, items1.length-1);
 			int r2 = General.random(0, items2.length-1);
@@ -146,6 +147,15 @@ public class JJsHerblore extends Script implements Painting {
 		}
 		return false;
 	}
+	
+	/** Opens the bank */
+	private boolean openBank(){
+		if(General.random(0, 1) == 1){
+			return Banking.openBankBanker() || Banking.openBankBooth();
+		}else{
+			return Banking.openBankBooth() || Banking.openBankBanker();
+		}
+	}
 
 	/// MAINLOOP \\\
 	@Override
@@ -163,6 +173,9 @@ public class JJsHerblore extends Script implements Painting {
 		
 		g.drawString("Gained " + xpGained + " herblore xp (" + xpHr + "/h)", 10, 170);
 		g.drawString("Mixed " + mixed + " potions (" + mixedHr + "/h)", 10, 190);
+		
+		g.drawString("Item #1 ID: " + item1ID, 10, 220);
+		g.drawString("Item #2 ID: " + item2ID, 10, 240);
 	}
 	
 	/** Returns the current state */
@@ -189,50 +202,67 @@ public class JJsHerblore extends Script implements Painting {
 	}
 
 	@Override
-	public void run() {
+	public State getInitialState() {
 		Mouse.setSpeed(General.random(150, 170));
 		
-		// Getting required item ID's
-		RSItem[] items = Inventory.getAll();
-		if(items.length < 2){
-			println("Place the two required items in your inventory!");
-			stopScript();
-		}else{
-			item1 = items[0].getID();
-			item2 = items[1].getID();
+		// Spawning GUI
+		java.awt.EventQueue.invokeLater(new Runnable(){
+			@Override
+			public void run() {
+				gui = new GUI();
+				guiInitialized = true;
+				gui.setVisible(true);
+			}
+    	});
+		
+		// Waiting for it to finish
+		while(true){
+			if(guiInitialized && !gui.isVisible()){
+				break;
+			}
+			sleep(50, 100);
 		}
 		
-		// Dynamic loop
-		while(true){
-			state = getState();
-			currentXp = Skills.getXP("Herblore");
-			
-			switch(state){
-				case CLICKING_ITEMS:
-					useItems();
-					break;
-				case CLICK_MIX_INTERFACE:
-					makePotions();
-				case CLOSING_BANK:
-					Banking.close();
-					break;
-				case DEPOSITING:
-					depositAll();
-					break;
-				case MIXING:
-					sleep(50, 100);
-					break;
-				case OPENING_BANK:
-					Banking.openBankBanker();
-					break;
-				case WITHDRAWING:
-					withdrawSupplies();
-					mixed+=14;
-					break;
-			}
-			
-			sleep(20, 40);
+		// Getting ID's from the GUI
+		item1ID = gui.getItem1ID();
+		item2ID = gui.getItem2ID();
+		
+		// Getting the current state
+		state = getState();
+		return state;
+	}
+
+	@Override
+	public State handleState(State state) {
+		currentXp = Skills.getXP("Herblore");
+		
+		switch(state){
+			case CLICKING_ITEMS:
+				useItems();
+				break;
+			case CLICK_MIX_INTERFACE:
+				makePotions();
+			case CLOSING_BANK:
+				openBank();
+				break;
+			case DEPOSITING:
+				depositAll();
+				break;
+			case MIXING:
+				sleep(50, 100);
+				break;
+			case OPENING_BANK:
+				Banking.openBankBanker();
+				break;
+			case WITHDRAWING:
+				withdrawSupplies();
+				mixed+=14;
+				break;
 		}
+		
+		sleep(20, 40);
+		state = getState();
+		return state;
 	}
 
 }
