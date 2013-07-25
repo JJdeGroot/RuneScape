@@ -1,8 +1,7 @@
 package scripts.jjsherblore;
 
+/** States for JJ's Herblore */
 public enum State {
-	
 	DEPOSITING, WITHDRAWING, CLOSING_BANK, CLICKING_ITEMS, 
-	CLICK_MIX_INTERFACE, MIXING, OPENING_BANK;
-	
+	CLICK_INTERFACE, MIXING, OPENING_BANK, GUI;
 }
