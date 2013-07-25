@@ -46,11 +46,12 @@ public class JJsWillowChopper extends Script implements Painting {
 	private final int willow_id = 1519;
 	// Shop related
 	private final Rectangle store_area = new Rectangle(2947, 3212, 3, 6);
-	private final int[] customer_ids = {2536, 2535};
+	private final int[] customer_ids = {1635, 1636};
 	private final int store_interface = 300;
 	private final int store_title_index = 76;
 	// Random event related
 	private final int[] nest_ids = {5073, 5074};
+	private final int tree_spirit_id = 579;
 	// Script states
 	private enum State {
 		CHOPPING, CLICK_WILLOW, WALK_TO_WILLOWS, RELOCATE_TO_WILLOWS,
