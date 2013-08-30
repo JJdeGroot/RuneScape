@@ -22,6 +22,7 @@ public class GUI extends JFrame {
 	
 	private int item1ID, item2ID;
 	private Method method;
+	private boolean done = false;
 
 	/** Creates the GUI for JJ's herblore */
 	public GUI(){
@@ -74,6 +75,10 @@ public class GUI extends JFrame {
 		return item2ID;
 	}
 	
+	public boolean isDone(){
+		return done;
+	}
+	
 	/** Checks if a JTextField contains a number */
 	private boolean containsNumber(JTextField field){
 		String text = field.getText();
@@ -97,6 +102,7 @@ public class GUI extends JFrame {
 		public void actionPerformed(ActionEvent e) {
 			System.out.println("Start button clicked!");
 			method = Method.values()[methodBox.getSelectedIndex()];
+			done = true;
 			
 			switch(method){
 				case GRINDING:
@@ -120,6 +126,22 @@ public class GUI extends JFrame {
 						dispose();
 					}
 					break;
+					
+				case DECANTING:
+					if(containsNumber(item1Field)){
+						item1ID = getNumber(item1Field);
+						dispose();
+					}
+					break;
+					
+				case ALL_IN_ONE:
+					if(containsNumber(item1Field) && containsNumber(item2Field)){
+						item1ID = getNumber(item1Field);
+						item2ID = getNumber(item2Field);
+						dispose();
+					}
+					break;
+					
 			
 			}
 		}
@@ -140,13 +162,29 @@ public class GUI extends JFrame {
 					item2Label.setVisible(false);
 					item2Field.setVisible(false);
 					break;
+					
 				case GRINDING:
 					item1Label.setText("Item ID:");
 					item2Label.setVisible(false);
 					item2Field.setVisible(false);
 					break;
+					
 				case MIXING:
 					item1Label.setText("Item #1 ID:");
+					item2Label.setText("Item #2 ID:");
+					item2Label.setVisible(true);
+					item2Field.setVisible(true);
+					break;
+					
+				case DECANTING:
+					item1Label.setText("Potion ID:");
+					item2Label.setVisible(false);
+					item2Field.setVisible(false);
+					break;
+					
+				case ALL_IN_ONE:
+					item1Label.setText("Herb ID:");
+					item2Label.setText("Secondary ID:");
 					item2Label.setVisible(true);
 					item2Field.setVisible(true);
 					break;
