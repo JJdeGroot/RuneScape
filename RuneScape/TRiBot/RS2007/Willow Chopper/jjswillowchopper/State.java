@@ -1,0 +1,14 @@
+package scripts.jjswillowchopper;
+
+public enum State {
+	CHOPPING, 
+	CLICK_WILLOW, 
+	WALK_TO_WILLOWS, 
+	TRADE_CUSTOMER, 
+	SELL_WILLOWS, 
+	WALK_TO_STORE,
+	WALK_TO_DOOR,
+	OPEN_DOOR,
+	EVIL_TREE,
+	TREE_SPIRIT;
+}

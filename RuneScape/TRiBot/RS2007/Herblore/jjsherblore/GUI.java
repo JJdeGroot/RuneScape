@@ -133,16 +133,6 @@ public class GUI extends JFrame {
 						dispose();
 					}
 					break;
-					
-				case ALL_IN_ONE:
-					if(containsNumber(item1Field) && containsNumber(item2Field)){
-						item1ID = getNumber(item1Field);
-						item2ID = getNumber(item2Field);
-						dispose();
-					}
-					break;
-					
-			
 			}
 		}
 		
@@ -180,13 +170,6 @@ public class GUI extends JFrame {
 					item1Label.setText("Potion ID:");
 					item2Label.setVisible(false);
 					item2Field.setVisible(false);
-					break;
-					
-				case ALL_IN_ONE:
-					item1Label.setText("Herb ID:");
-					item2Label.setText("Secondary ID:");
-					item2Label.setVisible(true);
-					item2Field.setVisible(true);
 					break;
 			}
 

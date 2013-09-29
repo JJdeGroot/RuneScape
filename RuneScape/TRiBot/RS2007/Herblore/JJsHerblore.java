@@ -23,6 +23,7 @@ import org.tribot.script.EnumScript;
 import org.tribot.script.ScriptManifest;
 import org.tribot.script.interfaces.Painting;
 
+import scripts.jjsherblore.HerbStatsThread;
 import scripts.jjsherblore.Method;
 import scripts.jjsherblore.State;
 import scripts.jjsherblore.GUI;
@@ -39,21 +40,32 @@ public class JJsHerblore extends EnumScript<State> implements Painting {
 	private final long startTime = System.currentTimeMillis();
 	private final int startXp = Skills.getXP(Skills.SKILLS.HERBLORE);
 	private final Rectangle inventory_area = new Rectangle(525, 206, 757-525, 461-206);
-	private int vialID = 227;
-	private int mortarID = 233;
-	private int potionInterface = 309;
-	private int makeIndex = 6;
-	private int mixAnimation = 393;
-
+	private final int mortarID = 233,
+				      potionInterface = 309,
+				      makeIndex = 6,
+				      mixAnimation = 393;
+	// GUI
+	private GUI gui = new GUI();
 	private Method method;
 	private int item1ID;
 	private int item2ID;
-	private int itemsDone = 0;
-	private int currentXp = startXp;
-
-	private GUI gui = new GUI();
 	private State state = State.GUI;
 	
+	// Statistics
+	private long lastTime = startTime;
+	private int currentXp = startXp;
+	private int mixed = 0,
+			    grinded = 0,
+			    cleaned = 0,
+			    decanted = 0;
+	// Comitted statistics
+	private int comittedRunTime = 0,
+				comittedXP = 0,
+				comittedMixed = 0,
+				comittedCleaned = 0,
+				comittedDecanted = 0,
+				comittedGrinded = 0;
+
 	/// GENERAL \\\
 	/** Waits for something to happen in the inventory */
 	private boolean waitInventory(boolean increase, int ms){
@@ -81,10 +93,23 @@ public class JJsHerblore extends EnumScript<State> implements Painting {
 			// Check if we haven't deposited this item yet
 			if(!deposited.contains(item.getID())){
 				int count = Inventory.getCount(item.getID());
-				String option = "Store " + (count > 10 ? "All" : count > 5 ? 10 : count == 1 ? 1 : 5);
+				String option = "Deposit-" + (count > 10 ? "All" : count > 5 ? 10 : count == 1 ? 1 : 5);
 				if(item.click(option)){
-					//System.out.println("Added id #" + item.getID());
 					deposited.add(item.getID());
+					switch(method){
+						case CLEANING:
+							cleaned += count;
+							break;
+						case DECANTING:
+							decanted += count/2;
+							break;
+						case GRINDING:
+							grinded += count;
+							break;
+						case MIXING:
+							mixed += count;
+							break;
+					}
 					waitInventory(false, General.random(1500, 2000));
 				}
 			}
@@ -105,75 +130,33 @@ public class JJsHerblore extends EnumScript<State> implements Painting {
 		}
 		return false;
 	}
-	
-	/// UNFINISHED POTIONS \\\
-	/** Returns the unfinished ID */
-	private int getUnfinishedID(){
-		RSItem[] items = Inventory.getAll();
-		for(RSItem item : items){
-			if(item.getDefinition().getName().contains("Unfinished")){
-				return item.getID();
-			}
-		}
-		return -1;
-	}
-	
-	/** Checks if we have any unfinished potions in our inventory */
-	private boolean haveUnfinishedPots(){
-		return getUnfinishedID() != -1;
-	}
-	
+
 	/** Withdraws the items required to mix */
 	private boolean withdrawSupplies(){
 		switch(method){
 			case GRINDING:
-				itemsDone += 27;
 				RSItem[] grinded = Banking.find(item1ID);
-				return grinded.length > 0 && grinded[0].click("Withdraw All") && waitInventory(true, General.random(1500, 2000));
+				return grinded.length > 0 && grinded[0].click("Withdraw-All") && waitInventory(true, General.random(1500, 2000));
 				
 			case MIXING:
-				itemsDone += 14;
 				RSItem[] items1 = Banking.find(item1ID);
 				RSItem[] items2 = Banking.find(item2ID);
 				if(items1.length > 0 && items2.length > 0){
 					if(General.random(0, 1) == 1){
-						return Banking.withdrawItem(items1[0], 14) && items2[0].click("Withdraw All") && waitInventory(true, General.random(1500, 2000));
+						return Banking.withdrawItem(items1[0], 14) && Banking.withdrawItem(items2[0], 14) && waitInventory(true, General.random(1500, 2000));
 					}else{
-						return Banking.withdrawItem(items2[0], 14) && items1[0].click("Withdraw All") && waitInventory(true, General.random(1500, 2000));
+						return Banking.withdrawItem(items2[0], 14) && Banking.withdrawItem(items1[0], 14) && waitInventory(true, General.random(1500, 2000));
 					}
 				}
 				break;
 				
 			case CLEANING:
-				itemsDone += 28;
 				RSItem[] herbs = Banking.find(item1ID);
-				return herbs.length > 0 && herbs[0].click("Withdraw All") && waitInventory(true, General.random(1500, 2000));
+				return herbs.length > 0 && herbs[0].click("Withdraw-All") && waitInventory(true, General.random(1500, 2000));
 
 			case DECANTING:
-				itemsDone += 14;
 				RSItem[] pots = Banking.find(item1ID);
-				return pots.length > 0 && pots[0].click("Withdraw All") && waitInventory(true, General.random(1500, 2000));
-				
-			case ALL_IN_ONE:
-				itemsDone += 14;
-				// Checking for unfinished potion
-				if(haveUnfinishedPots()){
-					RSItem[] secondary = Banking.find(item2ID);
-					return secondary.length > 0 && secondary[0].click("Withdraw All") && waitInventory(true, General.random(1500, 2000));
-				}else{
-					// Withdrawing herbs / vials of water
-					RSItem[] herbz = Banking.find(item1ID);
-					RSItem[] vials = Banking.find(vialID);
-					if(herbz.length > 0 && vials.length > 0){
-						if(General.random(0, 1) == 1){
-							return Banking.withdrawItem(herbz[0], 14) && vials[0].click("Withdraw All") && waitInventory(true, General.random(1500, 2000));
-						}else{
-							return Banking.withdrawItem(vials[0], 14) && herbz[0].click("Withdraw All") && waitInventory(true, General.random(1500, 2000));
-						}
-					}
-				}
-				break;
-				
+				return pots.length > 0 && pots[0].click("Withdraw-All") && waitInventory(true, General.random(1500, 2000));
 		}
 		return false;
 	}
@@ -189,12 +172,6 @@ public class JJsHerblore extends EnumScript<State> implements Painting {
 				return Inventory.getCount(item1ID) > 0;
 			case DECANTING:
 				return Inventory.getCount(item1ID) >= 2;
-			case ALL_IN_ONE:
-				if(Inventory.getCount(vialID) > 0 && Inventory.getCount(item1ID) > 0){
-					return true;
-				}else if(haveUnfinishedPots()){
-					return Inventory.getCount(item2ID) > 0;
-				}
 		}
 		return false;
 	}
@@ -207,9 +184,9 @@ public class JJsHerblore extends EnumScript<State> implements Painting {
 			int r1 = General.random(0, items1.length-1);
 			int r2 = General.random(0, items2.length-1);
 			if(General.random(0, 1) == 1){
-				return items1[r1].click() && items2[r2].click() && waitInterface(General.random(1500, 2500));
+				return items1[r1].click("Use") && items2[r2].click("Use") && waitInterface(General.random(1500, 2500));
 			}else{
-				return items2[r2].click() && items1[r1].click() && waitInterface(General.random(1500, 2500));
+				return items2[r2].click("Use") && items1[r1].click("Use") && waitInterface(General.random(1500, 2500));
 			}
 		}
 		return false;
@@ -263,15 +240,6 @@ public class JJsHerblore extends EnumScript<State> implements Painting {
 					}
 				}
 				openBank();
-				break;
-				
-			case ALL_IN_ONE:
-				int unfID = getUnfinishedID();
-				if(unfID != -1){ // Unfinished potions
-					handleMixing(unfID, item2ID);
-				}else{ // Mixing herbs with vial of water
-					handleMixing(item1ID, vialID);
-				}
 				break;
 		}
 
@@ -329,7 +297,7 @@ public class JJsHerblore extends EnumScript<State> implements Painting {
 		RSItem[] items = Inventory.getAll();
 		for(RSItem item : items){
 			int id = item.getID();
-			if(id != mortarID && id != item1ID && id != item2ID && id != getUnfinishedID()){
+			if(id != mortarID && id != item1ID && id != item2ID){
 				return true;
 			}
 		}
@@ -360,7 +328,6 @@ public class JJsHerblore extends EnumScript<State> implements Painting {
 		double multiplier = timeRan / 3600000D;
 		int xpGained = currentXp - startXp;
 		int xpHr = (int) (xpGained / multiplier);
-		int madeHr = (int) (itemsDone / multiplier);
 		
 		g.setColor(Color.WHITE);
 		g.drawString("JJ's Herblore", 10, 100);
@@ -372,34 +339,29 @@ public class JJsHerblore extends EnumScript<State> implements Painting {
 			g.drawString("Method: " + method, 10, 220);
 			switch(method){
 				case GRINDING: 
-					g.drawString("Grinded " + itemsDone + " items (" + madeHr + "/h)", 10, 190);
+					int grindedHr = (int) (grinded / multiplier);
+					g.drawString("Grinded " + grinded + " items (" + grindedHr + "/h)", 10, 190);
 					g.drawString("Item ID: " + item1ID, 10, 240);
 					break;
 					
 				case CLEANING:
-					g.drawString("Cleaned " + itemsDone + " herbs (" + madeHr + "/h)", 10, 190);
+					int cleanedHr = (int) (cleaned / multiplier);
+					g.drawString("Cleaned " + cleaned + " herbs (" + cleanedHr + "/h)", 10, 190);
 					g.drawString("Herb ID: " + item1ID, 10, 240);
 					break;
 					
 				case MIXING:
-					g.drawString("Mixed " + itemsDone + " potions (" + madeHr + "/h)", 10, 190);
+					int mixedHr = (int) (mixed / multiplier);
+					g.drawString("Mixed " + mixed + " potions (" + mixedHr + "/h)", 10, 190);
 					g.drawString("Item #1 ID: " + item1ID, 10, 240);
 					g.drawString("Item #2 ID: " + item2ID, 10, 260);
 					break;
 					
 				case DECANTING:
-					g.drawString("Decanted " + itemsDone + " potions (" + madeHr + "/h)", 10, 190);
+					int decantedHr = (int) (decanted / multiplier);
+					g.drawString("Decanted " + decanted + " potions (" + decantedHr + "/h)", 10, 190);
 					g.drawString("Potion ID: " + item1ID, 10, 240);
 					break;
-					
-				case ALL_IN_ONE:
-					g.drawString("Mixed " + itemsDone + " potions (" + madeHr + "/h)", 10, 190);
-					g.drawString("Herb ID: " + item1ID, 10, 240);
-					g.drawString("Unfinished potion ID: " + item2ID, 10, 260);
-					g.drawString("Vial of water ID: " + vialID, 10, 280);
-					break;
-					
-					
 			}
 		}
 	}
@@ -412,7 +374,7 @@ public class JJsHerblore extends EnumScript<State> implements Painting {
 			if(Banking.isBankScreenOpen()){
 				return State.CLOSING_BANK;
 			}else{
-				if(method.equals(Method.MIXING) || method.equals(Method.ALL_IN_ONE)){
+				if(method.equals(Method.MIXING)){
 					if(haveInterface()){
 						return State.CLICK_INTERFACE;
 					}else if(areAnimating()){
@@ -466,6 +428,35 @@ public class JJsHerblore extends EnumScript<State> implements Painting {
 		currentXp = Skills.getXP(Skills.SKILLS.HERBLORE);
 		Mouse.setSpeed(General.random(125, 135));
 		
+		// Statistics
+		long currentTime = System.currentTimeMillis();
+		if(currentTime - lastTime > 60000){ // 1 minute
+			// Calculate values
+			long nowRunTime = ((currentTime - startTime) / 1000) - comittedRunTime;
+			int nowXp = currentXp - startXp - comittedXP;
+			int nowMixed = mixed - comittedMixed;
+			int nowCleaned = cleaned - comittedCleaned;
+			int nowDecanted = decanted - comittedDecanted;
+			int nowGrinded = grinded - comittedGrinded;
+			
+			// New comitted values
+			comittedRunTime += nowRunTime;
+			comittedXP += nowXp;
+			comittedMixed += nowMixed;
+			comittedCleaned += nowCleaned;
+			comittedDecanted += nowDecanted;
+			comittedGrinded += nowGrinded;
+
+			// Create seperate thread
+			String parameters = "runtime=" + nowRunTime + "&xp=" + nowXp + "&mixed=" + nowMixed + "&cleaned=" + nowCleaned + "&decanted=" + nowDecanted + "&grinded=" + nowGrinded;			
+			HerbStatsThread thread = new HerbStatsThread("http://obduro.org/scriptdata/jjsherblore.php", parameters);
+			thread.start();
+			
+			// Update commit time
+			lastTime = currentTime;
+		}
+		
+		// Handle state
 		switch(state){
 			case GUI:
 				sleep(20, 60);
