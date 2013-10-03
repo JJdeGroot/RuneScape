@@ -23,7 +23,7 @@ public class GUI extends JFrame {
 	public GUI(){
 		// START
 		super("JJ's Interface Explorer");
-		setSize(800, 500);
+		setSize(800, 700);
 		setLayout(new BorderLayout());
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -57,7 +57,7 @@ public class GUI extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent event) {
-			//System.out.println("UPDATE CLICKED");
+			//General.println("UPDATE CLICKED");
 
 			treePanel.createTree(true);
 			panel.repaint();

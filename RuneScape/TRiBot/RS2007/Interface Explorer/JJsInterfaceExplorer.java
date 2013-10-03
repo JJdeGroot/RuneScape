@@ -47,55 +47,7 @@ public class JJsInterfaceExplorer extends Script implements Painting {
 				guiIntialized = true;
 			}
     	});
-		
-		System.out.println("Gathering interfaces v4 started");
-		RSInterfaceMaster[] masterInterfaces = Interfaces.getAll();
-		for(RSInterfaceMaster master : masterInterfaces){
-			if(master.getComponentStack() == 1337){
-				System.out.println("Master interface #" + master.getIndex() + " is 1337!");
-				System.out.println("Master #" + master.getIndex());
-			}
-			RSItem[] items = master.getItems();
-			if(items != null && items.length > 0){
-				for(RSItem item : items){
-					System.out.println("Master interface #" + master.getIndex() + " item id: " + item.getID());
-				}
-			}
-			RSInterfaceChild[] childs = master.getChildren();
-			if(childs != null && childs.length > 0){
-				for(RSInterfaceChild child : childs){
-					if(child.getComponentStack() == 1337){
-						System.out.println("Child interface #" + child.getIndex() + " is 1337!");
-						System.out.println("Master #" + master.getIndex() + ", Child #" + child.getIndex());
-					}
-					RSItem[] items2 = child.getItems();
-					if(items != null && items.length > 0){
-						for(RSItem item2 : items2){
-							System.out.println("Child interface #" + child.getIndex() + " item id: " + item2.getID());
-						}
-					}
-					RSInterfaceComponent[] comps = child.getChildren();
-					if(comps != null && comps.length > 0){
-						for(RSInterfaceComponent comp : comps){
-							if(comp.getComponentStack() == 1337){
-								System.out.println("Component #" + comp.getIndex() + " is 1337!");
-								System.out.println("Master #" + master.getIndex() + ", Child #" + child.getIndex() + ", Comp #" + comp.getIndex());
-							}
-							RSItem[] items3 = comp.getItems();
-							if(items3 != null && items3.length > 0){
-								for(RSItem item3 : items3){
-									System.out.println("Component interface #" + comp.getIndex() + " item id: " + item3.getID());
-								}
-							}
-							
-						}
-						
-					}
-				}
-			}
-		}
-		System.out.println("Gathering interfaces v4 ended");
-		
+
 		while(true){
 			sleep(50, 100);
 			if(guiIntialized && !gui.isVisible()){

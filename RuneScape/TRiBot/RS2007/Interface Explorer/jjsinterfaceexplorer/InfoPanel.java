@@ -55,12 +55,12 @@ public class InfoPanel extends JPanel {
 	public void setText(Rectangle absoluteBounds, RSInterface absoluteParent,
 			Point position, String[] actions, RSInterface[] children,
 			int componentIndex, int componentItem, int componentStack,
-			int height, int index, RSItem[] items, int modelID, int modelType, int modelZoom,
-			RSInterface parent, int parentID, int rotationX, int rotationY,
+			int height, boolean hidden, int index, RSItem[] items, int modelID, int modelType, 
+			int modelZoom, RSInterface parent, int parentID, int rotationX, int rotationY,
 			int rotationZ, int scrollMaxH, int scrollMaxV, String text,
 			int textureID, int uid, int width, int x, int y){
 		
-		//System.out.println("Updated info panel");
+		//General.println("Updated info panel");
 		bounds = absoluteBounds;
 		removeAll();
 		addCheckBox();
@@ -98,8 +98,8 @@ public class InfoPanel extends JPanel {
 				else
 					itemInfo .append("Item #" + i + ": " + items[i].getID() + ", ");
 
-		labels = new JLabel[27];
-		labels[0] = new JLabel("Bounds: " + absoluteBounds);
+		labels = new JLabel[28];
+		labels[0] = new JLabel("Absolute bounds: " + absoluteBounds);
 		labels[1] = new JLabel("Absolute parent index: " + absoluteParent.getComponentIndex());
 		labels[2] = new JLabel("Position: " + position);
 		labels[3] = new JLabel("Actions: " + actionInfo.toString());
@@ -108,29 +108,30 @@ public class InfoPanel extends JPanel {
 		labels[6] = new JLabel("Component item: " + componentItem);
 		labels[7] = new JLabel("Component stack: " + componentStack);
 		labels[8] = new JLabel("Height: " + height);
-		labels[9] = new JLabel("Index: " + index);
-		labels[10] = new JLabel("Items: " + itemInfo.toString());
-		labels[11] = new JLabel("Model ID: " +  modelID);
-		labels[12] = new JLabel("Model Type: " + modelType);
-		labels[13] = new JLabel("Model Zoom: " + modelZoom);
-		labels[14] = new JLabel("Parent index: " + parent.getComponentIndex());
-		labels[15] = new JLabel("Parent ID: " + parentID);
-		labels[16] = new JLabel("Rotation X: " + rotationX);
-		labels[17] = new JLabel("Rotation Y: " + rotationY);
-		labels[18] = new JLabel("Rotation Z: " + rotationZ);
-		labels[19] = new JLabel("Scroll Max Horizontal: " + scrollMaxH);
-		labels[20] = new JLabel("Scroll Max Vertical: " + scrollMaxV);
-		labels[21] = new JLabel("Text: " + text);
-		labels[22] = new JLabel("Texture ID: " + textureID);
-		labels[23] = new JLabel("UID: " + uid);
-		labels[24] = new JLabel("Width: " + width);
-		labels[25] = new JLabel("X: " + x);
-		labels[26] = new JLabel("Y: " + y);
+		labels[9] = new JLabel("Hidden? " + hidden);
+		labels[10] = new JLabel("Index: " + index);
+		labels[11] = new JLabel("Items: " + itemInfo.toString());
+		labels[12] = new JLabel("Model ID: " +  modelID);
+		labels[13] = new JLabel("Model Type: " + modelType);
+		labels[14] = new JLabel("Model Zoom: " + modelZoom);
+		labels[15] = new JLabel("Parent index: " + parent.getComponentIndex());
+		labels[16] = new JLabel("Parent ID: " + parentID);
+		labels[17] = new JLabel("Rotation X: " + rotationX);
+		labels[18] = new JLabel("Rotation Y: " + rotationY);
+		labels[19] = new JLabel("Rotation Z: " + rotationZ);
+		labels[20] = new JLabel("Scroll Max Horizontal: " + scrollMaxH);
+		labels[21] = new JLabel("Scroll Max Vertical: " + scrollMaxV);
+		labels[22] = new JLabel("Text: " + text);
+		labels[23] = new JLabel("Texture ID: " + textureID);
+		labels[24] = new JLabel("UID: " + uid);
+		labels[25] = new JLabel("Width: " + width);
+		labels[26] = new JLabel("X: " + x);
+		labels[27] = new JLabel("Y: " + y);
 
 		labelPanel = new JPanel();
-		labelPanel.setLayout(new GridLayout(27, 1));
+		labelPanel.setLayout(new GridLayout(28, 1));
 		for(JLabel label : labels){
-			//System.out.println("Added label: " + label.getText());
+			//General.println("Added label: " + label.getText());
 			labelPanel.add(label);
 		}
 		detailPanel.add(labelPanel, BorderLayout.CENTER);
@@ -151,7 +152,7 @@ public class InfoPanel extends JPanel {
 
 		@Override
 		public void actionPerformed(ActionEvent event) {
-			//System.out.println("CHECKBOX CLICKED");
+			//General.println("CHECKBOX CLICKED");
 
 			setDrawing(imageCheckBox.isSelected());
 			
