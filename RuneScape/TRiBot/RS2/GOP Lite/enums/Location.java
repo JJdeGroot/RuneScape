@@ -1,7 +1,0 @@
-package scripts.jjsgoplite.enums;
-
-public enum Location {
-	AIR_NORMAL, AIR_GOP, MIND_NORMAL, MIND_GOP, WATER_NORMAL,
-	WATER_GOP, EARTH_NORMAL, EARTH_GOP, FIRE_NORMAL, FIRE_GOP,
-	BODY_NORMAL, BODY_GOP, LOBBY;
-}
